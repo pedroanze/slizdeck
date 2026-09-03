@@ -1,0 +1,282 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-29T21:59:46Z",
+  "title": "Design System: Slizdeck — Sistema neutro default",
+  "extensions": {
+    "colorMeta": {
+      "founders-teal": {
+        "role": "primary",
+        "displayName": "Founder's Teal",
+        "canonical": "#0E7C66",
+        "tonalRamp": [
+          "#084539",
+          "#0E7964",
+          "#14AD8F",
+          "#19E2BA",
+          "#4BEBCB",
+          "#7FF1DA",
+          "#B4F6E9",
+          "#E8FCF8"
+        ]
+      },
+      "boardroom-navy": {
+        "role": "secondary",
+        "displayName": "Boardroom Navy",
+        "canonical": "#1E3A5F",
+        "tonalRamp": [
+          "#12233A",
+          "#203F66",
+          "#2E5A93",
+          "#3C75BF",
+          "#6794CF",
+          "#93B3DD",
+          "#BFD2EB",
+          "#ECF1F9"
+        ]
+      },
+      "signal-ember": {
+        "role": "tertiary",
+        "displayName": "Signal Ember",
+        "canonical": "#AD5407",
+        "tonalRamp": [
+          "#4A2403",
+          "#823F05",
+          "#BA5A08",
+          "#F2750A",
+          "#F7943E",
+          "#F9B376",
+          "#FCD2AE",
+          "#FEF1E6"
+        ]
+      },
+      "paper-cream": {
+        "role": "neutral",
+        "displayName": "Paper Cream",
+        "canonical": "#F7F6F2",
+        "tonalRamp": [
+          "#2F2C1D",
+          "#534D33",
+          "#786E4A",
+          "#9C9060",
+          "#B3A983",
+          "#C9C2A7",
+          "#DFDBCB",
+          "#F5F4EF"
+        ]
+      },
+      "ink-body": {
+        "role": "neutral",
+        "displayName": "Ink Body",
+        "canonical": "#454545",
+        "tonalRamp": [
+          "#262626",
+          "#434343",
+          "#616161",
+          "#7E7E7E",
+          "#9B9B9B",
+          "#B8B8B8",
+          "#D5D5D5",
+          "#F2F2F2"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Título de cover y transition — el momento de mayor peso del deck. Serif editorial (Newsreader)."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Título de cada slide de contenido. Serif editorial (Newsreader)."
+      },
+      "subtitle": {
+        "displayName": "Subtitle",
+        "purpose": "Subtítulo bajo el título de cover/transition. Sans funcional (IBM Plex Sans)."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Encabezado dentro de una card. Sans funcional."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Párrafo de card, texto de footer. Sans funcional."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Eyebrows y card-eyebrows, uppercase. Sans funcional."
+      }
+    },
+    "shadows": [
+      {
+        "name": "shadow-1",
+        "value": "0 1px 2px rgba(0,0,0,0.04), 0 1px 1px rgba(0,0,0,0.03)",
+        "purpose": "Separación mínima, casi imperceptible."
+      },
+      {
+        "name": "shadow-2",
+        "value": "0 4px 12px rgba(0,0,0,0.06), 0 2px 4px rgba(0,0,0,0.04)",
+        "purpose": "Sombra default de las cards."
+      },
+      {
+        "name": "shadow-3",
+        "value": "0 12px 32px rgba(0,0,0,0.08), 0 4px 10px rgba(0,0,0,0.05)",
+        "purpose": "Elementos que necesitan destacar más (mockups, nivel de animación HEAVY)."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-std",
+        "value": "cubic-bezier(0.22, 1, 0.36, 1)",
+        "purpose": "Easing por default para el reveal de elementos por paso."
+      },
+      {
+        "name": "reveal-duration",
+        "value": "520ms",
+        "purpose": "Duración del fade-in + translateY(16px→0) de cada elemento .reveal, con delay por --d por elemento para escalonar."
+      },
+      {
+        "name": "hard-cut",
+        "value": "120ms opacity ease",
+        "purpose": "Transición entre slides — corte directo, nunca sweep/gradiente al entrar."
+      },
+      {
+        "name": "progress-bar-fill",
+        "value": "240ms cubic-bezier(0.22, 1, 0.36, 1), animado vía transform: scaleX()",
+        "purpose": "Avance de la barra de progreso — se cambió de `width` a `transform` para evitar layout thrash (hallazgo de impeccable)."
+      }
+    ],
+    "gradients": {
+      "grad-radial": "radial-gradient(112% 150% at 0% 100%, #0E7C66 0%, #1E3A5F 100%)",
+      "grad-linear": "linear-gradient(135deg, #0E7C66 0%, #1E3A5F 100%)",
+      "grad-text": "linear-gradient(135deg, #0E7C66 0%, #146E63 50%, #1E3A5F 100%)"
+    },
+    "canvas": {
+      "designWidth": 1920,
+      "designHeight": 1080,
+      "scaling": "uniforme (transform: scale), letterboxed — no es un grid responsive con breakpoints"
+    },
+    "impeccableAudit": {
+      "lastRun": "2026-08-29",
+      "cleared": [
+        "overused-font",
+        "ai-color-palette",
+        "low-contrast",
+        "layout-transition",
+        "all-caps-body"
+      ],
+      "accepted": [
+        {
+          "antipattern": "gradient-text",
+          "reason": "Restringido a .grad-word en cover/transition por 'The Gradient-Is-A-Bookend Rule'. En print degrada a color solido (background-clip:text dibuja un recuadro visible en PDF)."
+        },
+        {
+          "antipattern": "em-dash-overuse",
+          "reason": "Falso positivo: cuenta em-dashes en comentarios de codigo del archivo heredado, no en contenido de slide."
+        },
+        {
+          "antipattern": "design-system-*",
+          "reason": "En decks concretos, los one-offs de composicion (tamanos de una sola slide) y el viewer chrome del shadow DOM quedan fuera del design system a proposito."
+        }
+      ]
+    },
+    "printPipeline": {
+      "note": "El export a PDF es impresion nativa del navegador. Cuatro defectos encontrados y corregidos el 2026-08-29 con el detector de impeccable + verificacion visual real (Chrome headless --print-to-pdf).",
+      "fixes": [
+        "@media print revela los .reveal: sin esto un deck animado exportaba slides en blanco.",
+        "beforeprint lleva TODAS las slides a su estado final: los contadores [data-counter] imprimian '0' en vez de su cifra real.",
+        "@media print oculta #progress-bar y #fs-btn: el chrome del reproductor se imprimia sobre el contenido.",
+        "@media print degrada .grad-word a color solido: background-clip:text dibujaba un recuadro visible alrededor de la palabra."
+      ]
+    }
+  },
+  "components": [
+    {
+      "name": "Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Contenedor blanco sobre fondo crema, usado para agrupar contenido dentro de una slide.",
+      "html": "<div class=\"ds-card\"><div class=\"ds-card-eyebrow\">CARD EYEBROW</div><h3 class=\"ds-card-title\">Card heading</h3><p class=\"ds-card-body\">Card body text goes here.</p></div>",
+      "css": ".ds-card { background: #FFFFFF; border: 1px solid rgba(0,0,0,0.08); border-radius: 26px; padding: 40px 44px; box-shadow: 0 4px 12px rgba(0,0,0,0.06), 0 2px 4px rgba(0,0,0,0.04); font-family: 'IBM Plex Sans', sans-serif; } .ds-card-eyebrow { font-size: 24px; letter-spacing: 0.22em; text-transform: uppercase; font-weight: 700; color: #65696F; margin-bottom: 18px; } .ds-card-title { font-size: 32px; line-height: 1.15; letter-spacing: -0.01em; color: #000000; font-weight: 700; margin: 0 0 14px; } .ds-card-body { font-size: 24px; line-height: 1.5; color: #454545; margin: 0; }"
+    },
+    {
+      "name": "Badge Primary",
+      "kind": "chip",
+      "refersTo": "badge-primary",
+      "description": "Etiqueta de estado semántico, forma de píldora, translúcida.",
+      "html": "<span class=\"ds-badge-primary\">BADGE LABEL</span>",
+      "css": ".ds-badge-primary { display: inline-flex; align-items: center; gap: 8px; font-size: 20px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; padding: 7px 14px; border-radius: 999px; background: rgba(14,124,102,0.10); color: #0E7C66; font-family: 'IBM Plex Sans', sans-serif; }"
+    },
+    {
+      "name": "Eyebrow Label",
+      "kind": "custom",
+      "refersTo": "label",
+      "description": "Etiqueta pequeña uppercase encima de un título de slide.",
+      "html": "<div class=\"ds-eyebrow\">Section eyebrow</div>",
+      "css": ".ds-eyebrow { font-size: 24px; letter-spacing: 0.22em; text-transform: uppercase; font-weight: 700; color: #0E7C66; margin: 0 0 36px; font-family: 'IBM Plex Sans', sans-serif; }"
+    },
+    {
+      "name": "Act Marker",
+      "kind": "custom",
+      "refersTo": "act-marker",
+      "description": "Indicador de paso (1/2) en la esquina superior derecha de slides multi-paso, fuente monoespaciada.",
+      "html": "<div class=\"ds-act-marker\"><span class=\"ds-act-marker-num\">1</span><span style=\"opacity:.4\">/2</span></div>",
+      "css": ".ds-act-marker { display: flex; align-items: center; gap: 10px; font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace; font-size: 24px; color: #65696F; letter-spacing: 0.08em; } .ds-act-marker-num { color: #000000; font-weight: 700; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "El Escenario del Fundador",
+    "overview": "Cada slide es un momento de un pitch en vivo frente a inversores, no una página de documento. El sistema es confiado y contenido: pocos elementos por slide, cada uno con peso deliberado, sin decoración que no sirva al mensaje. El verde azulado (Founder's Teal) domina el peso visual; el azul marino (Boardroom Navy) solo aparece en el gradiente de apertura/cierre; el ámbar quemado (Signal Ember) es la única voz que grita, y lo hace con cuentagotas.",
+    "keyCharacteristics": [
+      "Confiado y contenido, no enérgico ni ruidoso.",
+      "Un color domina cada slide (60-70% del peso visual); el acento aparece en un solo elemento por slide, como máximo.",
+      "Silencioso hasta que importa: todo en reposo es plano y quieto; el ámbar es lo único que reclama atención.",
+      "Canvas fijo 1920×1080, escalado uniformemente al viewport (no es un layout responsive tradicional).",
+      "Heading serif (Newsreader) contra body sans (IBM Plex Sans) — el contraste de familias es parte de la jerarquía."
+    ],
+    "rules": [
+      {
+        "name": "The One Accent Rule",
+        "body": "Signal Ember aparece en como máximo un elemento por slide. Su escasez es lo que lo hace notar.",
+        "section": "colors"
+      },
+      {
+        "name": "The Gradient-Is-A-Bookend Rule",
+        "body": "El gradiente (teal→navy) vive solo en cover y cierre. Las slides intermedias son crema, sin excepción.",
+        "section": "colors"
+      },
+      {
+        "name": "The No-Slop-Palette Rule",
+        "body": "Nunca volver a un gradiente azul/violeta ni a combinaciones cian-sobre-oscuro como default — son el tell de paleta más reconocible de UI generada por IA.",
+        "section": "colors"
+      },
+      {
+        "name": "The One-Line Title Rule",
+        "body": "Los títulos se escriben en una sola línea siempre que sea posible; un <br> solo se justifica por equilibrio visual, nunca por longitud del texto.",
+        "section": "typography"
+      },
+      {
+        "name": "The Serif-Sans Contrast Rule",
+        "body": "El heading nunca hereda la fuente del body ni viceversa — el contraste entre Newsreader y IBM Plex Sans es intencional.",
+        "section": "typography"
+      },
+      {
+        "name": "The Ambient-Only Rule",
+        "body": "Las sombras separan, no dramatizan. Si una sombra se nota antes que el contenido, es demasiado fuerte.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do dejar que un solo color domine cada slide (Founder's Teal o el crema neutro) y usar Signal Ember en un solo elemento como máximo.",
+      "Do usar Display (168px) solo en cover y transition, nunca en slides de contenido.",
+      "Do mantener el gradiente (teal→navy) exclusivamente en cover y cierre.",
+      "Do verificar contraste ≥4.5:1 para texto normal y ≥3:1 para texto grande antes de dar por cerrado un color nuevo."
+    ],
+    "donts": [
+      "Don't poner líneas o barras decorativas bajo ningún título.",
+      "Don't usar iconografía de stock genérica (candados, engranajes, bombillas) cuando hay un ícono más específico disponible.",
+      "Don't dejar una slide de contenido sin ningún elemento visual (imagen, gráfica, ícono, número grande) — nunca solo texto/bullets.",
+      "Don't mezclar más de 3 colores con peso visual real en una misma slide (dominante + apoyo + acento).",
+      "Don't volver a Inter, Roboto, Fraunces, Geist, Plus Jakarta Sans o Space Grotesk como default, ni a paletas azul/violeta con gradiente."
+    ]
+  }
+}
