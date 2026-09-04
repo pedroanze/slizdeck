@@ -8,3 +8,7 @@ node_modules/
 # macOS
 .DS_Store
 demo/t-*.png
+charla/s-*.png
+charla/*-crop.png
+charla/*-zoom.png
+charla/chk.png

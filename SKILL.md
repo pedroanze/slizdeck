@@ -23,6 +23,7 @@ Fork/adaptación de [`claude-slides`](https://github.com/marcogalluccio/claude-s
 | `reference/design-guidelines.md` | Principios de diseño: poco texto, un color dominante, anti-clichés, variedad de layout. Aplicar al construir el wireframe y al generar el HTML. |
 | `reference/deck-schema.md` | Formato del wireframe, arcos narrativos por tipo de deck, niveles de animación, estructura de cada `<section>`. |
 | `reference/components.md` | Catálogo de patrones de layout (cards, grids, mockups, diagramas) con HTML+CSS listos para copiar. |
+| `reference/media-and-data.md` | Imágenes, métricas, barras y pantalla de inicio. **Y cuándo pedirle assets al usuario.** |
 | `reference/animations.md` | Catálogo de técnicas de animación (reveal por pasos, dibujo de SVG, popups) y gotchas conocidos — solo para nivel HEAVY. |
 | `reference/icons.md` | Librería de íconos SVG con estilo coherente. |
 | `examples/demo-deck.html` | Deck de ejemplo de 6 slides, referencia end-to-end. |
@@ -98,9 +99,23 @@ Con el arco elegido, presentar el wireframe slide-por-slide (formato en `referen
 
 **Esperar aprobación explícita** antes de generar nada. Ajustar cuantas veces haga falta.
 
+### 5.5. Pedir los assets que faltan
+
+Con el wireframe aprobado, **antes de generar**, revisar qué slides necesitan una imagen, un gráfico o un dato real y **pedírselos al usuario en un solo mensaje**. Una slide rellena de texto que sustituye a la imagen que debería estar ahí es una slide peor, no una slide resuelta.
+
+Pedir imagen cuando la slide muestra un producto o una pantalla, presenta personas, abre o cierra el deck, o es la pantalla de espera. Decir siempre **qué slide, qué debería mostrar y en qué proporción** (a sangre: 1920×1080; media pantalla: 960×1080; recuadro: libre).
+
+Pedir el dato real cuando el wireframe tenga una cifra: es preferible un placeholder marcado a un número inventado.
+
+Ofrecer continuar sin los assets, dejando el hueco marcado en el deck para reemplazarlo después. Nunca bloquear la generación esperando una foto.
+
+Ver `reference/media-and-data.md` para los patrones y para dónde guardar los archivos.
+
 ### 6. Nivel de animación
 
 Una vez aprobado el wireframe, proponer un nivel (NONE/LIGHT/HEAVY, tabla y defaults en `reference/deck-schema.md`) y pedir confirmación. Reglas fijas: cover y transition siempre estáticas; nunca HEAVY en decks de más de 18 slides salvo pedido explícito.
+
+**Variar la entrada según el elemento.** Revelar todo el deck con el mismo `fade-up` es lo que hace que un deck animado se sienta mecánico. El template trae variantes que se combinan con `.reveal`: `r-rise` para títulos, `r-scale` para cifras, `r-blur` para imágenes y citas, `r-left` para listas y pasos, `r-wipe` para barras y reglas, `r-mask` para remates, `r-fade` para texto largo. Un contenedor con `.stagger` escalona sus hijos automáticamente sin escribir `--d` a mano.
 
 ### 7. Generar el deck
 

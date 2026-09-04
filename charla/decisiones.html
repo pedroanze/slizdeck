@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Claude Slides · [DECK NAME]</title>
-<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<title>El código se volvió barato. Las decisiones no. · Pedro Anze</title>
+<link href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Chivo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/lucide@latest"></script>
 <style>
   /* ============================================================
@@ -12,31 +12,31 @@
      ============================================================ */
   :root {
     /* --- Colores: primario/secundario dominan, acento se usa con cuentagotas --- */
-    --cs-primary:     #0E7C66;
-    --cs-secondary:   #1E3A5F;
-    --cs-accent:      #AD5407;
-    --cs-cream:       #F7F6F2;
-    --cs-cream-2:     #EDECE6;
-    --cs-black:       #000000;
-    --cs-body:        #454545;
-    --cs-muted:       #65696F;
+    --cs-primary:     #2D7A52;
+    --cs-secondary:   #2B2622;
+    --cs-accent:      #7B2233;
+    --cs-cream:       #FFFFFF;
+    --cs-cream-2:     #F3F2F0;
+    --cs-black:       #14110F;
+    --cs-body:        #3D3833;
+    --cs-muted:       #6E655D;
     --cs-white:       #FFFFFF;
     /* Superficie de cards/paneles y fondo del letterbox. Separados de
        --cs-white/--cs-black para que un style pack oscuro pueda invertirlos
        sin tocar el resto del sistema. */
-    --cs-surface:     #FFFFFF;
-    --cs-void:        #0C0C1A;
-    --cs-border:      rgba(0,0,0,0.08);
-    --cs-border-strong: rgba(0,0,0,0.16);
-    --cs-scrim:       rgba(0,0,0,0.05);
+    --cs-surface:     #FAF9F8;
+    --cs-void:        #14110F;
+    --cs-border:      rgba(20,17,15,0.12);
+    --cs-border-strong: rgba(20,17,15,0.22);
+    --cs-scrim:       rgba(20,17,15,0.05);
     --cs-grain:       .09;
-    --cs-grad-radial: radial-gradient(112% 150% at 0% 100%, #0E7C66 0%, #1E3A5F 100%);
-    --cs-grad-linear: linear-gradient(135deg, #0E7C66 0%, #1E3A5F 100%);
-    --cs-grad-text:   linear-gradient(135deg, #0E7C66 0%, #146E63 50%, #1E3A5F 100%);
+    --cs-grad-radial: radial-gradient(112% 150% at 0% 100%, #2D7A52 0%, #14110F 100%);
+    --cs-grad-linear: linear-gradient(135deg, #2D7A52 0%, #14110F 100%);
+    --cs-grad-text:   linear-gradient(135deg, #2D7A52 0%, #24402F 50%, #14110F 100%);
 
     /* --- Tipografía: heading serif con carácter editorial, body sans funcional --- */
-    --cs-font-sans:   'IBM Plex Sans', ui-sans-serif, system-ui, -apple-system, sans-serif;
-    --cs-font-heading: 'Newsreader', Georgia, 'Times New Roman', serif;
+    --cs-font-sans:   'Chivo', ui-sans-serif, system-ui, sans-serif;
+    --cs-font-heading: 'Young Serif', Georgia, 'Times New Roman', serif;
     --cs-font-mono:   ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
 
     /* --- Radios: escala corta, todo el sistema de componentes usa estos 3 --- */
@@ -118,9 +118,6 @@
     position: relative;
   }
   .pad.center { justify-content: center; align-items: center; text-align: center; }
-  /* Centrado vertical conservando la alineacion a la izquierda. Para slides
-     de contenido con poco material, donde alinear arriba deja el tercio
-     inferior vacio y el conjunto se lee sin terminar. */
   .pad.mid { justify-content: center; }
 
   /* ============================================================
@@ -403,10 +400,118 @@
   }
 
   /* ============================================================
-     INSERT SLIDE-SPECIFIC CSS BELOW
-     Copy snippets from components.md (layouts: .pq-card, terminal,
-     mockups, etc.) or animations.md (popup, SVG paths, packets) here.
+     CSS DE ESTA CHARLA
      ============================================================ */
+
+  /* Young Serif solo tiene peso 400: pedir 600/700 lo sintetiza y ensucia
+     el trazo. La jerarquia sale de la escala, como indica el pack. */
+  h1.cover, h1.cover-md, h2.title, .ts-title, .ts-title .grad-word {
+    font-weight: 400;
+  }
+
+  /* Pantalla de espera: se proyecta antes de empezar, mientras la sala se
+     llena. No es la portada; la portada abre la charla, esta espera. */
+  .standby { position: relative; height: 100%; display: flex; flex-direction: column; }
+  .standby .marca {
+    font-size: 26px; letter-spacing: .2em; text-transform: uppercase;
+    font-weight: 700; color: rgba(255,255,255,.75);
+  }
+  .standby .centro { margin: auto 0; }
+  .standby .autor { margin-top: 28px; font-size: 34px; color: rgba(255,255,255,.8); font-weight: 300; }
+  .standby .cuando { font-size: 30px; color: rgba(255,255,255,.7); }
+  @keyframes respira { 0%,100% { opacity: .5 } 50% { opacity: 1 } }
+  .standby .senal { animation: respira 3.4s ease-in-out infinite; }
+  @media (prefers-reduced-motion: reduce) { .standby .senal { animation: none } }
+
+  /* La segunda mitad del titulo es el remate de la charla, no un subtitulo.
+     Va al mismo tamano; lo que la separa es el aire y una opacidad menor. */
+  .portada-remate { margin-top: 18px; opacity: .72; }
+
+  /* Texto de entrada, un escalon sobre el cuerpo */
+  .lead {
+    font-size: 40px; line-height: 1.45;
+    color: var(--cs-body); font-weight: 300;
+    max-width: 1280px; margin-top: 8px;
+  }
+  .lead strong { font-weight: 600; color: var(--cs-black); }
+
+  /* Dos eventos, lado a lado */
+  .evento-par { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 16px; }
+  .evento { border-top: 1px solid var(--cs-border); padding-top: 28px; }
+  .evento .kind {
+    font-size: 22px; letter-spacing: 0.18em; text-transform: uppercase;
+    font-weight: 700; color: var(--cs-primary); margin-bottom: 20px;
+  }
+  .evento .cifra {
+    font-family: var(--cs-font-heading);
+    font-size: 108px; line-height: 1; color: var(--cs-black);
+    font-variant-numeric: tabular-nums;
+  }
+  .evento .detalle { font-size: 26px; line-height: 1.5; color: var(--cs-body); margin-top: 20px; }
+
+  /* Hechos apilados que se revelan uno a uno */
+  .hechos { margin-top: 8px; display: flex; flex-direction: column; gap: 26px; }
+  .hecho {
+    display: flex; align-items: baseline; gap: 28px;
+    font-size: 40px; line-height: 1.35; color: var(--cs-black);
+    border-bottom: 1px solid var(--cs-border); padding-bottom: 24px;
+  }
+  .hecho .n {
+    font-family: var(--cs-font-mono);
+    font-size: 22px; color: var(--cs-muted); flex: none; width: 40px;
+  }
+  .hecho.rompe { color: var(--cs-accent); }
+
+  /* Diagrama antes/ahora: dos barras apiladas, el ancho es el argumento */
+  .barras { margin-top: 24px; display: flex; flex-direction: column; gap: 52px; }
+  .barra-fila .etiqueta {
+    font-size: 26px; letter-spacing: 0.16em; text-transform: uppercase;
+    font-weight: 700; color: var(--cs-muted); margin-bottom: 18px;
+  }
+  .barra { display: flex; height: 92px; width: 100%; }
+  .seg { display: flex; align-items: center; padding: 0 24px; font-size: 24px; font-weight: 600; }
+  .seg.decidir  { background: var(--cs-primary); color: #fff; }
+  .seg.escribir { background: var(--cs-cream-2); color: var(--cs-body); }
+  .seg.revisar  { background: var(--cs-surface); color: var(--cs-muted); border: 1px solid var(--cs-border); }
+
+  /* Grid 2x2 para los documentos que se fundan */
+  .card-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 28px;
+    margin-top: 8px;
+  }
+  .card-grid-2 .card { padding: 32px 36px; }
+  .card-num {
+    font-family: var(--cs-font-mono);
+    font-size: 24px; font-weight: 700;
+    color: var(--cs-primary);
+    margin-bottom: 16px;
+  }
+
+  /* Cita a pantalla completa */
+  .cita {
+    font-family: var(--cs-font-heading);
+    font-size: 76px; line-height: 1.3; color: var(--cs-black);
+    max-width: 1500px; text-align: center;
+  }
+  .cita-autor {
+    margin-top: 44px; font-size: 26px; letter-spacing: 0.14em;
+    text-transform: uppercase; font-weight: 700; color: var(--cs-muted);
+    text-align: center;
+  }
+
+  /* Lista numerada de cierre */
+  .puntos { margin-top: 8px; display: flex; flex-direction: column; gap: 34px; }
+  .punto { display: flex; gap: 32px; align-items: baseline; }
+  .punto .idx {
+    font-family: var(--cs-font-mono); font-size: 26px;
+    color: var(--cs-primary); font-weight: 700; flex: none;
+  }
+  .punto .txt { font-size: 44px; line-height: 1.3; color: var(--cs-black); }
+
+  /* Handoff */
+  .handoff { font-size: 44px; line-height: 1.45; color: rgba(255,255,255,.92); max-width: 1400px; margin-top: 36px; }
 
 </style>
 </head>
@@ -421,7 +526,7 @@
        - data-steps="N" data-current-step="0"   (animated)
          OR data-steps="1" data-current-step="1" (static)
        - class="grad"                     (gradient bg, for cover)
-       - <div class="pad">                (standard padding frame)
+       - <div class="pad mid">                (standard padding frame)
        - <div class="pad center">         (vertically centered, for transitions)
        - <div class="footer">             (logo + speaker + slide num)
 
@@ -431,54 +536,345 @@
        - icons.md       → SVG icons library
        ============================================================ -->
 
-  <!-- ────────── EXAMPLE 1: Cover slide (gradient, static) ────────── -->
-  <section class="grad" data-label="01 Cover" data-steps="1" data-current-step="1">
+  <!-- 00 · Pantalla de espera (antes de empezar) -->
+  <section class="grad" data-label="00 Espera" data-steps="1" data-current-step="1">
+    <div class="pad standby">
+      <div class="marca">Angular Bolivia</div>
+      <div class="centro">
+        <h1 class="cover-md">El código se volvió barato.</h1>
+        <h1 class="cover-md portada-remate">Las decisiones no.</h1>
+        <div class="autor">Pedro Anze</div>
+      </div>
+      <div class="cuando senal">Empezamos en unos minutos</div>
+    </div>
+    <div class="footer"><div class="left"></div><div></div></div>
+  </section>
+
+  <!-- 01 · Portada -->
+  <section class="grad" data-label="01 Portada" data-steps="1" data-current-step="1">
     <div class="pad center">
-      <div class="eyebrow">Workshop · DATE · ORG</div>
-      <h1 class="cover">Deck Title Here</h1>
-      <div class="subtitle">Optional subtitle that explains in one sentence what this is about</div>
+      <div class="eyebrow">Angular Bolivia</div>
+      <h1 class="cover-md">El código se volvió barato.</h1>
+      <h1 class="cover-md portada-remate">Las decisiones no.</h1>
     </div>
     <div class="footer">
-      <div class="left">
-        <!-- Optional logo -->
-        <!-- <img src="assets/logos/logo-white.png" alt="Logo"> -->
-      </div>
-      <div>Speaker · Org · <span class="num">01</span></div>
+      <div class="left"></div>
+      <div>Pedro Anze · Angular Bolivia · <span class="num">01</span></div>
     </div>
   </section>
 
-  <!-- ────────── EXAMPLE 2: Content slide (cream, multi-step animated) ────────── -->
-  <section data-label="02 Content example" data-steps="2" data-current-step="0">
-    <div class="sweep"></div>
-    <div class="pad">
+  <!-- 02 · Mano alzada -->
+  <section data-label="02 Mano alzada" data-steps="1" data-current-step="1">
+    <div class="pad center">
+      <h1 class="ts-title">¿Quién eligió <span class="grad-word">Angular</span>?</h1>
+      <div class="ts-tagline">¿Y quién lo aprendió porque le tocó?</div>
+    </div>
+    <div class="footer">
+      <div class="left"></div>
+      <div>Pedro Anze · Angular Bolivia · <span class="num">02</span></div>
+    </div>
+  </section>
+
+  <!-- 03 · El encargo -->
+  <section data-label="03 El encargo" data-steps="2" data-current-step="0">
+    <div class="pad mid">
       <div class="act-marker"><span class="step-num">1</span><span style="opacity:.4">/2</span></div>
-      <div class="eyebrow reveal" data-step="1">Section eyebrow</div>
-      <h2 class="title reveal" data-step="1" style="--d:80ms">Slide title goes here</h2>
-
-      <div class="card reveal" data-step="2">
-        <div class="card-eyebrow">CARD EYEBROW</div>
-        <h3>Card heading</h3>
-        <p>Card body. Replace this with real content. For richer card patterns (consequence cards, mockups, terminals), see components.md.</p>
+      <div class="eyebrow reveal r-fade" data-step="1">El encargo</div>
+      <h2 class="title tight reveal r-rise" data-step="1" style="--d:80ms">Dos eventos, un sistema de registros</h2>
+      <div class="evento-par">
+        <div class="evento reveal r-scale" data-step="2">
+          <div class="kind">Virtual · gratuito</div>
+          <div class="cifra">100–200</div>
+          <div class="detalle">Asistentes esperados. Registro simple.</div>
+        </div>
+        <div class="evento reveal r-scale" data-step="2" style="--d:120ms">
+          <div class="kind">Presencial · de pago</div>
+          <div class="cifra">150</div>
+          <div class="detalle">Distintos precios de ticket y varios tracks de inscripción.</div>
+        </div>
       </div>
     </div>
     <div class="footer">
       <div class="left"></div>
-      <div>Speaker · Org · <span class="num">02</span></div>
+      <div>Pedro Anze · Angular Bolivia · <span class="num">03</span></div>
     </div>
   </section>
 
-  <!-- ────────── EXAMPLE 3: Transition slide (cream, big centered, static) ────────── -->
-  <section data-label="03 Transition example" data-steps="1" data-current-step="1">
-    <div class="pad center">
-      <h1 class="ts-title">The <span class="grad-word">shift</span></h1>
-      <div class="ts-tagline">Optional subtitle below the big title</div>
+  <!-- 04 · Lo que pasó -->
+  <section data-label="04 Lo que paso" data-steps="4" data-current-step="0">
+    <div class="pad mid">
+      <div class="act-marker"><span class="step-num">1</span><span style="opacity:.4">/4</span></div>
+      <div class="eyebrow reveal r-fade" data-step="1">Lo que pasó</div>
+      <h2 class="title tight reveal r-rise" data-step="1" style="--d:80ms">El plan y la realidad</h2>
+      <div class="hechos">
+        <div class="hecho reveal r-left" data-step="1" style="--d:160ms"><span class="n">01</span><span>Se eligió Angular en equipo, porque era lo que la mayoría usaba</span></div>
+        <div class="hecho reveal r-left" data-step="2"><span class="n">02</span><span>El equipo no llegó. Quedó un dev</span></div>
+        <div class="hecho rompe reveal r-left" data-step="3"><span class="n">03</span><span>Ese dev no sabía Angular</span></div>
+        <div class="hecho reveal r-left" data-step="4"><span class="n">04</span><span>Tres semanas de deadline. El formulario tenía que estar en una</span></div>
+      </div>
     </div>
     <div class="footer">
       <div class="left"></div>
-      <div>Speaker · Org · <span class="num">03</span></div>
+      <div>Pedro Anze · Angular Bolivia · <span class="num">04</span></div>
     </div>
   </section>
 
+  <!-- 05 · Se cumplió -->
+  <section data-label="05 Se cumplio" data-steps="1" data-current-step="1">
+    <div class="pad center">
+      <h1 class="ts-title">Se cumplió</h1>
+    </div>
+    <div class="footer">
+      <div class="left"></div>
+      <div>Pedro Anze · Angular Bolivia · <span class="num">05</span></div>
+    </div>
+  </section>
+
+  <!-- 06 · Los tres movimientos -->
+  <section data-label="06 Tres movimientos" data-steps="3" data-current-step="0">
+    <div class="pad mid">
+      <div class="act-marker"><span class="step-num">1</span><span style="opacity:.4">/3</span></div>
+      <div class="eyebrow reveal r-fade" data-step="1">La tesis</div>
+      <h2 class="title tight reveal r-rise" data-step="1" style="--d:80ms">Tres movimientos</h2>
+      <div class="hechos">
+        <div class="hecho reveal r-left" data-step="1" style="--d:160ms"><span class="n">01</span><span>Escribir código dejó de ser lo caro</span></div>
+        <div class="hecho reveal r-left" data-step="2"><span class="n">02</span><span>Lo caro es decidir, y sostener esa decisión en el tiempo</span></div>
+        <div class="hecho reveal r-left" data-step="3"><span class="n">03</span><span>Lo que no está escrito no sobrevive</span></div>
+      </div>
+    </div>
+    <div class="footer">
+      <div class="left"></div>
+      <div>Pedro Anze · Angular Bolivia · <span class="num">06</span></div>
+    </div>
+  </section>
+
+  <!-- 07 · Dónde está el trabajo -->
+  <section data-label="07 Donde esta el trabajo" data-steps="2" data-current-step="0">
+    <div class="pad mid">
+      <div class="act-marker"><span class="step-num">1</span><span style="opacity:.4">/2</span></div>
+      <div class="eyebrow reveal r-fade" data-step="1">Dónde está el trabajo</div>
+      <h2 class="title tight reveal r-rise" data-step="1" style="--d:80ms">El ancho es el punto</h2>
+      <div class="barras">
+        <div class="barra-fila reveal r-wipe" data-step="1" style="--d:200ms">
+          <div class="etiqueta">Antes</div>
+          <div class="barra">
+            <div class="seg decidir" style="width:14.3%">Decidir</div>
+            <div class="seg escribir" style="width:71.4%">Escribir</div>
+            <div class="seg revisar" style="width:14.3%">Revisar</div>
+          </div>
+        </div>
+        <div class="barra-fila reveal r-wipe" data-step="2">
+          <div class="etiqueta">Ahora</div>
+          <div class="barra">
+            <div class="seg decidir" style="width:64.3%">Decidir</div>
+            <div class="seg escribir" style="width:14.3%">Escribir</div>
+            <div class="seg revisar" style="width:21.4%">Revisar</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="footer">
+      <div class="left"></div>
+      <div>Pedro Anze · Angular Bolivia · <span class="num">07</span></div>
+    </div>
+  </section>
+
+  <!-- 08 · Frase ancla -->
+  <section data-label="08 Frase ancla" data-steps="1" data-current-step="1">
+    <div class="pad center">
+      <h1 class="ts-title">El código se volvió barato.<br>Las <span class="grad-word">decisiones</span> no.</h1>
+    </div>
+    <div class="footer">
+      <div class="left"></div>
+      <div>Pedro Anze · Angular Bolivia · <span class="num">08</span></div>
+    </div>
+  </section>
+
+  <!-- 09 · Fundar el contexto -->
+  <section data-label="09 Fundar el contexto" data-steps="2" data-current-step="0">
+    <div class="pad mid">
+      <div class="act-marker"><span class="step-num">1</span><span style="opacity:.4">/2</span></div>
+      <div class="eyebrow reveal r-fade" data-step="1">La fundación</div>
+      <h2 class="title tight reveal r-rise" data-step="1" style="--d:80ms">Antes de la primera línea de código</h2>
+      <div class="lead reveal r-fade" data-step="2">Una o dos horas hablando con el agente para definir bien las cosas ahorran <strong>decenas de preguntas</strong> durante el desarrollo. El contexto crece junto al producto, no después.</div>
+    </div>
+    <div class="footer">
+      <div class="left"></div>
+      <div>Pedro Anze · Angular Bolivia · <span class="num">09</span></div>
+    </div>
+  </section>
+
+  <!-- 10 · Los documentos -->
+  <section data-label="10 Los documentos" data-steps="4" data-current-step="0">
+    <div class="pad mid">
+      <div class="act-marker"><span class="step-num">1</span><span style="opacity:.4">/4</span></div>
+      <div class="eyebrow reveal r-fade" data-step="1">Qué se funda</div>
+      <h2 class="title tight reveal r-rise" data-step="1" style="--d:80ms">Cuatro documentos y las skills</h2>
+      <div class="card-grid-2">
+        <div class="card reveal r-blur" data-step="1" style="--d:180ms">
+          <div class="card-num">product.md</div>
+          <h3>Qué es y para quién</h3>
+          <p>El problema que resuelve. El vocabulario del dominio, que es lo que evita que el agente invente nombres. Qué está fuera de alcance.</p>
+        </div>
+        <div class="card reveal r-blur" data-step="2">
+          <div class="card-num">agent.md</div>
+          <h3>Cómo trabaja el agente</h3>
+          <p>Qué hace por su cuenta y qué consulta antes. Convenciones de commits y ramas. Qué nunca toca.</p>
+        </div>
+        <div class="card reveal r-blur" data-step="3">
+          <div class="card-num">design.md</div>
+          <h3>Criterios visuales</h3>
+          <p>Librería de UI y por qué. Tokens, tipografía, espaciado. Cuántos pasos máximo tiene un formulario.</p>
+        </div>
+        <div class="card reveal r-blur" data-step="4">
+          <div class="card-num">CLAUDE.md</div>
+          <h3>El índice</h3>
+          <p>Apunta a los otros tres y da el estado actual. Es lo primero que lee el agente, así que va corto.</p>
+        </div>
+      </div>
+    </div>
+    <div class="footer">
+      <div class="left"></div>
+      <div>Pedro Anze · Angular Bolivia · <span class="num">10</span></div>
+    </div>
+  </section>
+
+  <!-- 11 · El principio -->
+  <section data-label="11 El principio" data-steps="1" data-current-step="1">
+    <div class="pad center">
+      <div class="cita">Cada pregunta que un agente te hace dos veces es una decisión que <span class="grad-word">no documentaste</span>.</div>
+    </div>
+    <div class="footer">
+      <div class="left"></div>
+      <div>Pedro Anze · Angular Bolivia · <span class="num">11</span></div>
+    </div>
+  </section>
+
+  <!-- 12 · Caso A: el recorte -->
+  <section data-label="12 El recorte" data-steps="3" data-current-step="0">
+    <div class="pad mid">
+      <div class="act-marker"><span class="step-num">1</span><span style="opacity:.4">/3</span></div>
+      <div class="eyebrow reveal r-fade" data-step="1">Decidir bajo presión · Caso A</div>
+      <h2 class="title tight reveal r-rise" data-step="1" style="--d:80ms">El recorte de alcance</h2>
+      <div class="hechos">
+        <div class="hecho reveal r-left" data-step="1" style="--d:160ms"><span class="n">01</span><span>La visión: registro, sesiones, QR, pagos, mailing, check in</span></div>
+        <div class="hecho rompe reveal r-left" data-step="2"><span class="n">02</span><span>Semana uno entregó una cosa: registro con cuenta de Google</span></div>
+        <div class="hecho reveal r-left" data-step="3"><span class="n">03</span><span>Todo lo demás quedó fuera, con fecha y con razón escrita</span></div>
+      </div>
+    </div>
+    <div class="footer">
+      <div class="left"></div>
+      <div>Pedro Anze · Angular Bolivia · <span class="num">12</span></div>
+    </div>
+  </section>
+
+  <!-- 13 · Caso B: el supuesto -->
+  <section data-label="13 El supuesto" data-steps="3" data-current-step="0">
+    <div class="pad mid">
+      <div class="act-marker"><span class="step-num">1</span><span style="opacity:.4">/3</span></div>
+      <div class="eyebrow reveal r-fade" data-step="1">Decidir bajo presión · Caso B</div>
+      <h2 class="title tight reveal r-rise" data-step="1" style="--d:80ms">El primer ADR fue elegir Angular</h2>
+      <div class="hechos">
+        <div class="hecho reveal r-left" data-step="1" style="--d:160ms"><span class="n">01</span><span>La decisión se apoyaba en un supuesto: que había equipo</span></div>
+        <div class="hecho rompe reveal r-left" data-step="2"><span class="n">02</span><span>El supuesto se cayó</span></div>
+        <div class="hecho reveal r-left" data-step="3"><span class="n">03</span><span>La decisión no era mala con la información de ese momento</span></div>
+      </div>
+    </div>
+    <div class="footer">
+      <div class="left"></div>
+      <div>Pedro Anze · Angular Bolivia · <span class="num">13</span></div>
+    </div>
+  </section>
+
+  <!-- 14 · Las decisiones no caducan -->
+  <section data-label="14 Caducan los supuestos" data-steps="1" data-current-step="1">
+    <div class="pad center">
+      <h1 class="ts-title">Las decisiones no caducan.<br>Caducan sus <span class="grad-word">supuestos</span>.</h1>
+    </div>
+    <div class="footer">
+      <div class="left"></div>
+      <div>Pedro Anze · Angular Bolivia · <span class="num">14</span></div>
+    </div>
+  </section>
+
+  <!-- 15 · El dividendo -->
+  <section data-label="15 El dividendo" data-steps="3" data-current-step="0">
+    <div class="pad mid">
+      <div class="act-marker"><span class="step-num">1</span><span style="opacity:.4">/3</span></div>
+      <div class="eyebrow reveal r-fade" data-step="1">El dividendo</div>
+      <h2 class="title tight reveal r-rise" data-step="1" style="--d:80ms">El back office como evidencia</h2>
+      <div class="hechos">
+        <div class="hecho reveal r-left" data-step="1" style="--d:160ms"><span class="n">01</span><span>Mismo backend, mismo dev, pero el contexto ya existía</span></div>
+        <div class="hecho reveal r-left" data-step="2"><span class="n">02</span><span>Cambiar la librería de UI salió barato: la decisión original estaba escrita</span></div>
+        <div class="hecho reveal r-left" data-step="3"><span class="n">03</span><span>El contexto documentado es un activo transferible, no papeleo</span></div>
+      </div>
+    </div>
+    <div class="footer">
+      <div class="left"></div>
+      <div>Pedro Anze · Angular Bolivia · <span class="num">15</span></div>
+    </div>
+  </section>
+
+  <!-- 16 · Los tres puntos -->
+  <section data-label="16 Tres puntos" data-steps="3" data-current-step="0">
+    <div class="pad mid">
+      <div class="act-marker"><span class="step-num">1</span><span style="opacity:.4">/3</span></div>
+      <div class="eyebrow reveal r-fade" data-step="1">Lo que se llevan</div>
+      <h2 class="title tight reveal r-rise" data-step="1" style="--d:80ms">Tres puntos</h2>
+      <div class="puntos">
+        <div class="punto reveal r-left" data-step="1" style="--d:180ms"><span class="idx">01</span><span class="txt">Fundá el contexto antes del código</span></div>
+        <div class="punto reveal r-left" data-step="2"><span class="idx">02</span><span class="txt">Escribí el supuesto, no solo la decisión</span></div>
+        <div class="punto reveal r-left" data-step="3"><span class="idx">03</span><span class="txt">Cuando el agente pregunta dos veces, falta un documento</span></div>
+      </div>
+    </div>
+    <div class="footer">
+      <div class="left"></div>
+      <div>Pedro Anze · Angular Bolivia · <span class="num">16</span></div>
+    </div>
+  </section>
+
+  <!-- 17 · La acción del lunes -->
+  <section data-label="17 El lunes" data-steps="3" data-current-step="0">
+    <div class="pad mid">
+      <div class="act-marker"><span class="step-num">1</span><span style="opacity:.4">/3</span></div>
+      <div class="eyebrow reveal r-fade" data-step="1">El lunes</div>
+      <h2 class="title tight reveal r-rise" data-step="1" style="--d:80ms">Dos preguntas antes de la próxima línea</h2>
+      <div class="puntos">
+        <div class="punto reveal r-left" data-step="1" style="--d:180ms"><span class="idx">01</span><span class="txt">¿Qué estoy construyendo realmente?</span></div>
+        <div class="punto reveal r-left" data-step="2"><span class="idx">02</span><span class="txt">¿Estoy dentro del loop o afuera?</span></div>
+      </div>
+      <div class="lead reveal r-fade" data-step="3" style="margin-top:56px">Si venís en piloto automático, no es un problema técnico. Es que <strong>dejaste de decidir</strong>.</div>
+    </div>
+    <div class="footer">
+      <div class="left"></div>
+      <div>Pedro Anze · Angular Bolivia · <span class="num">17</span></div>
+    </div>
+  </section>
+
+  <!-- 18 · Kasparov -->
+  <section data-label="18 Kasparov" data-steps="1" data-current-step="1">
+    <div class="pad center">
+      <div class="cita">Las máquinas tienen instrucciones.<br>Nosotros tenemos <span class="grad-word">propósito</span>.</div>
+      <div class="cita-autor">Garry Kasparov · TED 2017</div>
+    </div>
+    <div class="footer">
+      <div class="left"></div>
+      <div>Pedro Anze · Angular Bolivia · <span class="num">18</span></div>
+    </div>
+  </section>
+
+  <!-- 19 · Handoff -->
+  <section class="grad" data-label="19 Handoff" data-steps="1" data-current-step="1">
+    <div class="pad center">
+      <div class="eyebrow">A continuación</div>
+      <h1 class="cover-md">Aldahir</h1>
+      <div class="handoff">Yo les mostré cómo se registran las decisiones. Cómo esas decisiones se vuelven límites reales dentro del código lo ve él en la siguiente charla.</div>
+    </div>
+    <div class="footer">
+      <div class="left"></div>
+      <div>Pedro Anze · Angular Bolivia · <span class="num">19</span></div>
+    </div>
+  </section>
 </deck-stage>
 
 <!-- Viewer chrome: progress bar (top) + fullscreen button (top-right) -->
