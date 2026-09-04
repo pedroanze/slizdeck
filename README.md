@@ -8,6 +8,7 @@ Es una [Agent Skill](https://agentskills.io) — funciona en Claude Code, Gemini
 
 - **Un archivo `.html` autónomo.** Sin build step, sin dependencias de toolchain. Lo abres en cualquier navegador y presentas: canvas 1920×1080, navegación por teclado (←/→/espacio), fullscreen, barra de progreso.
 - **Un PDF fiel**, vía impresión nativa del navegador (`Cmd/Ctrl+P`). El PDF exporta el **estado final** de cada slide: animaciones resueltas, contadores en su cifra real, sin el chrome del reproductor.
+- **Un PPTX editable** (`node scripts/export-pptx.mjs deck.html`), con texto y formas nativas de PowerPoint — no imágenes incrustadas. Se edita en PowerPoint o Google Slides.
 
 ## Cómo funciona
 
@@ -59,7 +60,8 @@ ln -s ~/proyectos/slizdeck ~/.claude/skills/slizdeck
 | `reference/animations.md` | Recetas de animación CSS y sus gotchas. |
 | `reference/icons.md` | Librería de íconos SVG. |
 | `DESIGN.md` · `.impeccable/design.json` | El design system del estilo default, documentado en formato [DESIGN.md](https://github.com/google-labs-code/design.md). |
-| `demo/` | Deck de ejemplo (`pitch-demo.html`) y su PDF exportado. |
+| `scripts/export-pptx.mjs` | Exporta un deck a `.pptx` editable (texto y formas nativas, no imágenes). |
+| `demo/` | Deck de ejemplo (`pitch-demo.html`) con su PDF y PPTX exportados. |
 
 ## Diseño
 

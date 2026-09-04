@@ -1,7 +1,7 @@
 ---
 name: slizdeck
 description: |
-  Genera decks de slides HTML animados a partir de un design system propio — enfocado en pitch decks de startup (minimalista, poco texto, mucha imagen/gráfica), pero también sirve para charlas, demos y recaps de evento. Arquitectura deck-stage 1920×1080 con navegación por teclado, pensado para presentar en vivo. El design system se define de forma guiada (preguntas simples o detectando tokens existentes), nunca requiere que el usuario escriba CSS/JSON a mano. El contenido se construye investigando en internet antes de proponer un wireframe que el usuario aprueba. Salida: archivo HTML autónomo (sin build step) exportable a PDF con impresión nativa del navegador.
+  Genera decks de slides HTML animados a partir de un design system propio — enfocado en pitch decks de startup (minimalista, poco texto, mucha imagen/gráfica), pero también sirve para charlas, demos y recaps de evento. Arquitectura deck-stage 1920×1080 con navegación por teclado, pensado para presentar en vivo. El design system se define de forma guiada (preguntas simples o detectando tokens existentes), nunca requiere que el usuario escriba CSS/JSON a mano. El contenido se construye investigando en internet antes de proponer un wireframe que el usuario aprueba. Salida: archivo HTML autónomo (sin build step), exportable a PDF con impresión nativa del navegador y a PPTX editable (texto y formas nativas de PowerPoint, no imágenes).
 
   DISPARADORES: crea un pitch deck, hazme un deck, presentación para X, slides para X, deck de startup, prepara una presentación, build slides, crea slides.
 license: MIT
@@ -26,6 +26,7 @@ Fork/adaptación de [`claude-slides`](https://github.com/marcogalluccio/claude-s
 | `reference/animations.md` | Catálogo de técnicas de animación (reveal por pasos, dibujo de SVG, popups) y gotchas conocidos — solo para nivel HEAVY. |
 | `reference/icons.md` | Librería de íconos SVG con estilo coherente. |
 | `examples/demo-deck.html` | Deck de ejemplo de 6 slides, referencia end-to-end. |
+| `scripts/export-pptx.mjs` | Exporta un deck HTML a `.pptx` editable (texto y formas nativas). |
 
 ## Cuándo activar esta skill
 
@@ -96,9 +97,34 @@ Una vez aprobado el wireframe, proponer un nivel (NONE/LIGHT/HEAVY, tabla y defa
 
 Abrir el archivo generado en el navegador. El usuario revisa y pide ajustes en conversación normal (*"cambia la slide 3"*, *"elimina la 5"*, *"aplica X a todo el deck"*). Después de cada edit, el usuario recarga el navegador — no hace falta reabrir el archivo.
 
-### 9. Exportar a PDF
+### 9. Exportar
 
-El export a PDF es nativo del navegador: `Cmd/Ctrl+P` → guardar como PDF. El template ya incluye las reglas `@media print` necesarias (tamaño de página = 1920×1080, un salto de página por slide). Si el resultado no tiene suficiente fidelidad visual, evaluar como paso posterior una alternativa vía Playwright (fuera del alcance de la Fase 1 de esta skill).
+El HTML ya es el entregable principal (se presenta en vivo desde el navegador). Además hay dos exports:
+
+**PDF** — impresión nativa del navegador: `Cmd/Ctrl+P` → guardar como PDF. El template ya trae las reglas `@media print` que garantizan el **estado final** de cada slide: reveals visibles, contadores en su cifra real, sin el chrome del reproductor. No hace falta avanzar las animaciones a mano antes de imprimir.
+
+Para generarlo sin abrir el navegador (útil para verificar un cambio):
+
+```bash
+"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" \
+  --headless --disable-gpu --no-pdf-header-footer \
+  --print-to-pdf="deck.pdf" --virtual-time-budget=5000 "file://$PWD/deck.html"
+```
+
+**PPTX editable** — para quien necesite el deck en PowerPoint o Google Slides:
+
+```bash
+node scripts/export-pptx.mjs deck.html deck.pptx
+```
+
+Reconstruye cada slide con cajas de texto y formas nativas (no imágenes), leyendo los design tokens del propio HTML. La primera vez requiere `npm install` en la raíz de la skill.
+
+Advertir al usuario de las tres degradaciones inherentes al formato, que no son fallos del export:
+- **Sin animaciones**: PPTX no reproduce el sistema de reveals; se exporta el estado final.
+- **Fuentes sustituidas**: las fuentes web se mapean a fuentes seguras de Office (serif → Cambria, sans → Calibri) porque una fuente no instalada en la máquina del lector se sustituye sola y rompe el layout.
+- **Gradientes aplanados**: los fondos de cover/cierre se exportan en el color primario sólido.
+
+Si el usuario necesita fidelidad visual exacta, el PDF es el formato correcto; el PPTX es para cuando necesita **editar**.
 
 ### 10. Speaker notes (solo si el usuario las pide)
 
