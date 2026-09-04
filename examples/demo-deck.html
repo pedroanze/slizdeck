@@ -1,0 +1,986 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claude Slides · Demo Deck</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,300;1,400&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+  /* ============================================================
+     CLAUDE SLIDES DESIGN TOKENS
+     ============================================================ */
+  :root {
+    --cs-primary:     #2563EB;
+    --cs-secondary:   #7C3AED;
+    --cs-cream:       #F7F6F2;
+    --cs-cream-2:     #EDECE6;
+    --cs-black:       #000000;
+    --cs-body:        #454545;
+    --cs-muted:       #9BA1A5;
+    --cs-white:       #FFFFFF;
+    --cs-border:      rgba(0,0,0,0.08);
+    --cs-border-strong: rgba(0,0,0,0.16);
+    --cs-grad-radial: radial-gradient(112% 150% at 0% 100%, #2563EB 0%, #7C3AED 100%);
+    --cs-grad-linear: linear-gradient(135deg, #2563EB 0%, #7C3AED 100%);
+    --cs-grad-text:   linear-gradient(135deg, #2563EB 0%, #504EEC 50%, #7C3AED 100%);
+    --cs-font-sans:   'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+    --cs-font-mono:   ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+    --cs-shadow-1:    0 1px 2px rgba(0,0,0,0.04), 0 1px 1px rgba(0,0,0,0.03);
+    --cs-shadow-2:    0 4px 12px rgba(0,0,0,0.06), 0 2px 4px rgba(0,0,0,0.04);
+    --cs-shadow-3:    0 12px 32px rgba(0,0,0,0.08), 0 4px 10px rgba(0,0,0,0.05);
+    --cs-fg-1:        var(--cs-black);
+    --cs-fg-2:        var(--cs-body);
+    --cs-fg-3:        var(--cs-muted);
+    --cs-ease-std:    cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  /* ============================================================
+     BASE
+     ============================================================ */
+  * { box-sizing: border-box; }
+  html, body { background: #0C0C1A; margin: 0; padding: 0; }
+  body {
+    font-family: var(--cs-font-sans);
+    color: var(--cs-fg-2);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* ============================================================
+     SECTION = single slide canvas (1920×1080 default)
+     deck-stage scales the canvas to fit viewport, letterboxed.
+     ============================================================ */
+  deck-stage > section {
+    background: var(--cs-cream);
+    color: var(--cs-fg-2);
+    overflow: hidden;
+    position: relative;
+    transition: opacity 120ms ease;
+  }
+
+  /* Surface helpers */
+  .grad   { background: var(--cs-grad-radial) !important; color: #fff !important; }
+  .cream  { background: var(--cs-cream); color: var(--cs-body); }
+
+  /* Standard frame inside a slide */
+  .pad {
+    padding: 96px 120px 120px;
+    height: 100%;
+    box-sizing: border-box;
+    display: flex; flex-direction: column;
+    justify-content: flex-start;
+    position: relative;
+  }
+  .pad.center { justify-content: center; align-items: center; text-align: center; }
+
+  /* ============================================================
+     TYPOGRAPHY
+     ============================================================ */
+  .eyebrow {
+    font-size: 24px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--cs-primary);
+    margin: 0 0 36px;
+  }
+  .grad .eyebrow { color: rgba(255,255,255,.9); }
+
+  h1.cover {
+    font-size: 168px; line-height: 0.98;
+    letter-spacing: -0.035em;
+    margin: 0; font-weight: 700; color: #fff;
+  }
+  h1.cover-md {
+    font-size: 132px; line-height: 1.0;
+    letter-spacing: -0.03em;
+    margin: 0; font-weight: 700; color: #fff;
+  }
+  h2.title {
+    font-size: 76px; line-height: 1.05;
+    letter-spacing: -0.022em;
+    margin: 0 0 56px;
+    font-weight: 700; color: var(--cs-black);
+  }
+  h2.title.tight { margin-bottom: 40px; }
+
+  .subtitle {
+    font-size: 36px; line-height: 1.4;
+    font-weight: 300;
+    color: rgba(255,255,255,.86);
+    max-width: 1300px;
+    margin-top: 48px;
+  }
+
+  .payoff {
+    font-size: 30px; line-height: 1.4;
+    color: var(--cs-black); font-weight: 600;
+    margin-top: 56px; max-width: 1500px;
+  }
+  .payoff em { font-style: normal; }
+
+  /* Gradient word — wrap a span/em inside any heading */
+  .grad-word {
+    background: var(--cs-grad-text);
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent; color: transparent;
+    font-style: normal;
+  }
+
+  /* Mono helper */
+  .mono { font-family: var(--cs-font-mono); }
+
+  /* Transition slide title (cream + huge centered title) */
+  .ts-title {
+    font-size: 168px; line-height: 0.98;
+    letter-spacing: -0.035em;
+    margin: 0; font-weight: 800; color: var(--cs-black);
+    text-align: center;
+  }
+  .ts-title .grad-word { font-weight: 800; }
+  .ts-tagline {
+    margin-top: 36px;
+    font-size: 36px; line-height: 1.4;
+    font-weight: 300;
+    color: var(--cs-body);
+    text-align: center;
+    max-width: 1300px;
+  }
+
+  /* ============================================================
+     FOOTER (always present on every slide)
+     ============================================================ */
+  .footer {
+    position: absolute;
+    left: 120px; right: 120px; bottom: 48px;
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 24px; letter-spacing: 0.06em;
+    color: var(--cs-muted); font-weight: 500;
+  }
+  .footer img { height: 22px; display: block; }
+  .footer .left { display: flex; align-items: center; gap: 18px; }
+  .footer .num {
+    font-variant-numeric: tabular-nums; font-weight: 600;
+    color: var(--cs-fg-1); opacity: .55;
+  }
+  .grad .footer { color: rgba(255,255,255,.6); }
+  .grad .footer .num { color: #fff; opacity: .8; }
+
+  /* ============================================================
+     COMMON COMPONENTS — baseline only
+     For richer patterns (.pq-card, terminals, mockups, mini-diagrams)
+     copy from components.md. For animation snippets (popup, SVG path
+     drawing, packets) copy from animations.md.
+     ============================================================ */
+
+  .card {
+    background: #fff;
+    border: 1px solid var(--cs-border);
+    border-radius: 26px;
+    padding: 40px 44px;
+    box-shadow: var(--cs-shadow-2);
+  }
+  .card .card-eyebrow {
+    font-size: 24px; letter-spacing: 0.22em;
+    text-transform: uppercase; font-weight: 700;
+    color: var(--cs-muted); margin-bottom: 18px;
+  }
+  .card h3 {
+    font-size: 32px; line-height: 1.15;
+    letter-spacing: -0.01em;
+    color: var(--cs-black); font-weight: 700;
+    margin: 0 0 14px;
+  }
+  .card p {
+    font-size: 24px; line-height: 1.5;
+    color: var(--cs-body); margin: 0;
+  }
+
+  .badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 20px; font-weight: 700;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    padding: 7px 14px; border-radius: 999px;
+  }
+  .badge-primary { background: rgba(37,99,235,0.10); color: var(--cs-primary); }
+  .badge-green  { background: rgba(22, 163, 74, 0.12); color: #15803d; }
+  .badge-red    { background: rgba(220, 38, 38, 0.10); color: #b91c1c; }
+  .badge-orange { background: rgba(217, 119, 6, 0.12); color: #b45309; }
+  .badge-muted  { background: rgba(0,0,0,0.05); color: var(--cs-muted); }
+
+  /* ============================================================
+     ANIMATION SYSTEM — opt-in
+     Add `class="reveal" data-step="N"` to elements you want to
+     reveal at step N. Add `data-steps="N" data-current-step="0"`
+     to the section. The step controller (in <script> below)
+     intercepts ←/→/space and toggles `.is-on` per step.
+
+     For STATIC slides: don't add `.reveal` anywhere. Set
+     `data-steps="1" data-current-step="1"` on the section.
+     ============================================================ */
+
+  .reveal {
+    opacity: 0;
+    transform: translateY(16px);
+    transition:
+      opacity 520ms var(--cs-ease-std),
+      transform 520ms var(--cs-ease-std);
+    transition-delay: var(--d, 0ms);
+  }
+  .reveal.is-on { opacity: 1; transform: none; }
+
+  /* Sweep no-op (legacy markup compatibility — keep div as harmless empty) */
+  .sweep { display: none; }
+
+  /* Act marker — top-right step indicator on multi-step slides */
+  .act-marker {
+    position: absolute;
+    top: 96px; right: 120px;
+    display: flex; align-items: center; gap: 10px;
+    font-family: var(--cs-font-mono);
+    font-size: 24px;
+    color: var(--cs-muted);
+    letter-spacing: 0.08em;
+    z-index: 2;
+  }
+  .grad .act-marker { color: rgba(255,255,255,0.5); }
+  .act-marker .step-num { color: var(--cs-fg-1); font-weight: 700; }
+  .grad .act-marker .step-num { color: #fff; }
+
+  /* Reduced motion — show everything immediately */
+  @media (prefers-reduced-motion: reduce) {
+    .reveal { opacity: 1 !important; transform: none !important; transition: none !important; }
+    *, *::before, *::after { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+  }
+
+  /* ============================================================
+     VIEWER CHROME — fullscreen button + progress bar
+     Outside deck-stage, fixed to viewport.
+     ============================================================ */
+
+  #fs-btn {
+    position: fixed;
+    top: 18px; right: 18px;
+    z-index: 2147483647;
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.2);
+    background: rgba(0,0,0,0.5);
+    color: rgba(255,255,255,0.85);
+    cursor: pointer;
+    display: grid; place-items: center;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    transition: opacity 200ms ease, background 200ms ease, color 200ms ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+  #fs-btn:hover { background: rgba(0,0,0,0.7); color: #fff; }
+  #fs-btn:focus { outline: none; }
+  #fs-btn svg { width: 18px; height: 18px; display: block; }
+  #fs-btn[data-fs="1"] { opacity: 0; pointer-events: none; }
+
+  #progress-bar {
+    position: fixed;
+    top: 0; left: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #2563EB, #7C3AED);
+    width: 0%;
+    transition: width 240ms cubic-bezier(0.22, 1, 0.36, 1);
+    z-index: 2147483646;
+    pointer-events: none;
+  }
+
+
+  /* ============================================================
+     DEMO DECK STYLES (patterns from components.md)
+     ============================================================ */
+
+  /* pq-card-3col — slide 02 */
+  .pq-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; margin-top: 8px; }
+  .pq-card {
+    background: #fff; border: 1px solid var(--cs-border); border-radius: 26px;
+    padding: 44px 46px; box-shadow: var(--cs-shadow-2); min-height: 480px;
+    display: flex; flex-direction: column; justify-content: center;
+  }
+  .pq-card .pq-eyebrow {
+    font-size: 18px; letter-spacing: 0.18em; text-transform: uppercase;
+    font-weight: 700; color: var(--cs-primary); margin-bottom: 20px;
+  }
+  .pq-card h3 {
+    font-size: 44px; font-weight: 800; color: var(--cs-black);
+    margin: 0 0 18px; line-height: 1.0; letter-spacing: -0.025em;
+  }
+  .pq-card .pq-consequence {
+    font-family: var(--cs-font-mono); font-size: 18px; font-weight: 700;
+    color: var(--cs-primary); letter-spacing: 0.06em; text-transform: uppercase;
+    margin: 0 0 22px;
+  }
+  .pq-card p { font-size: 20px; line-height: 1.5; color: var(--cs-body); margin: 0; }
+
+  /* flow-pipeline — slide 03 */
+  .pipeline { display: flex; align-items: center; justify-content: center; gap: 24px; margin-top: 200px; }
+  .pipe-card {
+    background: #fff; border: 1px solid var(--cs-border); border-radius: 18px;
+    padding: 32px 40px; text-align: center; box-shadow: var(--cs-shadow-2); min-width: 240px;
+  }
+  .pipe-eyebrow {
+    font-family: var(--cs-font-mono); font-size: 15px; letter-spacing: 0.18em;
+    text-transform: uppercase; color: var(--cs-muted); margin-bottom: 10px;
+  }
+  .pipe-name { font-size: 26px; font-weight: 700; color: var(--cs-black); letter-spacing: -0.01em; }
+  .pipe-arrow { font-size: 40px; color: var(--cs-muted); flex-shrink: 0; }
+  .pipe-note { margin-top: 110px; text-align: center; font-size: 26px; color: var(--cs-body); }
+
+  /* card-grid-3col-numbered — slide 04 */
+  .num-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; margin-top: 8px; }
+  .num-card {
+    background: #fff; border: 1px solid var(--cs-border); border-radius: 22px;
+    padding: 48px 46px; box-shadow: var(--cs-shadow-2); min-height: 380px;
+    display: flex; flex-direction: column; gap: 14px;
+  }
+  .num-card-num { font-family: var(--cs-font-mono); font-size: 30px; font-weight: 800; color: var(--cs-primary); line-height: 1; }
+  .num-card h3 { font-size: 34px; font-weight: 700; color: var(--cs-black); margin: 0; line-height: 1.15; }
+  .num-card p { font-size: 21px; line-height: 1.5; color: var(--cs-body); margin: 0; }
+
+  /* terminal-dark — slide 05 */
+  .demo-term { max-width: 980px; width: 100%; margin: 90px auto 0; }
+  .term { background: #1a1a2e; border-radius: 14px; overflow: hidden; box-shadow: 0 12px 28px rgba(0,0,0,0.28); }
+  .term .term-bar { background: #2a2a3e; padding: 14px 20px; display: flex; align-items: center; gap: 9px; }
+  .term .term-bar .dot { width: 14px; height: 14px; border-radius: 50%; }
+  .term .term-bar .dot.r { background: #ff5f56; }
+  .term .term-bar .dot.a { background: #ffbd2e; }
+  .term .term-bar .dot.g { background: #27c93f; }
+  .term .term-bar .fn { color: rgba(255,255,255,0.55); font-size: 20px; font-family: var(--cs-font-mono); margin-left: 10px; }
+  .term .term-body { padding: 30px 38px; font-family: var(--cs-font-mono); font-size: 26px; line-height: 1.7; }
+  .term .term-body .mh { color: #8FB8FF; font-weight: 700; }
+  .term .term-body .mp { color: #d4d4d4; }
+  .term .term-body .mi { color: #88c0d0; }
+
+</style>
+</head>
+<body>
+
+<deck-stage width="1920" height="1080">
+
+  <!-- ────────── 01 · Cover ────────── -->
+  <section class="grad" data-label="01 Cover" data-steps="1" data-current-step="1">
+    <div class="pad center">
+      <div class="eyebrow">Demo · Claude Slides</div>
+      <h1 class="cover-md">Build slides with<br>your AI agent</h1>
+      <div class="subtitle">A brief in, a self-contained HTML deck out</div>
+    </div>
+    <div class="footer">
+      <div class="left"></div>
+      <div>Demo · Claude Slides · <span class="num">01</span></div>
+    </div>
+  </section>
+
+  <!-- ────────── 02 · The problem (pq-card-3col, reveal one by one) ────────── -->
+  <section data-label="02 The problem" data-steps="4" data-current-step="0">
+    <div class="sweep"></div>
+    <div class="pad">
+      <div class="act-marker"><span class="step-num">1</span><span style="opacity:.4">/4</span></div>
+      <div class="eyebrow reveal" data-step="1">Why this exists</div>
+      <h2 class="title reveal" data-step="1" style="--d:80ms">The problem with deck tools</h2>
+      <div class="pq-grid-3">
+        <div class="pq-card reveal" data-step="2">
+          <div class="pq-eyebrow">Slide editors</div>
+          <h3>Slow</h3>
+          <div class="pq-consequence">→ Hours of dragging boxes</div>
+          <p>Every deck starts from a blank canvas. Alignment, spacing and styling eat the time you should spend on the story.</p>
+        </div>
+        <div class="pq-card reveal" data-step="3">
+          <div class="pq-eyebrow">Templates</div>
+          <h3>Rigid</h3>
+          <div class="pq-consequence">→ Same deck every time</div>
+          <p>Fixed layouts force your content into someone else's structure. The narrative bends to the template.</p>
+        </div>
+        <div class="pq-card reveal" data-step="4">
+          <div class="pq-eyebrow">AI exporters</div>
+          <h3>Opaque</h3>
+          <div class="pq-consequence">→ No control over output</div>
+          <p>One-shot generation with no wireframe step. You get a file you cannot easily inspect, diff or edit.</p>
+        </div>
+      </div>
+    </div>
+    <div class="footer">
+      <div class="left"></div>
+      <div>Demo · Claude Slides · <span class="num">02</span></div>
+    </div>
+  </section>
+
+  <!-- ────────── 03 · How it works (flow-pipeline) ────────── -->
+  <section data-label="03 How it works" data-steps="2" data-current-step="0">
+    <div class="sweep"></div>
+    <div class="pad">
+      <div class="act-marker"><span class="step-num">1</span><span style="opacity:.4">/2</span></div>
+      <div class="eyebrow reveal" data-step="1">Under the hood</div>
+      <h2 class="title reveal" data-step="1" style="--d:80ms">How it works</h2>
+      <div class="pipeline reveal" data-step="2">
+        <div class="pipe-card">
+          <div class="pipe-eyebrow">Input</div>
+          <div class="pipe-name">Your brief</div>
+        </div>
+        <div class="pipe-arrow">→</div>
+        <div class="pipe-card">
+          <div class="pipe-eyebrow">Boilerplate</div>
+          <div class="pipe-name mono">template.html</div>
+        </div>
+        <div class="pipe-arrow">→</div>
+        <div class="pipe-card">
+          <div class="pipe-eyebrow">Patterns</div>
+          <div class="pipe-name mono">components.md</div>
+        </div>
+        <div class="pipe-arrow">→</div>
+        <div class="pipe-card">
+          <div class="pipe-eyebrow">Output</div>
+          <div class="pipe-name">One HTML file</div>
+        </div>
+      </div>
+      <p class="pipe-note reveal" data-step="2" style="--d:200ms">No build step, no dependencies: open the file and present.</p>
+    </div>
+    <div class="footer">
+      <div class="left"></div>
+      <div>Demo · Claude Slides · <span class="num">03</span></div>
+    </div>
+  </section>
+
+  <!-- ────────── 04 · The workflow (numbered cards 01/02/03) ────────── -->
+  <section data-label="04 The workflow" data-steps="4" data-current-step="0">
+    <div class="sweep"></div>
+    <div class="pad">
+      <div class="act-marker"><span class="step-num">1</span><span style="opacity:.4">/4</span></div>
+      <div class="eyebrow reveal" data-step="1">Three moves</div>
+      <h2 class="title reveal" data-step="1" style="--d:80ms">From brief to deck</h2>
+      <div class="num-grid">
+        <div class="num-card reveal" data-step="2">
+          <div class="num-card-num">01</div>
+          <h3>Brief</h3>
+          <p>Topic, audience, type, duration. One quick round of questions, then the agent proposes a narrative arc.</p>
+        </div>
+        <div class="num-card reveal" data-step="3">
+          <div class="num-card-num">02</div>
+          <h3>Wireframe</h3>
+          <p>One line per slide, ASCII layout for the complex ones. You approve the structure before any code is written.</p>
+        </div>
+        <div class="num-card reveal" data-step="4">
+          <div class="num-card-num">03</div>
+          <h3>Generate</h3>
+          <p>The agent assembles the deck from the pattern catalog, opens it in your browser and iterates with you.</p>
+        </div>
+      </div>
+    </div>
+    <div class="footer">
+      <div class="left"></div>
+      <div>Demo · Claude Slides · <span class="num">04</span></div>
+    </div>
+  </section>
+
+  <!-- ────────── 05 · Plain files (terminal mockup) ────────── -->
+  <section data-label="05 Plain files" data-steps="2" data-current-step="0">
+    <div class="sweep"></div>
+    <div class="pad">
+      <div class="act-marker"><span class="step-num">1</span><span style="opacity:.4">/2</span></div>
+      <div class="eyebrow reveal" data-step="1">Inspectable by design</div>
+      <h2 class="title reveal" data-step="1" style="--d:80ms">Everything is a file you can read</h2>
+      <div class="demo-term reveal" data-step="2">
+        <div class="term">
+          <div class="term-bar">
+            <span class="dot r"></span><span class="dot a"></span><span class="dot g"></span>
+            <span class="fn">wireframe.md</span>
+          </div>
+          <div class="term-body">
+            <div class="mh"># Deck wireframe</div>
+            <div class="mi">- 01 Cover · cover-gradient</div>
+            <div class="mi">- 02 The problem · pq-card-3col</div>
+            <div class="mi">- 03 How it works · flow-pipeline</div>
+            <div class="mi">- 04 The workflow · numbered cards</div>
+            <div class="mp">Approved: generate the deck.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="footer">
+      <div class="left"></div>
+      <div>Demo · Claude Slides · <span class="num">05</span></div>
+    </div>
+  </section>
+
+  <!-- ────────── 06 · Closing ────────── -->
+  <section class="grad" data-label="06 Your turn" data-steps="1" data-current-step="1">
+    <div class="pad center">
+      <div class="eyebrow">Get started</div>
+      <h1 class="cover">Your turn</h1>
+      <div class="subtitle">Clone the repo into your skills folder and ask your agent for a deck</div>
+    </div>
+    <div class="footer">
+      <div class="left"></div>
+      <div>Demo · Claude Slides · <span class="num">06</span></div>
+    </div>
+  </section>
+
+</deck-stage>
+
+<!-- Viewer chrome: progress bar (top) + fullscreen button (top-right) -->
+<div id="progress-bar"></div>
+<button id="fs-btn" type="button" aria-label="Toggle fullscreen" title="Fullscreen">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M3 9V5a2 2 0 0 1 2-2h4M21 9V5a2 2 0 0 0-2-2h-4M21 15v4a2 2 0 0 1-2 2h-4M3 15v4a2 2 0 0 0 2 2h4"/>
+  </svg>
+</button>
+
+<!-- ============================================================
+     <deck-stage> custom element — fixed-aspect canvas with
+     keyboard nav, tap zones, slide overlay, print pagination.
+     Inlined IIFE — no external dependencies.
+     ============================================================ -->
+<script>
+  (() => {
+    const DESIGN_W_DEFAULT = 1920;
+    const DESIGN_H_DEFAULT = 1080;
+    const OVERLAY_HIDE_MS = 1800;
+    const VALIDATE_ATTR = 'no_overflowing_text,no_overlapping_text,slide_sized_text';
+    const pad2 = (n) => String(n).padStart(2, '0');
+
+    const stylesheet = `
+      :host {
+        position: fixed; inset: 0; display: block; background: #000; color: #fff;
+        font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, sans-serif;
+        overflow: hidden;
+      }
+      .stage { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
+      .canvas { position: relative; transform-origin: center center; flex-shrink: 0; background: #fff; will-change: transform; }
+      ::slotted(*) {
+        position: absolute !important; inset: 0 !important;
+        width: 100% !important; height: 100% !important;
+        box-sizing: border-box !important; overflow: hidden;
+        opacity: 0; pointer-events: none; visibility: hidden;
+      }
+      ::slotted([data-deck-active]) { opacity: 1; pointer-events: auto; visibility: visible; }
+      .tapzones { position: fixed; inset: 0; display: flex; z-index: 2147482000; pointer-events: none; }
+      .tapzone { flex: 1; pointer-events: auto; -webkit-tap-highlight-color: transparent; }
+      @media (hover: hover) and (pointer: fine) { .tapzones { display: none; } }
+      .overlay {
+        position: fixed; left: 50%; bottom: 22px;
+        transform: translate(-50%, 6px) scale(0.92); filter: blur(6px);
+        display: flex; align-items: center; gap: 4px; padding: 4px;
+        background: #000; color: #fff; border-radius: 999px;
+        font-size: 12px; font-feature-settings: "tnum" 1; letter-spacing: 0.01em;
+        opacity: 0; pointer-events: none;
+        transition: opacity 260ms ease, transform 260ms cubic-bezier(.2,.8,.2,1), filter 260ms ease;
+        transform-origin: center bottom; z-index: 2147483000; user-select: none;
+      }
+      .overlay[data-visible] { opacity: 1; pointer-events: auto; transform: translate(-50%, 0) scale(1); filter: blur(0); }
+      .btn {
+        appearance: none; background: transparent; border: 0; margin: 0; padding: 0;
+        color: rgba(255,255,255,0.72); font: inherit; cursor: default;
+        display: inline-flex; align-items: center; justify-content: center;
+        height: 28px; min-width: 28px; border-radius: 999px;
+        transition: background 140ms ease, color 140ms ease;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .btn:hover { background: rgba(255,255,255,0.12); color: #fff; }
+      .btn:active { background: rgba(255,255,255,0.18); }
+      .btn:focus, .btn:focus-visible { outline: none; }
+      .btn svg { width: 14px; height: 14px; display: block; }
+      .btn.reset { font-size: 11px; font-weight: 500; padding: 0 10px 0 12px; gap: 6px; }
+      .btn.reset .kbd {
+        display: inline-flex; align-items: center; justify-content: center;
+        min-width: 16px; height: 16px; padding: 0 4px;
+        font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+        font-size: 10px; line-height: 1; color: rgba(255,255,255,0.88);
+        background: rgba(255,255,255,0.12); border-radius: 4px;
+      }
+      .count {
+        font-variant-numeric: tabular-nums; color: #fff; font-weight: 500;
+        padding: 0 8px; min-width: 42px; text-align: center; font-size: 12px;
+      }
+      .count .sep { color: rgba(255,255,255,0.45); margin: 0 3px; font-weight: 400; }
+      .count .total { color: rgba(255,255,255,0.55); }
+      .divider { width: 1px; height: 14px; background: rgba(255,255,255,0.18); margin: 0 2px; }
+      @media print {
+        :host { position: static; inset: auto; background: none; overflow: visible; color: inherit; }
+        .stage { position: static; display: block; }
+        .canvas { transform: none !important; width: auto !important; height: auto !important; background: none; will-change: auto; }
+        ::slotted(*) {
+          position: relative !important; inset: auto !important;
+          width: var(--deck-design-w) !important; height: var(--deck-design-h) !important;
+          box-sizing: border-box !important;
+          opacity: 1 !important; visibility: visible !important; pointer-events: auto;
+          break-after: page; page-break-after: always; break-inside: avoid; overflow: hidden;
+        }
+        ::slotted(*:last-child) { break-after: auto; page-break-after: auto; }
+        .overlay, .tapzones { display: none !important; }
+      }
+    `;
+
+    class DeckStage extends HTMLElement {
+      static get observedAttributes() { return ['width', 'height', 'noscale']; }
+
+      constructor() {
+        super();
+        this._root = this.attachShadow({ mode: 'open' });
+        this._index = 0;
+        this._slides = [];
+        this._notes = [];
+        this._hideTimer = null;
+        this._onKey = this._onKey.bind(this);
+        this._onResize = this._onResize.bind(this);
+        this._onSlotChange = this._onSlotChange.bind(this);
+        this._onMouseMove = this._onMouseMove.bind(this);
+        this._onTapBack = this._onTapBack.bind(this);
+        this._onTapForward = this._onTapForward.bind(this);
+      }
+
+      get designWidth() { return parseInt(this.getAttribute('width'), 10) || DESIGN_W_DEFAULT; }
+      get designHeight() { return parseInt(this.getAttribute('height'), 10) || DESIGN_H_DEFAULT; }
+
+      connectedCallback() {
+        this._render();
+        this._loadNotes();
+        this._syncPrintPageRule();
+        window.addEventListener('keydown', this._onKey);
+        window.addEventListener('resize', this._onResize);
+        window.addEventListener('mousemove', this._onMouseMove, { passive: true });
+      }
+      disconnectedCallback() {
+        window.removeEventListener('keydown', this._onKey);
+        window.removeEventListener('resize', this._onResize);
+        window.removeEventListener('mousemove', this._onMouseMove);
+        if (this._hideTimer) clearTimeout(this._hideTimer);
+      }
+      attributeChangedCallback() {
+        if (this._canvas) {
+          this._canvas.style.width = this.designWidth + 'px';
+          this._canvas.style.height = this.designHeight + 'px';
+          this._canvas.style.setProperty('--deck-design-w', this.designWidth + 'px');
+          this._canvas.style.setProperty('--deck-design-h', this.designHeight + 'px');
+          this._fit();
+          this._syncPrintPageRule();
+        }
+      }
+
+      _render() {
+        const style = document.createElement('style');
+        style.textContent = stylesheet;
+        const stage = document.createElement('div');
+        stage.className = 'stage';
+        const canvas = document.createElement('div');
+        canvas.className = 'canvas';
+        canvas.style.width = this.designWidth + 'px';
+        canvas.style.height = this.designHeight + 'px';
+        canvas.style.setProperty('--deck-design-w', this.designWidth + 'px');
+        canvas.style.setProperty('--deck-design-h', this.designHeight + 'px');
+        const slot = document.createElement('slot');
+        slot.addEventListener('slotchange', this._onSlotChange);
+        canvas.appendChild(slot);
+        stage.appendChild(canvas);
+        const tapzones = document.createElement('div');
+        tapzones.className = 'tapzones export-hidden';
+        tapzones.setAttribute('aria-hidden', 'true');
+        const tzBack = document.createElement('div'); tzBack.className = 'tapzone tapzone--back';
+        const tzMid = document.createElement('div'); tzMid.className = 'tapzone tapzone--mid'; tzMid.style.pointerEvents = 'none';
+        const tzFwd = document.createElement('div'); tzFwd.className = 'tapzone tapzone--fwd';
+        tzBack.addEventListener('click', this._onTapBack);
+        tzFwd.addEventListener('click', this._onTapForward);
+        tapzones.append(tzBack, tzMid, tzFwd);
+        const overlay = document.createElement('div');
+        overlay.className = 'overlay export-hidden';
+        overlay.setAttribute('role', 'toolbar');
+        overlay.setAttribute('aria-label', 'Deck controls');
+        overlay.innerHTML =
+          '<button class="btn prev" type="button" aria-label="Previous slide" title="Previous (←)">' +
+            '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3L5 8l5 5"/></svg>' +
+          '</button>' +
+          '<span class="count" aria-live="polite"><span class="current">1</span><span class="sep">/</span><span class="total">1</span></span>' +
+          '<button class="btn next" type="button" aria-label="Next slide" title="Next (→)">' +
+            '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3l5 5-5 5"/></svg>' +
+          '</button>' +
+          '<span class="divider"></span>' +
+          '<button class="btn reset" type="button" aria-label="Reset to first slide" title="Reset (R)">Reset<span class="kbd">R</span></button>';
+        overlay.querySelector('.prev').addEventListener('click', () => this._go(this._index - 1, 'click'));
+        overlay.querySelector('.next').addEventListener('click', () => this._go(this._index + 1, 'click'));
+        overlay.querySelector('.reset').addEventListener('click', () => this._go(0, 'click'));
+        this._root.append(style, stage, tapzones, overlay);
+        this._canvas = canvas;
+        this._slot = slot;
+        this._overlay = overlay;
+        this._countEl = overlay.querySelector('.current');
+        this._totalEl = overlay.querySelector('.total');
+      }
+
+      _syncPrintPageRule() {
+        const id = 'deck-stage-print-page';
+        let tag = document.getElementById(id);
+        if (!tag) { tag = document.createElement('style'); tag.id = id; document.head.appendChild(tag); }
+        tag.textContent =
+          '@page { size: ' + this.designWidth + 'px ' + this.designHeight + 'px; margin: 0; } ' +
+          '@media print { html, body { margin: 0 !important; padding: 0 !important; background: none !important; overflow: visible !important; height: auto !important; } * { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }';
+      }
+
+      _onSlotChange() {
+        this._collectSlides();
+        this._restoreIndex();
+        this._applyIndex({ showOverlay: false, broadcast: true, reason: 'init' });
+        this._fit();
+      }
+
+      _collectSlides() {
+        const assigned = this._slot.assignedElements({ flatten: true });
+        this._slides = assigned.filter((el) => {
+          const tag = el.tagName;
+          return tag !== 'TEMPLATE' && tag !== 'SCRIPT' && tag !== 'STYLE';
+        });
+        this._slides.forEach((slide, i) => {
+          const n = i + 1;
+          let label = slide.getAttribute('data-label');
+          if (!label) {
+            const existing = slide.getAttribute('data-screen-label');
+            if (existing) label = existing.replace(/^\s*\d+\s*/, '').trim() || existing;
+          }
+          if (!label) {
+            const h = slide.querySelector('h1, h2, h3, [data-title]');
+            if (h) label = (h.textContent || '').trim().slice(0, 40);
+          }
+          if (!label) label = 'Slide';
+          slide.setAttribute('data-screen-label', `${pad2(n)} ${label}`);
+          if (!slide.hasAttribute('data-om-validate')) slide.setAttribute('data-om-validate', VALIDATE_ATTR);
+          slide.setAttribute('data-deck-slide', String(i));
+        });
+        if (this._totalEl) this._totalEl.textContent = String(this._slides.length || 1);
+        if (this._index >= this._slides.length) this._index = Math.max(0, this._slides.length - 1);
+      }
+
+      _loadNotes() {
+        const tag = document.getElementById('speaker-notes');
+        if (!tag) { this._notes = []; return; }
+        try {
+          const parsed = JSON.parse(tag.textContent || '[]');
+          if (Array.isArray(parsed)) this._notes = parsed;
+        } catch (e) { this._notes = []; }
+      }
+
+      _restoreIndex() {
+        const h = (location.hash || '').match(/^#(\d+)$/);
+        if (h) {
+          const n = parseInt(h[1], 10) - 1;
+          if (n >= 0 && n < this._slides.length) this._index = n;
+        }
+      }
+
+      _applyIndex({ showOverlay = true, broadcast = true, reason = 'init' } = {}) {
+        if (!this._slides.length) return;
+        const prev = this._prevIndex == null ? -1 : this._prevIndex;
+        const curr = this._index;
+        try { history.replaceState(null, '', '#' + (curr + 1)); } catch (e) {}
+        this._slides.forEach((s, i) => {
+          if (i === curr) s.setAttribute('data-deck-active', '');
+          else s.removeAttribute('data-deck-active');
+        });
+        if (this._countEl) this._countEl.textContent = String(curr + 1);
+        if (broadcast) {
+          try { window.postMessage({ slideIndexChanged: curr }, '*'); } catch (e) {}
+          this.dispatchEvent(new CustomEvent('slidechange', {
+            detail: {
+              index: curr, previousIndex: prev,
+              total: this._slides.length,
+              slide: this._slides[curr] || null,
+              previousSlide: prev >= 0 ? (this._slides[prev] || null) : null,
+              reason: reason,
+            },
+            bubbles: true, composed: true,
+          }));
+        }
+        this._prevIndex = curr;
+        if (showOverlay) this._flashOverlay();
+      }
+
+      _flashOverlay() {
+        if (!this._overlay) return;
+        this._overlay.setAttribute('data-visible', '');
+        if (this._hideTimer) clearTimeout(this._hideTimer);
+        this._hideTimer = setTimeout(() => { this._overlay.removeAttribute('data-visible'); }, OVERLAY_HIDE_MS);
+      }
+
+      _fit() {
+        if (!this._canvas) return;
+        if (this.hasAttribute('noscale')) { this._canvas.style.transform = 'none'; return; }
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+        const s = Math.min(vw / this.designWidth, vh / this.designHeight);
+        this._canvas.style.transform = `scale(${s})`;
+      }
+
+      _onResize() { this._fit(); }
+      _onMouseMove() { this._flashOverlay(); }
+      _onTapBack(e) { e.preventDefault(); this._go(this._index - 1, 'tap'); }
+      _onTapForward(e) { e.preventDefault(); this._go(this._index + 1, 'tap'); }
+
+      _onKey(e) {
+        const t = e.target;
+        if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
+        if (e.metaKey || e.ctrlKey || e.altKey) return;
+        const key = e.key;
+        let handled = true;
+        if (key === 'ArrowRight' || key === 'PageDown' || key === ' ' || key === 'Spacebar') this._go(this._index + 1, 'keyboard');
+        else if (key === 'ArrowLeft' || key === 'PageUp') this._go(this._index - 1, 'keyboard');
+        else if (key === 'Home') this._go(0, 'keyboard');
+        else if (key === 'End') this._go(this._slides.length - 1, 'keyboard');
+        else if (key === 'r' || key === 'R') this._go(0, 'keyboard');
+        else if (/^[0-9]$/.test(key)) {
+          const n = key === '0' ? 9 : parseInt(key, 10) - 1;
+          if (n < this._slides.length) this._go(n, 'keyboard');
+        } else handled = false;
+        if (handled) { e.preventDefault(); }
+      }
+
+      _go(i, reason = 'api') {
+        if (!this._slides.length) return;
+        const clamped = Math.max(0, Math.min(this._slides.length - 1, i));
+        if (clamped === this._index) { return; }
+        this._index = clamped;
+        this._applyIndex({ showOverlay: false, broadcast: true, reason });
+      }
+
+      get index() { return this._index; }
+      get length() { return this._slides.length; }
+      goTo(i) { this._go(i, 'api'); }
+      next() { this._go(this._index + 1, 'api'); }
+      prev() { this._go(this._index - 1, 'api'); }
+      reset() { this._go(0, 'api'); }
+    }
+
+    if (!customElements.get('deck-stage')) customElements.define('deck-stage', DeckStage);
+  })();
+</script>
+
+<!-- ============================================================
+     Runtime: lucide icons + step controller + viewer chrome
+     ============================================================ -->
+<script>
+  if (window.lucide) lucide.createIcons();
+
+  const stage = document.querySelector('deck-stage');
+
+  /* Mirror data-deck-active → data-active="true" on the section so CSS
+     animations and `.is-on` reveals can scope on it. */
+  function syncActive() {
+    const slides = stage.querySelectorAll(':scope > section');
+    slides.forEach((s) => {
+      if (s.hasAttribute('data-deck-active')) s.setAttribute('data-active', 'true');
+      else s.removeAttribute('data-active');
+    });
+  }
+
+  /* Counter animation — runs when [data-counter] reaches data-target-step.
+     Used by the counter+bars pattern (animations.md). */
+  function runCounter(el) {
+    if (el.dataset.played === '1') return;
+    el.dataset.played = '1';
+    const target = parseInt(el.dataset.counter, 10);
+    const duration = 1400;
+    const unitNode = el.querySelector('.unit');
+    const unitHTML = unitNode ? unitNode.outerHTML : '';
+    const formatVal = (v) => {
+      if (target >= 100000) return (v / 1000).toFixed(0) + 'k';
+      if (target >= 1000)   return (v / 1000).toFixed(1) + 'k';
+      return Math.round(v).toString();
+    };
+    el.innerHTML = formatVal(0) + unitHTML;
+    const start = performance.now();
+    const tick = (now) => {
+      const t = Math.min(1, (now - start) / duration);
+      const eased = 1 - Math.pow(1 - t, 5);
+      el.innerHTML = formatVal(target * eased) + unitHTML;
+      if (t < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }
+
+  function resetCounters(slide) {
+    slide.querySelectorAll('[data-counter]').forEach((el) => {
+      el.dataset.played = '';
+      const unitNode = el.querySelector('.unit');
+      const unitHTML = unitNode ? unitNode.outerHTML : '';
+      el.innerHTML = '0' + unitHTML;
+    });
+  }
+
+  /* Apply current step: every .reveal whose data-step <= current gets .is-on. */
+  function applyStep(slide, step) {
+    slide.dataset.currentStep = String(step);
+    slide.querySelectorAll('.reveal').forEach((el) => {
+      const elStep = parseInt(el.dataset.step || '1', 10);
+      el.classList.toggle('is-on', elStep <= step);
+    });
+    slide.querySelectorAll('[data-counter]').forEach((el) => {
+      const target = parseInt(el.dataset.targetStep || '1', 10);
+      if (target <= step) runCounter(el);
+    });
+    const marker = slide.querySelector('.act-marker .step-num');
+    if (marker) marker.textContent = String(step);
+  }
+
+  /* Reset slide to step 0 (all reveals hidden), then advance to step 1
+     so the first reveal animates in on entry. */
+  function resetAndEnter(slide) {
+    if (!slide) return;
+    slide.querySelectorAll('.reveal').forEach((el) => el.classList.remove('is-on'));
+    resetCounters(slide);
+    slide.dataset.currentStep = '0';
+    requestAnimationFrame(() => requestAnimationFrame(() => applyStep(slide, 1)));
+  }
+
+  /* Capture-phase keydown — runs BEFORE deck-stage's own handler. Advances
+     in-slide steps until exhausted, then lets deck-stage advance the slide. */
+  window.addEventListener('keydown', (e) => {
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    const t = e.target;
+    if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
+    const slide = stage.querySelector(':scope > section[data-deck-active]');
+    if (!slide) return;
+    const total = parseInt(slide.dataset.steps || '1', 10);
+    const current = parseInt(slide.dataset.currentStep || '1', 10);
+    if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+      if (current < total) {
+        applyStep(slide, current + 1);
+        e.preventDefault();
+        e.stopImmediatePropagation();
+      }
+    } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+      if (current > 1) {
+        applyStep(slide, current - 1);
+        e.preventDefault();
+        e.stopImmediatePropagation();
+      }
+    }
+  }, { capture: true });
+
+  /* On slide change: sync data-active, re-enter the new slide, update progress bar */
+  stage.addEventListener('slidechange', (e) => {
+    requestAnimationFrame(() => {
+      syncActive();
+      resetAndEnter(e.detail.slide);
+    });
+    const pct = ((e.detail.index + 1) / e.detail.total) * 100;
+    const bar = document.getElementById('progress-bar');
+    if (bar) bar.style.width = pct + '%';
+  });
+
+  /* Fullscreen button — toggle, hide while fullscreen */
+  const fsBtn = document.getElementById('fs-btn');
+  if (fsBtn) {
+    fsBtn.addEventListener('click', () => {
+      if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(() => {});
+      else document.exitFullscreen();
+    });
+    document.addEventListener('fullscreenchange', () => {
+      if (document.fullscreenElement) fsBtn.setAttribute('data-fs', '1');
+      else fsBtn.removeAttribute('data-fs');
+    });
+  }
+</script>
+
+</body>
+</html>

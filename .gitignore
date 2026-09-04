@@ -1,0 +1,9 @@
+# Artefactos de verificación visual (regenerables con Chrome headless)
+demo/pg-*.png
+demo/slide-*.png
+
+# Dependencias
+node_modules/
+
+# macOS
+.DS_Store
