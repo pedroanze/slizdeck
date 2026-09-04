@@ -1,7 +1,7 @@
 ---
 name: slizdeck
 description: |
-  Genera decks de slides HTML animados a partir de un design system propio — enfocado en pitch decks de startup (minimalista, poco texto, mucha imagen/gráfica), pero también sirve para charlas, demos y recaps de evento. Arquitectura deck-stage 1920×1080 con navegación por teclado, pensado para presentar en vivo. El design system se define de forma guiada (preguntas simples o detectando tokens existentes), nunca requiere que el usuario escriba CSS/JSON a mano. El contenido se construye investigando en internet antes de proponer un wireframe que el usuario aprueba. Salida: archivo HTML autónomo (sin build step), exportable a PDF con impresión nativa del navegador y a PPTX editable (texto y formas nativas de PowerPoint, no imágenes).
+  Genera decks de slides HTML animados a partir de un design system propio — enfocado en pitch decks de startup (minimalista, poco texto, mucha imagen/gráfica), pero también sirve para charlas, demos y recaps de evento. Arquitectura deck-stage 1920×1080 con navegación por teclado, pensado para presentar en vivo. Trae cinco style packs listos (terminal oscuro, blanco puro, color dominante, denso en datos, editorial), cada uno con paleta, tipografía y reglas de composición validadas contra contraste WCAG y clichés visuales de IA. El design system se define de forma guiada —elegir un pack, inyectar los colores de la marca del usuario, o generar una paleta a medida— y nunca requiere que el usuario escriba CSS/JSON a mano. El contenido se construye investigando en internet antes de proponer un wireframe que el usuario aprueba. Salida: archivo HTML autónomo (sin build step), exportable a PDF con impresión nativa del navegador y a PPTX editable (texto y formas nativas de PowerPoint, no imágenes).
 
   DISPARADORES: crea un pitch deck, hazme un deck, presentación para X, slides para X, deck de startup, prepara una presentación, build slides, crea slides.
 license: MIT
@@ -26,6 +26,10 @@ Fork/adaptación de [`claude-slides`](https://github.com/marcogalluccio/claude-s
 | `reference/animations.md` | Catálogo de técnicas de animación (reveal por pasos, dibujo de SVG, popups) y gotchas conocidos — solo para nivel HEAVY. |
 | `reference/icons.md` | Librería de íconos SVG con estilo coherente. |
 | `examples/demo-deck.html` | Deck de ejemplo de 6 slides, referencia end-to-end. |
+| `styles/index.md` | Catálogo de style packs. **Lo único que hay que leer para elegir estilo.** |
+| `styles/<pack>.md` | Un mundo visual completo: tokens, tipografía y reglas de composición. |
+| `scripts/apply-style-pack.mjs` | Aplica un pack a un deck fusionando tokens (no reemplaza el `:root`). |
+| `scripts/check-style-pack.mjs` | Valida contrastes, distinción primario/acento y clichés de IA. |
 | `scripts/export-pptx.mjs` | Exporta un deck HTML a `.pptx` editable (texto y formas nativas). |
 
 ## Cuándo activar esta skill
@@ -40,20 +44,35 @@ Este flujo es multi-turno: una vez cargado el contenido de esta skill, sigue vig
 
 Al reconocer el disparador: *"Te armo el deck. Antes, defino tu design system y el brief."*
 
-### 2. Design system
+### 2. Estilo y design system
 
-Buscar `design-tokens.json` en el directorio de trabajo actual.
+Tres caminos, en este orden. El objetivo es que el usuario nunca escriba CSS ni JSON a mano.
 
-- **Si existe**: leerlo y usarlo directamente (validar contra `reference/design-tokens-schema.md`).
-- **Si el usuario menciona un design system existente** (tokens de su sitio, guía de marca, CSS de otro proyecto): leerlo y traducirlo al esquema.
-- **Si no hay nada**: hacer como máximo 3 preguntas simples, en un solo mensaje:
-  1. Color de marca (un hex, o una descripción como "verde esmeralda" — o "elige tú").
-  2. Tipografía preferida, o "elige tú".
-  3. El "vibe" del deck en una frase (ej. "minimalista y serio", "bold y energético", "oscuro y tech").
+**a) El usuario ya tiene design system.** Buscar `design-tokens.json` en el directorio actual, o leer los tokens que el usuario señale (CSS de su sitio, guía de marca, variables de otro proyecto). Sus colores mandan. Aun así hay que elegir un pack de `styles/index.md`, porque el pack aporta lo que un archivo de tokens casi nunca trae: tipografía, composición y reglas de uso del color. Aplicar el pack y después sobreescribir sus colores con los de la marca:
 
-  Con esas respuestas, generar automáticamente `design-tokens.json` completo (paleta, tipografía, radios, spacing) siguiendo la lógica de derivación de colores en `reference/design-tokens-schema.md`. El usuario nunca tiene que escribir JSON/CSS a mano; puede pedir ajustes después ("más oscuro", "cambia el acento a coral") y se regenera el archivo.
+```bash
+node scripts/apply-style-pack.mjs styles/<pack>.md deck.html
+node scripts/check-style-pack.mjs deck.html    # confirmar que la marca no rompe contrastes
+```
 
-Guardar `design-tokens.json` en el directorio del proyecto (no dentro de la skill) para poder reutilizarlo en futuros decks del mismo usuario/marca.
+Si al inyectar los colores de marca el validador falla, **decirlo y proponer el ajuste mínimo** (normalmente oscurecer el texto atenuado o separar acento de primario), nunca entregar un deck que no pasa.
+
+**b) El usuario no tiene design system.** Mostrar la tabla de `styles/index.md` —solo esa tabla, son cinco líneas— y pedirle que elija. Si no elige, `paper-white`. Preguntar si tiene un color de marca para inyectar; si no lo tiene, el pack se usa tal cual.
+
+**c) El usuario no tiene nada y quiere algo hecho a medida.** Generar una semilla con la skill de diseño `impeccable`:
+
+```bash
+node ~/.claude/skills/impeccable/scripts/palette.mjs --from "<tema del deck>"
+```
+
+Devuelve un color ancla en OKLCH y el mood que evoca. Componer los cinco roles (fondo, superficie, ink, acento, atenuado) siguiendo las reglas que el propio script imprime, tomando como base el pack cuya estructura mejor calce, y validar con `check-style-pack.mjs`. Presentar el resultado como propuesta, no como hecho consumado.
+
+**Reglas que no se negocian, vengan los colores de donde vengan:**
+- El fondo es blanco puro o casi negro salvo que el mood sea explícitamente ambiental (un panel de instrumentos, una pantalla de terminal). Un fondo crema "porque se ve cálido" es el cliché que hay que evitar: la calidez va en los colores de marca y en la tipografía, no en la superficie.
+- Nunca usar Inter, Roboto, Fraunces, Newsreader, IBM Plex, Space Grotesk, Geist, DM Sans, Plus Jakarta Sans ni Instrument Sans salvo que el usuario las pida por nombre. Están en la lista de fuentes que delatan una interfaz generada por IA.
+- El deck no se da por terminado hasta que `check-style-pack.mjs` pasa sin fallos.
+
+Guardar `design-tokens.json` en el directorio del proyecto (no dentro de la skill) para reutilizarlo en futuros decks de la misma marca.
 
 ### 3. Brief + research
 
@@ -156,6 +175,8 @@ Generar `[nombre-deck]-notes.md`: un bloque `## Slide NN — Título` por slide,
 - [ ] Nivel de animación coherente con el tamaño del deck (nunca HEAVY en >18 slides)
 - [ ] Cada slide tiene un elemento visual, no es solo texto/bullets
 - [ ] Un color domina cada slide, el acento se usa con cuentagotas (ver `reference/design-guidelines.md`)
+- [ ] `node scripts/check-style-pack.mjs <deck>.html` pasa sin fallos
+- [ ] Las notas de composición del pack elegido se aplicaron (no solo su paleta)
 - [ ] HTML balanceado: `<section>` y `<div>` abiertos = cerrados
 
 ## Notas finales

@@ -60,12 +60,31 @@ ln -s ~/proyectos/slizdeck ~/.claude/skills/slizdeck
 | `reference/animations.md` | Recetas de animación CSS y sus gotchas. |
 | `reference/icons.md` | Librería de íconos SVG. |
 | `DESIGN.md` · `.impeccable/design.json` | El design system del estilo default, documentado en formato [DESIGN.md](https://github.com/google-labs-code/design.md). |
+| `styles/` | Cinco style packs (terminal, paper-white, committed, instrument, editorial) + su índice. |
+| `scripts/apply-style-pack.mjs` | Aplica un pack a un deck fusionando tokens. |
+| `scripts/check-style-pack.mjs` | Valida contrastes y avisa de clichés visuales de IA. |
 | `scripts/export-pptx.mjs` | Exporta un deck a `.pptx` editable (texto y formas nativas, no imágenes). |
 | `demo/` | Deck de ejemplo (`pitch-demo.html`) con su PDF y PPTX exportados. |
 
 ## Diseño
 
-El estilo default no es un placeholder: está calibrado para **no parecer generado por IA**. Nada de la paleta azul/violeta con gradiente ni de las tipografías sobreusadas (Inter, Roboto, Geist, Space Grotesk) que delatan una UI generada. En su lugar: verde azulado + azul marino + un ámbar quemado como acento, con Newsreader (serif editorial) sobre IBM Plex Sans.
+Slizdeck trae **cinco style packs**, cada uno un mundo visual completo (paleta, tipografía y reglas de composición), derivados del entorno visual real de la audiencia — documentación técnica, terminales, paneles de datos, prensa — y no de "minimalista" en abstracto:
+
+| Pack | Para qué |
+|---|---|
+| `terminal` | Infra, AI, demos técnicas. Sala oscura con proyector. |
+| `paper-white` | Cuando el contenido y las cifras deben cargar todo el peso. |
+| `committed` | El pitch que necesita recordarse. Keynotes, lanzamientos. |
+| `instrument` | Decks densos en métricas: tracción, unit economics. |
+| `editorial` | Charlas con tesis, donde el texto respira. |
+
+Ninguno usa las tipografías ni las combinaciones de color que delatan una interfaz generada por IA, y todos pasan un validador de contrastes:
+
+```bash
+node scripts/check-style-pack.mjs styles/terminal.md
+```
+
+Comprueba los contrastes WCAG, que primario y acento sean distinguibles entre sí, y avisa si la paleta cae en una zona atractora conocida o si la tipografía está en la lista de *training-data defaults*. Sirve igual para un pack propio armado con los colores de tu marca.
 
 Las reglas están en `reference/design-guidelines.md` y son verificables mecánicamente con el detector de [impeccable](https://github.com/pbakaus/impeccable):
 

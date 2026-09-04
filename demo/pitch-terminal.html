@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Claude Slides · [DECK NAME]</title>
-<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<title>Mesa · Terminal pack</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/lucide@latest"></script>
 <style>
   /* ============================================================
@@ -12,31 +12,31 @@
      ============================================================ */
   :root {
     /* --- Colores: primario/secundario dominan, acento se usa con cuentagotas --- */
-    --cs-primary:     #0E7C66;
-    --cs-secondary:   #1E3A5F;
-    --cs-accent:      #AD5407;
-    --cs-cream:       #F7F6F2;
-    --cs-cream-2:     #EDECE6;
-    --cs-black:       #000000;
-    --cs-body:        #454545;
-    --cs-muted:       #65696F;
+    --cs-primary:     #E8A33D;
+    --cs-secondary:   #3D4A52;
+    --cs-accent:      #E8433A;
+    --cs-cream:       #0B0D0E;
+    --cs-cream-2:     #141719;
+    --cs-black:       #FFFFFF;
+    --cs-body:        #C9D1D5;
+    --cs-muted:       #8A9296;
     --cs-white:       #FFFFFF;
     /* Superficie de cards/paneles y fondo del letterbox. Separados de
        --cs-white/--cs-black para que un style pack oscuro pueda invertirlos
        sin tocar el resto del sistema. */
-    --cs-surface:     #FFFFFF;
-    --cs-void:        #0C0C1A;
-    --cs-border:      rgba(0,0,0,0.08);
-    --cs-border-strong: rgba(0,0,0,0.16);
-    --cs-scrim:       rgba(0,0,0,0.05);
-    --cs-grad-radial: radial-gradient(112% 150% at 0% 100%, #0E7C66 0%, #1E3A5F 100%);
-    --cs-grad-linear: linear-gradient(135deg, #0E7C66 0%, #1E3A5F 100%);
-    --cs-grad-text:   linear-gradient(135deg, #0E7C66 0%, #146E63 50%, #1E3A5F 100%);
+    --cs-surface:     #16191B;
+    --cs-void:        #000000;
+    --cs-border:      rgba(255,255,255,0.10);
+    --cs-border-strong: rgba(255,255,255,0.20);
+    --cs-scrim:       rgba(255,255,255,0.06);
+    --cs-grad-radial: radial-gradient(112% 150% at 0% 100%, #16191B 0%, #0B0D0E 100%);
+    --cs-grad-linear: linear-gradient(135deg, #E8A33D 0%, #E8433A 100%);
+    --cs-grad-text:   linear-gradient(135deg, #E8A33D 0%, #E8763B 50%, #E8433A 100%);
 
     /* --- Tipografía: heading serif con carácter editorial, body sans funcional --- */
-    --cs-font-sans:   'IBM Plex Sans', ui-sans-serif, system-ui, -apple-system, sans-serif;
-    --cs-font-heading: 'Newsreader', Georgia, 'Times New Roman', serif;
-    --cs-font-mono:   ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+    --cs-font-sans:   'Archivo', ui-sans-serif, system-ui, sans-serif;
+    --cs-font-heading: 'Archivo', ui-sans-serif, system-ui, sans-serif;
+    --cs-font-mono:   'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
 
     /* --- Radios: escala corta, todo el sistema de componentes usa estos 3 --- */
     --cs-radius-sm:   12px;
@@ -339,10 +339,62 @@
   }
 
   /* ============================================================
-     INSERT SLIDE-SPECIFIC CSS BELOW
-     Copy snippets from components.md (layouts: .pq-card, terminal,
-     mockups, etc.) or animations.md (popup, SVG paths, packets) here.
+     SLIDE-SPECIFIC CSS
      ============================================================ */
+
+  /* Grid de 3 cards numeradas */
+  .card-grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 32px;
+    margin-top: 8px;
+  }
+  .card-grid-3 .card { display: flex; flex-direction: column; }
+  .card-num {
+    font-family: var(--cs-font-mono);
+    font-size: 22px; font-weight: 700;
+    color: var(--cs-primary);
+    letter-spacing: 0.1em;
+    margin-bottom: 20px;
+  }
+
+  /* Dato grande: la cifra es el contenido visual de la slide */
+  .stat-split {
+    display: grid;
+    grid-template-columns: 0.9fr 1.1fr;
+    gap: 80px;
+    align-items: center;
+    margin-top: 24px;
+  }
+  .stat-figure {
+    font-family: var(--cs-font-heading);
+    font-size: 240px; line-height: 0.9;
+    font-weight: 600;
+    letter-spacing: -0.04em;
+    color: var(--cs-accent);
+    font-variant-numeric: tabular-nums;
+  }
+  .stat-figure .unit { font-size: 120px; }
+  .stat-caption {
+    font-size: 34px; line-height: 1.45;
+    color: var(--cs-body);
+    max-width: 760px;
+  }
+  .stat-source {
+    margin-top: 28px;
+    font-size: 20px; letter-spacing: 0.02em;
+    font-weight: 500;
+    color: var(--cs-muted);
+  }
+
+  /* Slide de cierre: una sola frase, alto contraste */
+  .ask-line {
+    font-size: 44px; line-height: 1.45;
+    font-weight: 300;
+    color: rgba(255,255,255,.92);
+    max-width: 1280px;
+    margin-top: 40px;
+  }
 
 </style>
 </head>
@@ -367,51 +419,93 @@
        - icons.md       → SVG icons library
        ============================================================ -->
 
-  <!-- ────────── EXAMPLE 1: Cover slide (gradient, static) ────────── -->
+  <!-- SLIDE 01 · Cover · grad-cover (estática) -->
   <section class="grad" data-label="01 Cover" data-steps="1" data-current-step="1">
     <div class="pad center">
-      <div class="eyebrow">Workshop · DATE · ORG</div>
-      <h1 class="cover">Deck Title Here</h1>
-      <div class="subtitle">Optional subtitle that explains in one sentence what this is about</div>
+      <div class="eyebrow">Pitch deck · Ronda seed</div>
+      <h1 class="cover">Mesa</h1>
+      <div class="subtitle">Inventario en tiempo real para restaurantes independientes</div>
     </div>
     <div class="footer">
-      <div class="left">
-        <!-- Optional logo -->
-        <!-- <img src="assets/logos/logo-white.png" alt="Logo"> -->
-      </div>
-      <div>Speaker · Org · <span class="num">01</span></div>
+      <div class="left"></div>
+      <div>Mesa · <span class="num">01</span></div>
     </div>
   </section>
 
-  <!-- ────────── EXAMPLE 2: Content slide (cream, multi-step animated) ────────── -->
-  <section data-label="02 Content example" data-steps="2" data-current-step="0">
-    <div class="sweep"></div>
+  <!-- SLIDE 02 · El problema · stat-split (2 pasos) -->
+  <section data-label="02 El problema" data-steps="2" data-current-step="0">
     <div class="pad">
       <div class="act-marker"><span class="step-num">1</span><span style="opacity:.4">/2</span></div>
-      <div class="eyebrow reveal" data-step="1">Section eyebrow</div>
-      <h2 class="title reveal" data-step="1" style="--d:80ms">Slide title goes here</h2>
+      <div class="eyebrow reveal" data-step="1">El problema</div>
+      <h2 class="title tight reveal" data-step="1" style="--d:80ms">Se tira comida que nadie contó</h2>
 
-      <div class="card reveal" data-step="2">
-        <div class="card-eyebrow">CARD EYEBROW</div>
-        <h3>Card heading</h3>
-        <p>Card body. Replace this with real content. For richer card patterns (consequence cards, mockups, terminals), see components.md.</p>
+      <div class="stat-split">
+        <div class="stat-figure reveal" data-step="2" data-counter="23" data-target-step="2">0<span class="unit">%</span></div>
+        <div class="reveal" data-step="2" style="--d:140ms">
+          <div class="stat-caption">Del inventario de un restaurante independiente se pierde antes de llegar al plato. No por robo: por falta de visibilidad diaria de lo que ya está en la cocina.</div>
+          <div class="stat-source">Dato de ejemplo · reemplazar con research real</div>
+        </div>
       </div>
     </div>
     <div class="footer">
       <div class="left"></div>
-      <div>Speaker · Org · <span class="num">02</span></div>
+      <div>Mesa · <span class="num">02</span></div>
     </div>
   </section>
 
-  <!-- ────────── EXAMPLE 3: Transition slide (cream, big centered, static) ────────── -->
-  <section data-label="03 Transition example" data-steps="1" data-current-step="1">
+  <!-- SLIDE 03 · La solución · transición (estática) -->
+  <section data-label="03 La solucion" data-steps="1" data-current-step="1">
     <div class="pad center">
-      <h1 class="ts-title">The <span class="grad-word">shift</span></h1>
-      <div class="ts-tagline">Optional subtitle below the big title</div>
+      <h1 class="ts-title">Contar <span class="grad-word">sin contar</span></h1>
+      <div class="ts-tagline">Una foto al cierre. El inventario se actualiza solo.</div>
     </div>
     <div class="footer">
       <div class="left"></div>
-      <div>Speaker · Org · <span class="num">03</span></div>
+      <div>Mesa · <span class="num">03</span></div>
+    </div>
+  </section>
+
+  <!-- SLIDE 04 · Cómo funciona · card-grid-3 (3 pasos) -->
+  <section data-label="04 Como funciona" data-steps="3" data-current-step="0">
+    <div class="pad">
+      <div class="act-marker"><span class="step-num">1</span><span style="opacity:.4">/3</span></div>
+      <div class="eyebrow reveal" data-step="1">Cómo funciona</div>
+      <h2 class="title tight reveal" data-step="1" style="--d:80ms">Tres pasos, cero capacitación</h2>
+
+      <div class="card-grid-3">
+        <div class="card reveal" data-step="1" style="--d:160ms">
+          <div class="card-num">01</div>
+          <h3>Foto al cierre</h3>
+          <p>El encargado fotografía la cámara de frío desde el celular. Sin formularios, sin planilla.</p>
+        </div>
+        <div class="card reveal" data-step="2">
+          <div class="card-num">02</div>
+          <h3>Conteo automático</h3>
+          <p>El modelo identifica y cuantifica lo que hay. El stock del día queda registrado en segundos.</p>
+        </div>
+        <div class="card reveal" data-step="3">
+          <div class="card-num">03</div>
+          <h3>Alerta antes de perder</h3>
+          <p>Cuando un insumo se acerca a su vida útil, avisa qué usar primero y en qué platos.</p>
+        </div>
+      </div>
+    </div>
+    <div class="footer">
+      <div class="left"></div>
+      <div>Mesa · <span class="num">04</span></div>
+    </div>
+  </section>
+
+  <!-- SLIDE 05 · El ask · grad-cover (estática) -->
+  <section class="grad" data-label="05 El ask" data-steps="1" data-current-step="1">
+    <div class="pad center">
+      <div class="eyebrow">Lo que buscamos</div>
+      <h1 class="cover-md">Levantamos $1.2M</h1>
+      <div class="ask-line">18 meses de pista para llegar a 500 restaurantes activos y cerrar la integración con los tres POS más usados de la región.</div>
+    </div>
+    <div class="footer">
+      <div class="left"></div>
+      <div>Mesa · <span class="num">05</span></div>
     </div>
   </section>
 

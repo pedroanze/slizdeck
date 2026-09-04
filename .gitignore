@@ -7,3 +7,4 @@ node_modules/
 
 # macOS
 .DS_Store
+demo/t-*.png
