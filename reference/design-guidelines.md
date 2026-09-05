@@ -55,7 +55,7 @@ Estas dos reglas están verificadas con la skill `impeccable` (`node ~/.claude/s
 | 80-120 caracteres | `.ts-title-sm` (64px) | 2-3 |
 | > 120 caracteres | — | No usar este patrón: acortar la frase o pasarla a una slide de contenido con cuerpo de texto (`h2.title` + `<p>`), nunca forzarla en `.ts-title` a cualquier tamaño. |
 
-Un separador de sección (`class="grad"` opcional, o `class="divider"` sobre `--cs-cream`) usa el mismo criterio de tamaño, pero además lleva `.divider-num` con el número de la parte en grande y tenue de fondo (ver `template.html`) — nunca el mismo layout plano que una frase sola de contenido. Son narrativamente distintos (uno marca un capítulo, el otro remata una idea) y deben distinguirse a simple vista, no solo por el texto del eyebrow.
+Un separador de sección usa el mismo tamaño de `.ts-title` que una frase sola, pero sobre `class="grad"` (el mismo fondo invertido de cover/cierre) en vez de `--cs-cream` — la diferenciación es el fondo, no el texto. Un número de capítulo grande y tenue de fondo se probó primero y se descartó: a los tamaños de `.ts-title` los dígitos chocan visualmente contra las letras del título. `.grad .ts-title` y `.grad .ts-tagline` pasan a blanco automáticamente (ver `template.html`), igual que ya hace `.eyebrow`. Son narrativamente distintos de una frase sola de contenido (uno marca un capítulo, el otro remata una idea) y deben distinguirse a simple vista.
 
 ## Énfasis dentro del texto
 

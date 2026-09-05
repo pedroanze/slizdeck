@@ -238,19 +238,13 @@
   .hl { font-weight: 700; color: var(--cs-primary); }
   .hl-accent { font-weight: 700; color: var(--cs-accent); }
 
-  /* Separador de seccion: mismo layout centrado que .ts-title, pero con el
-     numero de la parte en grande y tenue detras, para que no se confunda
-     con una slide de frase sola de contenido. */
-  .divider { position: relative; }
-  .divider .divider-num {
-    font-family: var(--cs-font-mono);
-    font-size: 320px; line-height: 1; font-weight: 500;
-    color: var(--cs-border-strong);
-    position: absolute; top: 50%; left: 50%;
-    transform: translate(-50%, -52%);
-    z-index: 0; user-select: none; pointer-events: none;
-  }
-  .divider .pad.center { position: relative; z-index: 1; }
+  /* Separador de seccion: mismo .ts-title/.ts-tagline centrado, pero sobre
+     class="grad" (el mismo fondo invertido que cover/cierre) en vez de
+     --cs-cream. La diferenciacion es el fondo, no un numero de fondo
+     (probado: un "01" gigante detras del titulo choca contra las letras
+     a estos tamanos). .ts-title/.ts-tagline son negro por default; sobre
+     .grad necesitan pasar a blanco, igual que ya hace .eyebrow arriba. */
+  .grad .ts-title, .grad .ts-tagline { color: #fff; }
 
   /* ============================================================
      FOOTER (always present on every slide)
@@ -335,8 +329,6 @@
     transition-delay: var(--d, 0ms);
     will-change: opacity, transform;
   }
-  .reveal.is-on { opacity: 1; transform: none; filter: none; }
-
   /* ── Variantes de entrada ──────────────────────────────────────────
      Se combinan con .reveal: class="reveal r-rise". Un deck que revela
      todo con el mismo fade-up se siente mecanico; variar la entrada
@@ -360,6 +352,17 @@
   .reveal.r-wipe.is-on { clip-path: inset(0 0 0 0); }
   .reveal.r-mask  { opacity: 1; clip-path: inset(0 0 110% 0); transform: none; }
   .reveal.r-mask.is-on { clip-path: inset(-20% 0 -20% 0); }
+
+  /* .reveal.is-on tiene que ganar la cascada sobre CUALQUIER variante
+     r-rise/r-scale/r-blur/r-left de arriba: misma especificidad (dos
+     clases), asi que el orden de aparicion decide, y por eso esta regla
+     va deliberadamente DESPUES de todas ellas. Declarada antes (como
+     estaba originalmente), el elemento revelado se quedaba con el
+     transform de su animacion aplicado para siempre en la vista en vivo
+     — se notaba como texto corrido a la izquierda en cualquier .r-left
+     ya revelado. El @media print de mas abajo lo tapaba con !important,
+     por eso el PDF salia bien pero la vista en vivo no. */
+  .reveal.is-on { opacity: 1; transform: none; filter: none; }
 
   /* Escalonado automatico: en un contenedor con .stagger, cada hijo
      .reveal del mismo paso entra 90ms despues del anterior, sin tener

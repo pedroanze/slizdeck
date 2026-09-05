@@ -6,6 +6,14 @@ Copiar el CSS al bloque de la slide y el HTML dentro del `.pad`.
 
 **Soporte en export a PPTX** (`scripts/export-pptx.mjs`): imagen a sangre/split y fila de métricas se reconocen y se exportan como texto/formas nativas. Barras comparativas y progreso/proporción **todavía no** — su contenido no aparece en el `.pptx` si se usan. Si el deck necesita export fiel a PowerPoint, preferir la fila de métricas sobre las barras para mostrar comparaciones.
 
+**Un filtro CSS decorativo (`grayscale`, `sepia`, etc.) en una imagen nunca va en el mismo elemento que lleva `.reveal`.** El pipeline de impresión resetea `filter: none !important` sobre cualquier `.reveal` para quitar el `blur(14px)` de la animación al finalizar (ver `template.html` → `@media print`) — y como es el mismo shorthand, se lleva puesto cualquier otro filtro que el elemento tuviera, incluido uno que nada tenga que ver con la animación. Si una imagen necesita `.reveal` (para que aparezca en su paso) y además un filtro permanente, separarlos en dos elementos: el filtro va en el `<img>`, `.reveal`/`.r-blur` va en un `<div>` que lo envuelve.
+
+```html
+<div class="reveal r-blur" data-step="2" style="width:100%">
+  <img src="assets/img/foto.jpg" alt="..." style="filter:grayscale(1);display:block;width:100%">
+</div>
+```
+
 ---
 
 ## Cuándo pedirle imágenes al usuario

@@ -132,10 +132,16 @@ function extractSlide(section) {
   push('subtitle', clean(section.querySelector('.ts-tagline')));
   push('payoff', clean(section.querySelector('.payoff')));
 
-  // Imagen de un patron .split/.bleed (reference/media-and-data.md): no se
-  // embebe el archivo (principio "cero imagenes" del export, ppt/media/
-  // queda vacio), se deja una forma placeholder con el alt como etiqueta.
-  const img = section.querySelector('.split img, .bleed img');
+  // Imagen suelta en la slide (patron .split/.bleed, o un <img> de ancho
+  // completo fuera de cualquier contenedor con clase): no se embebe el
+  // archivo (principio "cero imagenes" del export, ppt/media/ queda
+  // vacio), se deja una forma placeholder con el alt como etiqueta. No
+  // acotar el selector a .split/.bleed — cualquier <img> que no dependa de
+  // esas clases especificas (ej. una imagen de ancho completo sola en
+  // .pad) se perdia en silencio antes de este fix.
+  const img = [...section.querySelectorAll('img')].find(
+    (el) => !hasAncestorClass(el, 'card') && !hasAncestorClass(el, 'footer'),
+  );
   if (img) push('image', img.getAttribute('alt') || 'Imagen');
 
   const counter = section.querySelector('[data-counter]');
