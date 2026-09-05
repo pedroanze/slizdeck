@@ -1,73 +1,70 @@
 ---
-name: Slizdeck — Sistema neutro default
-description: Sistema visual base de slizdeck para pitch decks de startup — confiado, contenido, un color domina y el acento se usa con cuentagotas.
+name: Slizdeck
+description: Sistema visual de slizdeck. Lo invariante vive aquí; la paleta y la tipografía las aporta el style pack elegido.
 colors:
-  founders-teal: "#0E7C66"
-  founders-teal-mid: "#146E63"
-  boardroom-navy: "#1E3A5F"
-  signal-ember: "#AD5407"
-  paper-cream: "#F7F6F2"
-  paper-cream-deep: "#EDECE6"
-  ink-black: "#000000"
-  ink-body: "#454545"
-  ink-muted: "#65696F"
-  surface-white: "#FFFFFF"
-  stage-void: "#0C0C1A"
+  ink-strong: "#0A0B0C"
+  ink-body: "#3A4046"
+  ink-muted: "#6B7278"
+  bg: "#FFFFFF"
+  surface: "#FAFBFB"
+  primary: "#16181A"
+  accent: "#E23D1E"
+  stage-void: "#0A0B0C"
   status-green: "#15803D"
   status-red: "#B91C1C"
   status-orange: "#B45309"
 typography:
   display:
-    fontFamily: "'Newsreader', Georgia, 'Times New Roman', serif"
+    fontFamily: "'Schibsted Grotesk', ui-sans-serif, system-ui, sans-serif"
     fontSize: "168px"
-    fontWeight: 600
+    fontWeight: 700
     lineHeight: 0.98
     letterSpacing: "-0.02em"
+  display-md:
+    fontFamily: "'Schibsted Grotesk', ui-sans-serif, system-ui, sans-serif"
+    fontSize: "132px"
+    fontWeight: 700
+    lineHeight: 1.0
+    letterSpacing: "-0.02em"
   headline:
-    fontFamily: "'Newsreader', Georgia, 'Times New Roman', serif"
+    fontFamily: "'Schibsted Grotesk', ui-sans-serif, system-ui, sans-serif"
     fontSize: "76px"
-    fontWeight: 600
+    fontWeight: 700
     lineHeight: 1.05
     letterSpacing: "-0.015em"
   subtitle:
-    fontFamily: "'IBM Plex Sans', ui-sans-serif, system-ui, -apple-system, sans-serif"
+    fontFamily: "'Schibsted Grotesk', ui-sans-serif, system-ui, sans-serif"
     fontSize: "36px"
     fontWeight: 300
     lineHeight: 1.4
   title:
-    fontFamily: "'IBM Plex Sans', ui-sans-serif, system-ui, -apple-system, sans-serif"
+    fontFamily: "'Schibsted Grotesk', ui-sans-serif, system-ui, sans-serif"
     fontSize: "32px"
     fontWeight: 700
     lineHeight: 1.15
     letterSpacing: "-0.01em"
   body:
-    fontFamily: "'IBM Plex Sans', ui-sans-serif, system-ui, -apple-system, sans-serif"
+    fontFamily: "'Schibsted Grotesk', ui-sans-serif, system-ui, sans-serif"
     fontSize: "24px"
     fontWeight: 400
     lineHeight: 1.5
   label:
-    fontFamily: "'IBM Plex Sans', ui-sans-serif, system-ui, -apple-system, sans-serif"
+    fontFamily: "'Schibsted Grotesk', ui-sans-serif, system-ui, sans-serif"
     fontSize: "24px"
     fontWeight: 700
     lineHeight: 1
     letterSpacing: "0.22em"
-  display-md:
-    fontFamily: "'Newsreader', Georgia, 'Times New Roman', serif"
-    fontSize: "132px"
-    fontWeight: 600
-    lineHeight: 1.0
-    letterSpacing: "-0.02em"
-  payoff:
-    fontFamily: "'IBM Plex Sans', ui-sans-serif, system-ui, -apple-system, sans-serif"
-    fontSize: "30px"
-    fontWeight: 600
-    lineHeight: 1.4
   label-sm:
-    fontFamily: "'IBM Plex Sans', ui-sans-serif, system-ui, -apple-system, sans-serif"
+    fontFamily: "'Schibsted Grotesk', ui-sans-serif, system-ui, sans-serif"
     fontSize: "20px"
     fontWeight: 700
     lineHeight: 1
     letterSpacing: "0.14em"
+  payoff:
+    fontFamily: "'Schibsted Grotesk', ui-sans-serif, system-ui, sans-serif"
+    fontSize: "30px"
+    fontWeight: 600
+    lineHeight: 1.4
   step-marker:
     fontFamily: "ui-monospace, 'SF Mono', Menlo, Consolas, monospace"
     fontSize: "24px"
@@ -85,104 +82,100 @@ spacing:
   padBottom: "120px"
 components:
   card:
-    backgroundColor: "{colors.surface-white}"
+    backgroundColor: "{colors.surface}"
     textColor: "{colors.ink-body}"
     rounded: "{rounded.lg}"
     padding: "40px 44px"
   badge-primary:
-    backgroundColor: "rgba(14,124,102,0.10)"
-    textColor: "{colors.founders-teal}"
-    rounded: "{rounded.pill}"
-    padding: "7px 14px"
-  badge-green:
-    backgroundColor: "rgba(22,163,74,0.12)"
-    textColor: "{colors.status-green}"
-    rounded: "{rounded.pill}"
-    padding: "7px 14px"
-  badge-red:
-    backgroundColor: "rgba(220,38,38,0.10)"
-    textColor: "{colors.status-red}"
-    rounded: "{rounded.pill}"
-    padding: "7px 14px"
-  badge-orange:
-    backgroundColor: "rgba(217,119,6,0.12)"
-    textColor: "{colors.status-orange}"
+    backgroundColor: "rgba(22,24,26,0.08)"
+    textColor: "{colors.primary}"
     rounded: "{rounded.pill}"
     padding: "7px 14px"
 ---
 
-# Design System: Slizdeck — Sistema neutro default
+# Design System: Slizdeck
 
 ## Overview
 
 **Creative North Star: "El Escenario del Fundador"**
 
-Cada slide es un momento de un pitch en vivo frente a inversores, no una página de documento. El sistema es confiado y contenido: pocos elementos por slide, cada uno con peso deliberado, sin decoración que no sirva al mensaje. El verde azulado (Founder's Teal) domina el peso visual; el azul marino (Boardroom Navy) solo aparece en el gradiente de apertura/cierre; el ámbar quemado (Signal Ember) es la única voz que "grita", y lo hace con cuentagotas — un dato, un badge, nunca un fondo.
+Cada slide es un momento de una presentación en vivo, no una página de documento. El sistema es confiado y contenido: pocos elementos por slide, cada uno con peso deliberado, sin decoración que no sirva al mensaje.
 
-Rechazos confirmados: nada de líneas o barras decorativas bajo los títulos, nada de iconografía de stock genérica, nada de bullets como única forma de mostrar información, nada de gradientes decorativos fuera de cover/cierre, nada de la paleta azul/violeta ni de las tipografías (Inter, Roboto, Fraunces, Geist, Plus Jakarta Sans, Space Grotesk) que `impeccable` marca como los tells más reconocibles de UI generada por IA.
+**Este documento describe lo invariante del sistema** — el contrato de tokens, el lienzo, la elevación, el movimiento y las reglas de composición. **La paleta y la tipografía concretas las aporta el style pack elegido** (`styles/index.md`): slizdeck tiene cinco, y cambiarlos es una sustitución deliberada, no una desviación.
+
+Los valores del frontmatter son los del pack por defecto, `paper-white`, y están ahí como referencia legible por herramientas. Un deck construido con `terminal`, `committed`, `instrument` o `editorial` tendrá otros colores y otras fuentes **a propósito**: un detector que compare ese deck contra este archivo reportará diferencias que no son defectos. La validación real de un deck se hace con su propio pack:
+
+```bash
+node scripts/check-style-pack.mjs <deck>.html
+```
+
+Rechazos confirmados, válidos para cualquier pack: nada de líneas o barras decorativas bajo los títulos, nada de iconografía de stock genérica, nada de bullets como única forma de mostrar información, nada de gradientes decorativos fuera de cover y cierre.
 
 **Key Characteristics:**
 - Confiado y contenido, no enérgico ni ruidoso.
 - Un color domina cada slide (60-70% del peso visual); el acento aparece en un solo elemento por slide, como máximo.
-- Silencioso hasta que importa: todo en reposo es plano y quieto; el ámbar es lo único que reclama atención.
+- Silencioso hasta que importa: todo en reposo es plano y quieto.
 - Canvas fijo 1920×1080, escalado uniformemente al viewport (no es un layout responsive tradicional).
-- Un heading serif con carácter editorial (Newsreader) sobre un body sans funcional (IBM Plex Sans) — la jerarquía viene también del contraste serif/sans, no solo de escala.
 
 ## Colors
 
-Un dominante frío y confiado (verde azulado), un acompañante aún más frío reservado al gradiente de marca (azul marino), y un acento cálido que corta la paleta a propósito.
+El sistema define **roles**, no colores. Cada pack los rellena con su propia paleta.
 
-### Primary
-- **Founder's Teal** (#0E7C66): color dominante. Eyebrows, números destacados, badges primarios, la mitad del gradiente de cover/cierre.
+| Rol | Token | Qué es |
+|---|---|---|
+| Fondo | `--cs-cream` | El fondo de las slides de contenido. Blanco puro o casi negro salvo mood ambiental. |
+| Superficie | `--cs-surface` | Cards y paneles sobre el fondo. |
+| Ink fuerte | `--cs-black` | Títulos. Contraste ≥7:1 sobre el fondo. |
+| Ink cuerpo | `--cs-body` | Texto de párrafo. Contraste ≥7:1. |
+| Ink atenuado | `--cs-muted` | Texto secundario y footer. Contraste ≥3.5:1. |
+| Primario | `--cs-primary` | Eyebrows, cifras, badges. El color que domina. |
+| Acento | `--cs-accent` | Un detalle por slide. Debe distinguirse del primario (≥1.7:1). |
+| Void | `--cs-void` | El fondo del navegador fuera del lienzo. No es parte de la slide. |
 
-### Secondary
-- **Boardroom Navy** (#1E3A5F): solo aparece en el gradiente de marca (`--cs-grad-radial`, `--cs-grad-linear`, `--cs-grad-text`) — cover, cierre, y palabras de énfasis con `.grad-word`. Nunca como color sólido de fondo o texto por sí solo.
-
-### Tertiary
-- **Signal Ember** (#AD5407): el acento nítido. Un detalle por slide como máximo — un dato animado, un badge, un ícono puntual. Nunca un fondo, nunca más de un elemento por slide.
-
-El gradiente de marca pasa por un punto medio, **Founder's Teal Mid** (#146E63), que suaviza la transición teal→navy en `--cs-grad-text`. Los colores de estado (`status-green` #15803D, `status-red` #B91C1C, `status-orange` #B45309) existen solo para los badges semánticos: nunca se usan como color de texto, fondo o acento fuera de un badge.
-
-### Neutral
-- **Paper Cream** (#F7F6F2): fondo de todas las slides intermedias (no cover/transición).
-- **Stage Void** (#0C0C1A): el fondo del navegador fuera del canvas 1920×1080 (letterboxing). No es parte de la slide — es el "cine" alrededor de ella, y por eso es casi negro.
-- **Paper Cream Deep** (#EDECE6): variante ligeramente más oscura del fondo crema, para separación sutil entre superficies.
-- **Ink Black** (#000000): texto de máximo contraste (títulos sobre crema).
-- **Ink Body** (#454545): texto de cuerpo.
-- **Ink Muted** (#65696F): texto secundario, eyebrows de card, footer. Calibrado a ≥4.5:1 de contraste sobre blanco y crema (WCAG AA) — el tono heredado original (#9BA1A5) no llegaba a 3:1.
-- **Surface White** (#FFFFFF): fondo de cards sobre crema.
+Los colores de estado (`status-green`, `status-red`, `status-orange`) existen solo para badges semánticos y son iguales en todos los packs.
 
 ### Named Rules
-**The One Accent Rule.** Signal Ember aparece en como máximo un elemento por slide. Su escasez es lo que lo hace notar.
+**The One Accent Rule.** El acento aparece en como máximo un elemento por slide. Su escasez es lo que lo hace notar.
 
-**The Gradient-Is-A-Bookend Rule.** El gradiente (teal→navy) vive solo en cover y cierre. Las slides intermedias son crema, sin excepción.
+**The Gradient-Is-A-Bookend Rule.** El gradiente vive solo en cover y cierre. Las slides intermedias son fondo plano, sin excepción.
 
-**The No-Slop-Palette Rule.** Nunca volver a un gradiente azul/violeta ni a combinaciones cian-sobre-oscuro como default — son el tell de paleta más reconocible de UI generada por IA (verificado con `impeccable`).
+**The No-Slop-Palette Rule.** Nunca un gradiente azul/violeta ni cian-sobre-oscuro como default, ni las fuentes de la lista de *training-data defaults* (Inter, Roboto, Fraunces, Newsreader, IBM Plex, Space Grotesk, Geist, DM Sans, Plus Jakarta Sans, Instrument Sans). Verificado con `check-style-pack.mjs`.
 
 ## Typography
 
-**Display Font:** Newsreader (con fallback a `Georgia, 'Times New Roman', serif`)
-**Body Font:** IBM Plex Sans (con fallback a `ui-sans-serif, system-ui, -apple-system, sans-serif`)
-**Label/Mono Font:** `ui-monospace, 'SF Mono', Menlo, Consolas, monospace` (usado en el act-marker/step indicator)
+Cada pack define su pareja de fuentes. Lo invariante es **la escala y los roles**, no las familias:
 
-**Character:** Un serif editorial para los momentos de mayor peso (cover, headlines) contra un sans funcional para todo lo demás — el contraste entre familias hace parte de la jerarquía, no solo la escala. Ninguna de las dos está en la lista de fuentes sobreusadas por IA generativa (Inter, Roboto, Fraunces, Geist, Plus Jakarta Sans, Space Grotesk).
+- **Display** (168px) — cover y transition. El momento de mayor peso.
+- **Display MD** (132px) — variante para títulos largos.
+- **Headline** (76px) — título de slide de contenido.
+- **Subtitle** (36px, peso ligero) — bajo el título de cover o transición.
+- **Title** (32px) — encabezado dentro de una card.
+- **Body** (24px) — párrafo y footer.
+- **Label** (24px, uppercase, tracking 0.22em) — eyebrows.
+- **Label SM** (20px, uppercase, tracking 0.14em) — badges.
+- **Payoff** (30px) — frase de remate.
+- **Step marker** (24px, mono) — el indicador "1/2". Único uso de la monoespaciada.
 
-### Hierarchy
-- **Display** (Newsreader 600, 168px, line-height 0.98, letter-spacing -0.02em): títulos de cover y transition — el momento de mayor peso del deck.
-- **Display MD** (Newsreader 600, 132px, line-height 1.0, letter-spacing -0.02em): variante de cover para títulos más largos que no respiran a 168px.
-- **Headline** (Newsreader 600, 76px, line-height 1.05, letter-spacing -0.015em): título de cada slide de contenido.
-- **Subtitle** (IBM Plex Sans 300, 36px, line-height 1.4): subtítulo bajo el título de cover o de transición.
-- **Title** (IBM Plex Sans 700, 32px, line-height 1.15, letter-spacing -0.01em): encabezado dentro de una card.
-- **Body** (IBM Plex Sans 400, 24px, line-height 1.5): párrafo de card, texto de footer.
-- **Label** (IBM Plex Sans 700, 24px, uppercase, letter-spacing 0.22em): eyebrows y card-eyebrows.
-- **Label SM** (IBM Plex Sans 700, 20px, uppercase, letter-spacing 0.14em): texto dentro de badges.
-- **Payoff** (IBM Plex Sans 600, 30px, line-height 1.4): frase de remate bajo el contenido de una slide.
-- **Step Marker** (mono 700, 24px, letter-spacing 0.08em): el indicador de paso "1/2" del act-marker. Único uso de la monoespaciada en el sistema.
+La proporción display/headline es de 2.2×, y esa escala extrema es parte de la jerarquía: aplanarla desdibuja el sistema.
 
 ### Named Rules
-**The One-Line Title Rule.** Los títulos se escriben en una sola línea siempre que sea posible; un `<br>` solo se justifica por equilibrio visual, nunca por longitud del texto.
+**The One-Line Title Rule.** Los títulos en una sola línea siempre que se pueda; un `<br>` solo se justifica por equilibrio visual, nunca por longitud.
 
-**The Serif-Sans Contrast Rule.** El heading nunca hereda la fuente del body ni viceversa — el contraste entre Newsreader y IBM Plex Sans es intencional y no debe colapsarse a una sola familia salvo pedido explícito del usuario.
+## Motion
+
+El movimiento es opt-in por pasos (`.reveal` + `data-step`), y **la entrada varía según el elemento**: revelar todo con el mismo fade-up es lo que hace que un deck se sienta mecánico.
+
+| Variante | Para |
+|---|---|
+| `r-rise` | Títulos |
+| `r-fade` | Texto largo, eyebrows |
+| `r-scale` | Cifras y datos |
+| `r-blur` | Imágenes y citas |
+| `r-left` | Listas y pasos |
+| `r-wipe` | Barras y reglas |
+| `r-mask` | Remates |
+
+Un contenedor con `.stagger` escalona sus hijos automáticamente. Las superficies con gradiente llevan grano (`--cs-grain`), sin `mix-blend-mode`: `overlay` es invisible sobre fondos oscuros.
 
 ## Layout
 

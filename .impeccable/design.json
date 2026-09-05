@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-08-29T21:59:46Z",
-  "title": "Design System: Slizdeck — Sistema neutro default",
+  "generatedAt": "2026-09-05T02:23:29Z",
+  "title": "Design System: Slizdeck",
   "extensions": {
     "colorMeta": {
       "founders-teal": {
@@ -166,16 +166,24 @@
       ],
       "accepted": [
         {
+          "antipattern": "design-system-*",
+          "reason": "slizdeck es multi-pack: DESIGN.md documenta el contrato de roles y la paleta del pack por defecto (paper-white). Un deck construido con terminal, committed, instrument o editorial usa otros colores y otras fuentes A PROPOSITO. El validador consciente del pack es scripts/check-style-pack.mjs; los hallazgos design-system-* no aplican aqui."
+        },
+        {
           "antipattern": "gradient-text",
-          "reason": "Restringido a .grad-word en cover/transition por 'The Gradient-Is-A-Bookend Rule'. En print degrada a color solido (background-clip:text dibuja un recuadro visible en PDF)."
+          "reason": "Restringido a .grad-word en cover/transition por 'The Gradient-Is-A-Bookend Rule'. En print degrada a color solido."
         },
         {
           "antipattern": "em-dash-overuse",
           "reason": "Falso positivo: cuenta em-dashes en comentarios de codigo del archivo heredado, no en contenido de slide."
         },
         {
-          "antipattern": "design-system-*",
-          "reason": "En decks concretos, los one-offs de composicion (tamanos de una sola slide) y el viewer chrome del shadow DOM quedan fuera del design system a proposito."
+          "antipattern": "wide-tracking",
+          "reason": "El letter-spacing de .footer (0.06em) es una etiqueta pequena, no texto de cuerpo. Heredado de claude-slides."
+        },
+        {
+          "antipattern": "oversized-h1",
+          "reason": "Una portada de deck no es un hero de pagina web: el titulo a tamano display es el proposito de la slide."
         }
       ]
     },
