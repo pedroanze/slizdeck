@@ -1,6 +1,6 @@
 # Slizdeck
 
-Genera decks de slides **HTML animados** a partir de tu propio design system, con el contenido investigado en internet. Pensado para pitch decks de startup: minimalista, poco texto, mucha imagen y dato duro.
+Genera decks de slides **HTML animados** a partir de tu propio design system, con el contenido investigado en internet. Pensado para pitch decks de startup: minimalista, poco texto, mucha imagen y dato duro — también sirve para charlas, demos y recaps de evento.
 
 Es una [Agent Skill](https://agentskills.io) — funciona en Claude Code, Gemini CLI, Codex, OpenCode y cualquier cliente que soporte el estándar abierto.
 
@@ -10,15 +10,20 @@ Es una [Agent Skill](https://agentskills.io) — funciona en Claude Code, Gemini
 - **Un PDF fiel**, vía impresión nativa del navegador (`Cmd/Ctrl+P`). El PDF exporta el **estado final** de cada slide: animaciones resueltas, contadores en su cifra real, sin el chrome del reproductor.
 - **Un PPTX editable** (`node scripts/export-pptx.mjs deck.html`), con texto y formas nativas de PowerPoint — no imágenes incrustadas. Se edita en PowerPoint o Google Slides.
 
-## Cómo funciona
+## Cómo usarlo
 
-Invocas la skill y ella conduce el flujo:
+Le pides algo como *"hazme un pitch deck de 8 slides sobre mi startup"* y la skill conduce el resto de la conversación. No es una sola cadena rígida: son **seis fases**, cada una con su propio momento de activación — también se activan sueltas cuando pides algo puntual sobre un deck que ya existe, sin repetir las anteriores.
 
-1. **Design system** — Si no tienes uno, te hace 3 preguntas simples (color de marca, tipografía, "vibe") y genera la paleta completa. Nunca te pide escribir CSS ni JSON a mano. Si ya tienes tokens, los detecta y traduce.
-2. **Brief + research** — Le das el tema; investiga en internet para que el contenido tenga datos reales, no inventados.
-3. **Wireframe** — Propone la narrativa slide por slide y **espera tu aprobación** antes de generar nada.
-4. **Generación** — Escribe el HTML aplicando la guía de diseño anti-genérico.
-5. **Iteración** — Ajustas en conversación normal ("cambia la slide 3", "elimina la 5").
+| Fase | Se activa con | Qué hace | Referencia |
+|---|---|---|---|
+| **init** | El disparador inicial, o "cambia la paleta/el pack/la tipografía" | Elegir o cambiar pack visual, colores de marca, tipografía | [reference/init.md](reference/init.md) |
+| **brief** | Después de init, o "cambia el tema/tamaño/contenido" | Tema, público, tipo de deck, tamaño, research en internet, arco narrativo, wireframe aprobado por ti | [reference/brief.md](reference/brief.md) |
+| **assets** | Después de aprobar el wireframe, o "¿qué imágenes necesito?" | Checklist obligatorio y bloqueante de imágenes, logos y datos reales por slide — no se genera nada hasta resolver cada ítem | [reference/assets.md](reference/assets.md) |
+| **build** | Después de resolver assets, o "regenera/agrega animación" | Nivel de animación y generación del HTML final | [reference/build.md](reference/build.md) |
+| **audit** | Antes de entregar, o "audita el deck" | Validación automática (`scripts/audit.mjs`): contraste, balance HTML, reglas de voz, assets pendientes | [reference/audit.md](reference/audit.md) |
+| **export** | "pásalo a PDF/PPTX", "dame las notas" | PDF nativo, PPTX editable, deck sin dependencia de red, speaker notes | [reference/export.md](reference/export.md) |
+
+**Ejemplo de una petición puntual**, sin recorrer todo el flujo: *"cambia el pack a terminal"* activa solo `init`; *"audita el deck que ya generé"* activa solo `audit`. La skill decide qué fase corresponde por lo que pediste, no por dónde vas en la conversación.
 
 ## Instalación
 
@@ -38,8 +43,6 @@ git clone https://github.com/<tu-usuario>/slizdeck ~/.codex/skills/slizdeck
 git clone https://github.com/<tu-usuario>/slizdeck ~/.opencode/skills/slizdeck
 ```
 
-Luego pídele a tu agente algo como *"hazme un pitch deck de 8 slides sobre mi startup"*.
-
 Para trabajar en la skill sin duplicarla, clona donde prefieras y enlaza:
 
 ```bash
@@ -47,36 +50,53 @@ git clone https://github.com/<tu-usuario>/slizdeck ~/proyectos/slizdeck
 ln -s ~/proyectos/slizdeck ~/.claude/skills/slizdeck
 ```
 
+La primera vez que se necesite exportar a PPTX, instalar dependencias en la raíz de la skill:
+
+```bash
+npm install
+```
+
 ## Estructura
 
 | Archivo | Rol |
 |---|---|
-| `SKILL.md` | El flujo que sigue el agente. Punto de entrada. |
+| `SKILL.md` | Punto de entrada: qué dispara la skill y la tabla de fases con su ruteo. |
 | `template.html` | Motor del deck: canvas `<deck-stage>`, navegación, sistema de reveals, tokens CSS. |
+| `reference/init.md` | Fase init — pack, colores de marca, tipografía. |
+| `reference/brief.md` | Fase brief — tema, público, tamaño, research, arco, wireframe. |
+| `reference/assets.md` | Fase assets — checklist bloqueante de imágenes/logos/datos. |
+| `reference/build.md` | Fase build — nivel de animación y generación del HTML. |
+| `reference/audit.md` | Fase audit — qué valida `scripts/audit.mjs` y qué queda a criterio del modelo. |
+| `reference/export.md` | Fase export — PDF, PPTX, deck sin red, speaker notes. |
 | `reference/design-tokens-schema.md` | Esquema del design system y su mapeo a variables CSS. |
 | `reference/design-guidelines.md` | Principios visuales y lista de anti-clichés. |
 | `reference/deck-schema.md` | Formato del wireframe, arcos narrativos, niveles de animación. |
 | `reference/components.md` | Catálogo de patrones de layout. |
-| `reference/animations.md` | Recetas de animación CSS y sus gotchas. |
+| `reference/media-and-data.md` | Patrones de imagen, métricas, barras y pantalla de inicio (y qué de esto sobrevive al export a PPTX). |
+| `reference/animations.md` | Recetas de animación CSS y sus gotchas — solo para nivel HEAVY. |
 | `reference/icons.md` | Librería de íconos SVG. |
-| `DESIGN.md` · `.impeccable/design.json` | El design system del estilo default, documentado en formato [DESIGN.md](https://github.com/google-labs-code/design.md). |
+| `DESIGN.md` · `.impeccable/design.json` | El contrato del sistema visual (roles de color, escala tipográfica, movimiento), en formato [DESIGN.md](https://github.com/google-labs-code/design.md). |
 | `styles/` | Cinco style packs (terminal, paper-white, committed, instrument, editorial) + su índice. |
-| `scripts/apply-style-pack.mjs` | Aplica un pack a un deck fusionando tokens. |
+| `scripts/apply-style-pack.mjs` | Aplica un pack a un deck fusionando tokens (y su alternativa tipográfica, con `--font=<id>`). |
 | `scripts/check-style-pack.mjs` | Valida contrastes y avisa de clichés visuales de IA. |
+| `scripts/audit.mjs` | Valida un deck ya generado: contraste, balance HTML, reglas de voz, assets pendientes. |
 | `scripts/export-pptx.mjs` | Exporta un deck a `.pptx` editable (texto y formas nativas, no imágenes). |
-| `demo/` | Deck de ejemplo (`pitch-demo.html`) con su PDF y PPTX exportados. |
+| `scripts/make-offline.mjs` | Incrusta las fuentes como `data:` URI para presentar sin depender de red. |
+| `scripts/smoke-test.mjs` | Test de regresión: ejercita cada pack con cada alternativa tipográfica. |
+| `examples/demo-deck.html` | Deck de ejemplo heredado del fork original, sin modificar (ver `NOTICE.md`). |
+| `demo/` | Deck de ejemplo propio (`pitch-demo.html`) con su PDF y PPTX exportados. |
 
 ## Diseño
 
-Slizdeck trae **cinco style packs**, cada uno un mundo visual completo (paleta, tipografía y reglas de composición), derivados del entorno visual real de la audiencia — documentación técnica, terminales, paneles de datos, prensa — y no de "minimalista" en abstracto:
+Slizdeck trae **cinco style packs**, cada uno un mundo visual completo (paleta, tipografía y reglas de composición), derivados del entorno visual real de la audiencia — documentación técnica, terminales, paneles de datos, prensa — y no de "minimalista" en abstracto. Cada pack trae además **2 alternativas tipográficas curadas** sobre su default.
 
-| Pack | Para qué |
-|---|---|
-| `terminal` | Infra, AI, demos técnicas. Sala oscura con proyector. |
-| `paper-white` | Cuando el contenido y las cifras deben cargar todo el peso. |
-| `committed` | El pitch que necesita recordarse. Keynotes, lanzamientos. |
-| `instrument` | Decks densos en métricas: tracción, unit economics. |
-| `editorial` | Charlas con tesis, donde el texto respira. |
+| Pack | Fondo | Tipografía | Para qué |
+|---|---|---|---|
+| `terminal` | Casi negro | Archivo + JetBrains Mono | Infra, AI, demos técnicas. Sala oscura con proyector. |
+| `paper-white` | Blanco literal | Schibsted Grotesk | Cuando el contenido y las cifras deben cargar todo el peso. |
+| `committed` | Cobalto dominante | Bricolage Grotesque + Manrope | El pitch que necesita recordarse. Keynotes, lanzamientos. |
+| `instrument` | Neutro frío | Public Sans + Martian Mono | Decks densos en métricas: tracción, unit economics. |
+| `editorial` | Blanco puro | Young Serif + Chivo | Charlas con tesis, donde el texto respira. |
 
 Ninguno usa las tipografías ni las combinaciones de color que delatan una interfaz generada por IA, y todos pasan un validador de contrastes:
 
@@ -84,9 +104,9 @@ Ninguno usa las tipografías ni las combinaciones de color que delatan una inter
 node scripts/check-style-pack.mjs styles/terminal.md
 ```
 
-Comprueba los contrastes WCAG, que primario y acento sean distinguibles entre sí, y avisa si la paleta cae en una zona atractora conocida o si la tipografía está en la lista de *training-data defaults*. Sirve igual para un pack propio armado con los colores de tu marca.
+Comprueba los contrastes WCAG, que primario y acento sean distinguibles entre sí, y avisa si la paleta cae en una zona atractora conocida o si la tipografía está en la lista de *training-data defaults*. Sirve igual para un pack propio armado con los colores de tu marca, o para un deck ya generado (`node scripts/audit.mjs deck.html` lo incluye automáticamente).
 
-Las reglas están en `reference/design-guidelines.md` y son verificables mecánicamente con el detector de [impeccable](https://github.com/pbakaus/impeccable):
+Las reglas de composición están en `reference/design-guidelines.md` y son verificables mecánicamente con el detector de [impeccable](https://github.com/pbakaus/impeccable):
 
 ```bash
 node ~/.claude/skills/impeccable/scripts/detect.mjs --json tu-deck.html
