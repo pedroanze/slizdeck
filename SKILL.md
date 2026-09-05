@@ -40,6 +40,7 @@ Fork/adaptación de [`claude-slides`](https://github.com/marcogalluccio/claude-s
 | `scripts/apply-style-pack.mjs` | Aplica un pack a un deck fusionando tokens (no reemplaza el `:root`). |
 | `scripts/check-style-pack.mjs` | Valida contrastes, distinción primario/acento y clichés de IA. |
 | `scripts/audit.mjs` | Valida un deck generado: contraste, balance HTML, reglas de voz, assets pendientes. |
+| `scripts/check-reveal.mjs` | Verifica que la cascada CSS de `.reveal` resuelva bien al revelarse (`.is-on` debe ganar contra cualquier variante `r-*`) — detecta bugs de orden de cascada que `audit.mjs` no puede ver porque solo mira el HTML estático. |
 | `scripts/export-pptx.mjs` | Exporta un deck HTML a `.pptx` editable (texto y formas nativas). |
 | `scripts/make-offline.mjs` | Incrusta las fuentes como `data:` URI para presentar sin red. |
 | `scripts/renumber.mjs` | Recalcula `data-label` y `<span class="num">` de todas las slides en orden de documento — usar siempre después de insertar una slide en medio del deck. |

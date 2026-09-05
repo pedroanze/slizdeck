@@ -24,6 +24,7 @@
   --cs-border:      rgba(0,0,0,0.10);
   --cs-border-strong: rgba(0,0,0,0.18);
   --cs-scrim:       rgba(0,0,0,0.05);
+  --cs-shadow-2:    none;
   --cs-grad-radial: radial-gradient(112% 150% at 0% 100% in oklch, #16181A 0%, #000000 100%);
   --cs-grad-linear: linear-gradient(135deg in oklch, #16181A 0%, #000000 100%);
   --cs-grad-text:   linear-gradient(135deg in oklch, #16181A 0%, #3A4046 50%, #16181A 100%);
