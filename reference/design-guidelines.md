@@ -27,8 +27,7 @@ Directamente prohibido, sin importar qué tan "de diseño" parezca:
 - Bullets como única forma de presentar información — ver "Contenido" arriba.
 - Texto centrado en slides de contenido (solo cover y transition van centradas — ver `SKILL.md`, regla de voz #9).
 - Gradientes decorativos en elementos que no sean el fondo de cover/transition o `--cs-grad-text` en una palabra de énfasis.
-- **Fuentes sobreusadas en UI generada por IA**: Inter, Roboto, Fraunces, Geist, Plus Jakarta Sans, Space Grotesk. El default de `template.html` usa Newsreader (heading) + IBM Plex Sans (body) — si el usuario no pide una tipografía específica, no volver a Inter por comodidad.
-- **Paletas azul/violeta con gradiente y combinaciones cian-sobre-oscuro**: son el tell más reconocible de "hecho por IA". El default de `template.html` usa verde azulado + azul marino + ámbar quemado precisamente para evitar este patrón.
+- **Fuentes y paletas sobreusadas en UI generada por IA**: ver la lista completa y las zonas atractoras en `reference/init.md` y `styles/index.md` (`check-style-pack.mjs` las detecta automáticamente). No hay un único default que evitarlas por sí solo — cada style pack ya está calibrado contra esta lista.
 
 Estas dos reglas están verificadas con la skill `impeccable` (`node ~/.claude/skills/impeccable/scripts/detect.mjs --json <archivo>`), que las marca automáticamente como `overused-font` y `ai-color-palette`. Correr el detector sobre un deck terminado es una buena forma de auditar esto sin depender solo del ojo.
 
@@ -45,6 +44,21 @@ Estas dos reglas están verificadas con la skill `impeccable` (`node ~/.claude/s
 - **Alternar densidad.** Después de una slide con mucha data/mockup, una slide de transición (`.ts-title`, estática, gran tipografía) para que el público respire.
 - **La narrativa manda el orden**, no la plantilla. Usar los arcos narrativos de `SKILL.md` (hook → problema → solución → tracción → ask, para pitch) como columna vertebral del wireframe.
 
-## Fase 1 (MVP): un solo estilo, bien calibrado
+## Frase sola / transition: elegir el tamaño por longitud, nunca el default a ciegas
 
-En esta fase no hay catálogo de múltiples estilos — el objetivo es que el estilo neutro azul/violeta de `template.html` (o su variante con los colores de marca del usuario, vía `design-tokens.json`) se sienta consistentemente "pro" y de startup, no genérico. El catálogo de varios "style packs" (minimalista editorial, bold/gradiente, oscuro tech, corporativo limpio) llega en la Fase 2, calibrado con las referencias visuales del usuario.
+`.ts-title` (168px) es el tamaño de una portada, no de cualquier frase. Usado sin criterio en una oración larga, la parte en 3-4 líneas y dejar de leerse como remate — es exactamente el efecto que hay que evitar. Elegir la clase por longitud del texto:
+
+| Longitud del texto | Clase | Líneas esperadas |
+|---|---|---|
+| < 45 caracteres | `.ts-title` (168px) | 1 |
+| 45-80 caracteres | `.ts-title-md` (96px) | 1-2 |
+| 80-120 caracteres | `.ts-title-sm` (64px) | 2-3 |
+| > 120 caracteres | — | No usar este patrón: acortar la frase o pasarla a una slide de contenido con cuerpo de texto (`h2.title` + `<p>`), nunca forzarla en `.ts-title` a cualquier tamaño. |
+
+Un separador de sección (`class="grad"` opcional, o `class="divider"` sobre `--cs-cream`) usa el mismo criterio de tamaño, pero además lleva `.divider-num` con el número de la parte en grande y tenue de fondo (ver `template.html`) — nunca el mismo layout plano que una frase sola de contenido. Son narrativamente distintos (uno marca un capítulo, el otro remata una idea) y deben distinguirse a simple vista, no solo por el texto del eyebrow.
+
+## Énfasis dentro del texto
+
+Para resaltar una palabra o frase sin cambiar el fondo a gradiente: `<span class="hl">frase clave</span>` (negrita + color primario) en cualquier `h1`/`h2`/`p`/`.ts-tagline`. Mismo cupo que el acento: **máximo un `.hl` por slide**. No es intercambiable con `.grad-word` (ese va sobre fondo con gradiente y usa el degradado de texto del pack; `.hl` es para slides en `--cs-cream` que quieren un remate sin cambiar de fondo).
+
+**No sirve de nada dentro de un elemento que ya es bold del mismo color.** `.ts-title`/`.ts-title-md`/`.ts-title-sm` ya son `font-weight:600` en `--cs-black` — meter un `.hl` (700, `--cs-primary`) ahí es invisible si el pack usa negro puro como primario (el caso de cualquier sistema casi monocromo, como un pack de marca sin color de acento real). Antes de usarlo, comprobar que el texto base alrededor sea más liviano (`.ts-tagline`, `<p>` de cuerpo, `.subtitle`) o que `--cs-primary` sea un color realmente distinto de `--cs-black`/`--cs-body` — si no, no se va a ver y hay que descartarlo, no dejarlo puesto "por si acaso".

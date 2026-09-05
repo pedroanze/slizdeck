@@ -206,6 +206,52 @@
     max-width: 1300px;
   }
 
+  /* .ts-title a 168px asume una frase corta (menos de ~45 caracteres): a
+     ese tamano, una oracion mas larga se parte en 3-4 lineas y deja de
+     leerse como un remate. Elegir el tamano por longitud del texto, no
+     usar siempre el default:
+       < 45 caracteres  -> .ts-title    (168px, 1 linea)
+       45-80 caracteres -> .ts-title-md (96px,  1-2 lineas)
+       80-120 caracteres -> .ts-title-sm (64px, 2-3 lineas)
+       > 120 caracteres  -> no usar este patron: acortar la frase o pasarla
+                            a una slide de contenido con cuerpo de texto. */
+  .ts-title-md {
+    font-family: var(--cs-font-heading);
+    font-size: 96px; line-height: 1.08;
+    letter-spacing: -0.015em;
+    margin: 0; font-weight: 600; color: var(--cs-black);
+    text-align: center;
+  }
+  .ts-title-sm {
+    font-family: var(--cs-font-heading);
+    font-size: 64px; line-height: 1.15;
+    letter-spacing: -0.01em;
+    margin: 0; font-weight: 600; color: var(--cs-black);
+    text-align: center;
+  }
+  .ts-title-md .grad-word, .ts-title-sm .grad-word { font-weight: 600; }
+
+  /* Resaltar una palabra o frase suelta sin necesitar un fondo degradado:
+     negrita + color primario. Como maximo un .hl por slide (mismo cupo
+     visual que el acento) — no es una alternativa al gradiente, es para
+     las slides en --cs-cream que quieren un remate sin cambiar de fondo. */
+  .hl { font-weight: 700; color: var(--cs-primary); }
+  .hl-accent { font-weight: 700; color: var(--cs-accent); }
+
+  /* Separador de seccion: mismo layout centrado que .ts-title, pero con el
+     numero de la parte en grande y tenue detras, para que no se confunda
+     con una slide de frase sola de contenido. */
+  .divider { position: relative; }
+  .divider .divider-num {
+    font-family: var(--cs-font-mono);
+    font-size: 320px; line-height: 1; font-weight: 500;
+    color: var(--cs-border-strong);
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -52%);
+    z-index: 0; user-select: none; pointer-events: none;
+  }
+  .divider .pad.center { position: relative; z-index: 1; }
+
   /* ============================================================
      FOOTER (always present on every slide)
      ============================================================ */
