@@ -25,6 +25,8 @@ Fork/adaptación de [`claude-slides`](https://github.com/marcogalluccio/claude-s
 | `reference/build.md` | Fase build: nivel de animación y generación del HTML. |
 | `reference/audit.md` | Fase audit: qué valida `scripts/audit.mjs` y qué queda a criterio del modelo. |
 | `reference/export.md` | Fase export: PDF, PPTX, deck sin red, speaker notes. |
+| `reference/add.md` | Fase add: agregar slides a un deck existente sin romper la numeración. |
+| `reference/fix.md` | Fase fix: corregir o mejorar una slide puntual sin romper el resto del deck. |
 | `reference/design-tokens-schema.md` | Esquema del design system (`design-tokens.json`) y cómo se mapea a las CSS variables del template. |
 | `reference/design-guidelines.md` | Principios de diseño: poco texto, un color dominante, anti-clichés, variedad de layout. Aplicar al construir el wireframe y al generar el HTML. |
 | `reference/deck-schema.md` | Formato del wireframe, arcos narrativos por tipo de deck, niveles de animación, estructura de cada `<section>`. |
@@ -40,6 +42,7 @@ Fork/adaptación de [`claude-slides`](https://github.com/marcogalluccio/claude-s
 | `scripts/audit.mjs` | Valida un deck generado: contraste, balance HTML, reglas de voz, assets pendientes. |
 | `scripts/export-pptx.mjs` | Exporta un deck HTML a `.pptx` editable (texto y formas nativas). |
 | `scripts/make-offline.mjs` | Incrusta las fuentes como `data:` URI para presentar sin red. |
+| `scripts/renumber.mjs` | Recalcula `data-label` y `<span class="num">` de todas las slides en orden de documento — usar siempre después de insertar una slide en medio del deck. |
 
 ## Cuándo activar esta skill
 
@@ -47,20 +50,22 @@ Cuando el usuario pide slides o una presentación de cualquier tipo. Si no espec
 
 ## Fases
 
-El flujo completo es multi-turno: una vez cargada esta skill, sigue vigente en toda la conversación hasta cerrar el deck. Pero no es una sola cadena rígida — son seis fases independientes, cada una con su propio archivo, que también se activan sueltas cuando el usuario pide algo puntual sobre un deck que ya existe.
+El flujo completo es multi-turno: una vez cargada esta skill, sigue vigente en toda la conversación hasta cerrar el deck. Pero no es una sola cadena rígida — son ocho fases independientes, cada una con su propio archivo. Las primeras seis arman un deck nuevo de punta a punta; `add` y `fix` se activan sueltas sobre un deck que ya existe.
 
 | Fase | Se activa con | Qué hace | Referencia |
 |---|---|---|---|
 | **init** | Disparador inicial, o "cambia la paleta/el pack/la tipografía" | Elegir o cambiar pack, colores de marca, tipografía | [reference/init.md](reference/init.md) |
 | **brief** | Después de init, o "cambia el tema/tamaño/contenido" | Tema, público, tipo, tamaño, research, arco narrativo, wireframe | [reference/brief.md](reference/brief.md) |
 | **assets** | Después de aprobar el wireframe, o "¿qué imágenes necesito?" | Checklist obligatorio y bloqueante de imágenes, logos y datos por slide | [reference/assets.md](reference/assets.md) |
-| **build** | Después de resolver assets, o "regenera/agrega animación" | Nivel de animación y generación del HTML | [reference/build.md](reference/build.md) |
+| **build** | Después de resolver assets, o "sube el nivel de animación de la slide 3" | Nivel de animación y generación del HTML | [reference/build.md](reference/build.md) |
 | **audit** | Antes de entregar, o "audita el deck" | Validación automática (`scripts/audit.mjs`) + checklist de criterio | [reference/audit.md](reference/audit.md) |
 | **export** | "pásalo a PDF/PPTX", "dame las notas" | PDF nativo, PPTX editable, deck sin red, speaker notes | [reference/export.md](reference/export.md) |
+| **add** | "agrega una slide sobre X", "mete 2 slides entre la 9 y la 10" | Agregar slides a un deck existente, renumerando todo con `scripts/renumber.mjs` | [reference/add.md](reference/add.md) |
+| **fix** | "la slide 7 se ve genérica, mejórala", "arregla el texto de la 12" | Corregir o mejorar una o más slides puntuales sin tocar el resto del deck | [reference/fix.md](reference/fix.md) |
 
 **Ruteo:**
-- **Deck nuevo, sin más contexto:** recorrer las seis fases en orden, una por una, esperando la confirmación que cada archivo de referencia pide antes de avanzar a la siguiente. No saltarse `assets` nunca, aunque el usuario no lo mencione — es la fase que existe precisamente porque se saltaba antes.
-- **Petición puntual sobre un deck que ya existe** ("cambia la paleta a X", "agrega una imagen a la slide 3", "audita esto", "pásalo a PDF"): identificar qué fase la cubre por su columna "Se activa con", cargar solo esa referencia, y resolver sin repetir las fases anteriores.
+- **Deck nuevo, sin más contexto:** recorrer `init` → `brief` → `assets` → `build` → `audit` → `export` en orden, una por una, esperando la confirmación que cada archivo de referencia pide antes de avanzar a la siguiente. No saltarse `assets` nunca, aunque el usuario no lo mencione — es la fase que existe precisamente porque se saltaba antes.
+- **Petición puntual sobre un deck que ya existe** ("cambia la paleta a X", "agrega una slide de tracción", "arregla la slide 12", "audita esto", "pásalo a PDF"): identificar qué fase la cubre por su columna "Se activa con", cargar solo esa referencia, y resolver sin repetir las fases anteriores. `add` y `fix` terminan siempre corriendo `audit` antes de darse por cerradas — ver sus propios archivos.
 - **Ambiguo entre dos fases:** preguntar una vez cuál corresponde, en vez de adivinar.
 
 Al reconocer el disparador inicial: *"Te armo el deck. Antes, defino tu design system y el brief."*

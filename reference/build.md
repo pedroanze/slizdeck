@@ -1,6 +1,6 @@
 # Fase: build — animación y generación
 
-Se activa cuando `assets` ya resolvió cada ítem del wireframe (o el usuario pide regenerar/ajustar un deck existente: "agrega más animación a la slide 3", "regenera con el wireframe actualizado").
+Se activa cuando `assets` ya resolvió cada ítem del wireframe (o el usuario pide regenerar el deck, o subir/bajar el nivel de animación de una slide existente: "sube el nivel de animación de la slide 3", "regenera con el wireframe actualizado"). Para agregar slides nuevas al deck, ver `reference/add.md`; para corregir el contenido de una slide puntual sin tocar su animación, ver `reference/fix.md`.
 
 ## 1. Nivel de animación
 

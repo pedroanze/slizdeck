@@ -12,18 +12,20 @@ Es una [Agent Skill](https://agentskills.io) — funciona en Claude Code, Gemini
 
 ## Cómo usarlo
 
-Le pides algo como *"hazme un pitch deck de 8 slides sobre mi startup"* y la skill conduce el resto de la conversación. No es una sola cadena rígida: son **seis fases**, cada una con su propio momento de activación — también se activan sueltas cuando pides algo puntual sobre un deck que ya existe, sin repetir las anteriores.
+Le pides algo como *"hazme un pitch deck de 8 slides sobre mi startup"* y la skill conduce el resto de la conversación. No es una sola cadena rígida: son **ocho fases**, cada una con su propio momento de activación. Las primeras seis arman un deck nuevo de punta a punta; `add` y `fix` se activan sueltas sobre un deck que ya existe, sin repetir las anteriores.
 
 | Fase | Se activa con | Qué hace | Referencia |
 |---|---|---|---|
 | **init** | El disparador inicial, o "cambia la paleta/el pack/la tipografía" | Elegir o cambiar pack visual, colores de marca, tipografía | [reference/init.md](reference/init.md) |
 | **brief** | Después de init, o "cambia el tema/tamaño/contenido" | Tema, público, tipo de deck, tamaño, research en internet, arco narrativo, wireframe aprobado por ti | [reference/brief.md](reference/brief.md) |
 | **assets** | Después de aprobar el wireframe, o "¿qué imágenes necesito?" | Checklist obligatorio y bloqueante de imágenes, logos y datos reales por slide — no se genera nada hasta resolver cada ítem | [reference/assets.md](reference/assets.md) |
-| **build** | Después de resolver assets, o "regenera/agrega animación" | Nivel de animación y generación del HTML final | [reference/build.md](reference/build.md) |
+| **build** | Después de resolver assets | Nivel de animación y generación del HTML final | [reference/build.md](reference/build.md) |
 | **audit** | Antes de entregar, o "audita el deck" | Validación automática (`scripts/audit.mjs`): contraste, balance HTML, reglas de voz, assets pendientes | [reference/audit.md](reference/audit.md) |
 | **export** | "pásalo a PDF/PPTX", "dame las notas" | PDF nativo, PPTX editable, deck sin dependencia de red, speaker notes | [reference/export.md](reference/export.md) |
+| **add** | "agrega una slide sobre X", "mete 2 slides entre la 9 y la 10" | Agregar slides a un deck existente, renumerando todo automáticamente (`scripts/renumber.mjs`) — nunca deja huecos ni duplicados | [reference/add.md](reference/add.md) |
+| **fix** | "la slide 7 se ve genérica, mejórala" | Corregir o mejorar una o más slides puntuales sin tocar el resto del deck | [reference/fix.md](reference/fix.md) |
 
-**Ejemplo de una petición puntual**, sin recorrer todo el flujo: *"cambia el pack a terminal"* activa solo `init`; *"audita el deck que ya generé"* activa solo `audit`. La skill decide qué fase corresponde por lo que pediste, no por dónde vas en la conversación.
+**Ejemplo de una petición puntual**, sin recorrer todo el flujo: *"cambia el pack a terminal"* activa solo `init`; *"audita el deck que ya generé"* activa solo `audit`; *"agrégale una slide de FAQ al final"* activa solo `add`. La skill decide qué fase corresponde por lo que pediste, no por dónde vas en la conversación.
 
 ## Instalación
 
@@ -68,6 +70,8 @@ npm install
 | `reference/build.md` | Fase build — nivel de animación y generación del HTML. |
 | `reference/audit.md` | Fase audit — qué valida `scripts/audit.mjs` y qué queda a criterio del modelo. |
 | `reference/export.md` | Fase export — PDF, PPTX, deck sin red, speaker notes. |
+| `reference/add.md` | Fase add — agregar slides a un deck existente sin romper la numeración. |
+| `reference/fix.md` | Fase fix — corregir o mejorar una slide puntual sin romper el resto. |
 | `reference/design-tokens-schema.md` | Esquema del design system y su mapeo a variables CSS. |
 | `reference/design-guidelines.md` | Principios visuales y lista de anti-clichés. |
 | `reference/deck-schema.md` | Formato del wireframe, arcos narrativos, niveles de animación. |
@@ -82,6 +86,7 @@ npm install
 | `scripts/audit.mjs` | Valida un deck ya generado: contraste, balance HTML, reglas de voz, assets pendientes. |
 | `scripts/export-pptx.mjs` | Exporta un deck a `.pptx` editable (texto y formas nativas, no imágenes). |
 | `scripts/make-offline.mjs` | Incrusta las fuentes como `data:` URI para presentar sin depender de red. |
+| `scripts/renumber.mjs` | Recalcula `data-label` y `<span class="num">` de todas las slides en orden de documento — usar después de insertar una slide en medio del deck. |
 | `scripts/smoke-test.mjs` | Test de regresión: ejercita cada pack con cada alternativa tipográfica. |
 | `examples/demo-deck.html` | Deck de ejemplo heredado del fork original, sin modificar (ver `NOTICE.md`). |
 | `demo/` | Deck de ejemplo propio (`pitch-demo.html`) con su PDF y PPTX exportados. |
