@@ -152,6 +152,18 @@ function extractSlide(section) {
     if (!hasAncestorClass(p, 'card')) push('body', clean(p));
   }
 
+  // Listas sueltas (ej. .list-strike u otra <ul>/<ol> ad-hoc que no este
+  // documentada como patron fijo): cada <li> es una linea, .out se marca
+  // tachado en vez de perderse.
+  for (const list of section.querySelectorAll('ul, ol')) {
+    if (hasAncestorClass(list, 'card')) continue;
+    const items = [...list.querySelectorAll('li')].map((li) => ({
+      text: clean(li),
+      out: (li.getAttribute('class') || '').split(/\s+/).includes('out'),
+    })).filter((i) => i.text);
+    if (items.length) out.blocks.push({ role: 'list', text: '', items });
+  }
+
   for (const card of section.querySelectorAll('.card')) {
     out.cards.push({
       num: clean(card.querySelector('.card-num')),
@@ -206,6 +218,23 @@ function renderSlide(pptx, data, t) {
 
   // Bloques de texto apilados verticalmente (mas la forma placeholder de imagen)
   for (const b of data.blocks) {
+    if (b.role === 'list') {
+      const rowH = 52;
+      const h = b.items.length * rowH;
+      slide.addText(
+        b.items.map((it) => ({
+          text: it.text,
+          options: { strike: it.out, color: it.out ? t.muted : t.body, breakLine: true },
+        })),
+        {
+          x: px(t.padX), y: px(y), w: px(contentW), h: px(h),
+          fontSize: pt(28), fontFace: t.fontBody, color: t.body,
+          bullet: { code: '2022' }, lineSpacingMultiple: 1.3, valign: 'top',
+        },
+      );
+      y += h + 34;
+      continue;
+    }
     if (b.role === 'image') {
       const h = 280;
       slide.addShape(pptx.ShapeType.roundRect, {
