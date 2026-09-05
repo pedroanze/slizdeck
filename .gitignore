@@ -5,6 +5,9 @@ demo/slide-*.png
 # Dependencias
 node_modules/
 
+# Salida de scripts/smoke-test.mjs (regenerable)
+.smoke-test-out/
+
 # macOS
 .DS_Store
 demo/t-*.png
