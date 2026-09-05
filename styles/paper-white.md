@@ -24,9 +24,9 @@
   --cs-border:      rgba(0,0,0,0.10);
   --cs-border-strong: rgba(0,0,0,0.18);
   --cs-scrim:       rgba(0,0,0,0.05);
-  --cs-grad-radial: radial-gradient(112% 150% at 0% 100%, #16181A 0%, #000000 100%);
-  --cs-grad-linear: linear-gradient(135deg, #16181A 0%, #000000 100%);
-  --cs-grad-text:   linear-gradient(135deg, #16181A 0%, #3A4046 50%, #16181A 100%);
+  --cs-grad-radial: radial-gradient(112% 150% at 0% 100% in oklch, #16181A 0%, #000000 100%);
+  --cs-grad-linear: linear-gradient(135deg in oklch, #16181A 0%, #000000 100%);
+  --cs-grad-text:   linear-gradient(135deg in oklch, #16181A 0%, #3A4046 50%, #16181A 100%);
   --cs-font-sans:   'Schibsted Grotesk', ui-sans-serif, system-ui, sans-serif;
   --cs-font-heading: 'Schibsted Grotesk', ui-sans-serif, system-ui, sans-serif;
   --cs-font-mono:   ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
@@ -36,6 +36,28 @@
 **Google Fonts:**
 ```
 https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800;900&display=swap
+```
+
+**Alternativas tipográficas:** (mismo mundo, distinta ejecución; elegir una en el flujo de la skill)
+
+### Alt: hanken — Hanken Grotesk
+Grotesk más neutro y algo más ancho que Schibsted; se siente menos "producto Nordic" y más documentación genérica bien hecha.
+```css
+--cs-font-sans:    'Hanken Grotesk', ui-sans-serif, system-ui, sans-serif;
+--cs-font-heading: 'Hanken Grotesk', ui-sans-serif, system-ui, sans-serif;
+```
+```
+https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800;900&display=swap
+```
+
+### Alt: figtree — Figtree
+Trazo más cálido y redondeado sin perder la contención del pack; para cuando el "casi monocromo" no debe sentirse frío.
+```css
+--cs-font-sans:    'Figtree', ui-sans-serif, system-ui, sans-serif;
+--cs-font-heading: 'Figtree', ui-sans-serif, system-ui, sans-serif;
+```
+```
+https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800;900&display=swap
 ```
 
 **Composición:**

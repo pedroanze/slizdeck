@@ -60,6 +60,13 @@ Si al inyectar los colores de marca el validador falla, **decirlo y proponer el 
 
 **b) El usuario no tiene design system.** Mostrar la tabla de `styles/index.md` —solo esa tabla, son cinco líneas— y pedirle que elija. Si no elige, `paper-white`. Preguntar si tiene un color de marca para inyectar; si no lo tiene, el pack se usa tal cual.
 
+Con el pack elegido, mostrar también sus **2 alternativas tipográficas** (nombre + la línea de "cuándo preferirla" que trae el propio pack) y dejar elegir entre esas y el default. No es personalización libre — son 2-3 opciones curadas por pack, ya validadas contra clichés de IA — pero sí le da al usuario una decisión real sobre cómo se ve su tipografía. Si no elige, se usa el default del pack. Aplicar con:
+
+```bash
+node scripts/apply-style-pack.mjs styles/<pack>.md deck.html --font=<id>   # si eligió una alternativa
+node scripts/apply-style-pack.mjs styles/<pack>.md deck.html               # si se queda con el default
+```
+
 **c) El usuario no tiene nada y quiere algo hecho a medida.** Generar una semilla con la skill de diseño `impeccable`:
 
 ```bash
@@ -200,4 +207,3 @@ Generar `[nombre-deck]-notes.md`: un bloque `## Slide NN — Título` por slide,
 - **`reference/animations.md` tiene los gotchas** de cada técnica — leerlos antes de usar nivel HEAVY.
 - **Probar siempre en el navegador.** Abrir, verificar que el mensaje pasa, iterar.
 - **Animar cuesta tokens.** Respetar el nivel elegido; si el usuario pide "esta slide debe ser WOW", subir de nivel solo esa slide, no todo el deck.
-- **Fase 1 de `slizdeck`**: un solo estilo visual bien calibrado (el neutro azul/violeta o los colores de marca del usuario). El catálogo de varios "style packs" y el export a PPTX llegan en fases posteriores — ver el plan del proyecto.

@@ -26,9 +26,9 @@
   --cs-border:      rgba(10,14,39,0.12);
   --cs-border-strong: rgba(10,14,39,0.22);
   --cs-scrim:       rgba(10,14,39,0.06);
-  --cs-grad-radial: radial-gradient(112% 150% at 0% 100%, #1B3AF5 0%, #0B1B8A 100%);
-  --cs-grad-linear: linear-gradient(135deg, #1B3AF5 0%, #0B1B8A 100%);
-  --cs-grad-text:   linear-gradient(135deg, #1B3AF5 0%, #1430C0 50%, #0B1B8A 100%);
+  --cs-grad-radial: radial-gradient(112% 150% at 0% 100% in oklch, #1B3AF5 0%, #0B1B8A 100%);
+  --cs-grad-linear: linear-gradient(135deg in oklch, #1B3AF5 0%, #0B1B8A 100%);
+  --cs-grad-text:   linear-gradient(135deg in oklch, #1B3AF5 0%, #1430C0 50%, #0B1B8A 100%);
   --cs-font-sans:   'Manrope', ui-sans-serif, system-ui, sans-serif;
   --cs-font-heading: 'Bricolage Grotesque', ui-sans-serif, system-ui, sans-serif;
   --cs-font-mono:   ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
@@ -38,6 +38,28 @@
 **Google Fonts:**
 ```
 https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Manrope:wght@300;400;500;600;700;800&display=swap
+```
+
+**Alternativas tipográficas:** (mismo mundo, distinta ejecución; elegir una en el flujo de la skill)
+
+### Alt: unbounded — Unbounded + Onest
+Display geométrico y macizo, más cartel-de-festival aún que Bricolage; para el pitch que necesita gritar un poco más.
+```css
+--cs-font-sans:    'Onest', ui-sans-serif, system-ui, sans-serif;
+--cs-font-heading: 'Unbounded', ui-sans-serif, system-ui, sans-serif;
+```
+```
+https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600;700;800;900&family=Onest:wght@400;500;600;700&display=swap
+```
+
+### Alt: quiet-bold — Familjen Grotesk + Karla
+Igual de contundente en el cobalto pero con trazo más editorial en el titular; para marcas que quieren energía sin sentirse "festival".
+```css
+--cs-font-sans:    'Karla', ui-sans-serif, system-ui, sans-serif;
+--cs-font-heading: 'Familjen Grotesk', ui-sans-serif, system-ui, sans-serif;
+```
+```
+https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@500;600;700&family=Karla:wght@400;500;600;700&display=swap
 ```
 
 **Composición:**

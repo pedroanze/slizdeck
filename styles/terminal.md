@@ -24,9 +24,9 @@
   --cs-border:      rgba(255,255,255,0.10);
   --cs-border-strong: rgba(255,255,255,0.20);
   --cs-scrim:       rgba(255,255,255,0.06);
-  --cs-grad-radial: radial-gradient(112% 150% at 0% 100%, #16191B 0%, #0B0D0E 100%);
-  --cs-grad-linear: linear-gradient(135deg, #E8A33D 0%, #E8433A 100%);
-  --cs-grad-text:   linear-gradient(135deg, #E8A33D 0%, #E8763B 50%, #E8433A 100%);
+  --cs-grad-radial: radial-gradient(112% 150% at 0% 100% in oklch, #16191B 0%, #0B0D0E 100%);
+  --cs-grad-linear: linear-gradient(135deg in oklch, #E8A33D 0%, #E8433A 100%);
+  --cs-grad-text:   linear-gradient(135deg in oklch, #E8A33D 0%, #E8763B 50%, #E8433A 100%);
   --cs-font-sans:   'Archivo', ui-sans-serif, system-ui, sans-serif;
   --cs-font-heading: 'Archivo', ui-sans-serif, system-ui, sans-serif;
   --cs-font-mono:   'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
@@ -36,6 +36,30 @@
 **Google Fonts:**
 ```
 https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap
+```
+
+**Alternativas tipográficas:** (mismo mundo, distinta ejecución; elegir una en el flujo de la skill)
+
+### Alt: mono-tech — Chakra Petch + Fragment Mono
+Más anguloso, sensación de HUD de interfaz de control en vez de terminal clásica de texto.
+```css
+--cs-font-sans:    'Chakra Petch', ui-sans-serif, system-ui, sans-serif;
+--cs-font-heading: 'Chakra Petch', ui-sans-serif, system-ui, sans-serif;
+--cs-font-mono:    'Fragment Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+```
+```
+https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=Fragment+Mono&display=swap
+```
+
+### Alt: quiet-sans — Sora + Overpass Mono
+Menos ruido visual que Archivo; para decks donde el texto debe leerse primero y el código después.
+```css
+--cs-font-sans:    'Sora', ui-sans-serif, system-ui, sans-serif;
+--cs-font-heading: 'Sora', ui-sans-serif, system-ui, sans-serif;
+--cs-font-mono:    'Overpass Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+```
+```
+https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Overpass+Mono:wght@400;600;700&display=swap
 ```
 
 **Composición:**

@@ -24,9 +24,9 @@
   --cs-border:      rgba(13,27,38,0.12);
   --cs-border-strong: rgba(13,27,38,0.24);
   --cs-scrim:       rgba(13,27,38,0.06);
-  --cs-grad-radial: radial-gradient(112% 150% at 0% 100%, #0F5FD6 0%, #0D1B26 100%);
-  --cs-grad-linear: linear-gradient(135deg, #0F5FD6 0%, #0D1B26 100%);
-  --cs-grad-text:   linear-gradient(135deg, #0F5FD6 0%, #17435E 50%, #0D1B26 100%);
+  --cs-grad-radial: radial-gradient(112% 150% at 0% 100% in oklch, #0F5FD6 0%, #0D1B26 100%);
+  --cs-grad-linear: linear-gradient(135deg in oklch, #0F5FD6 0%, #0D1B26 100%);
+  --cs-grad-text:   linear-gradient(135deg in oklch, #0F5FD6 0%, #17435E 50%, #0D1B26 100%);
   --cs-font-sans:   'Public Sans', ui-sans-serif, system-ui, sans-serif;
   --cs-font-heading: 'Public Sans', ui-sans-serif, system-ui, sans-serif;
   --cs-font-mono:   'Martian Mono', ui-monospace, 'SF Mono', Menlo, monospace;
@@ -39,6 +39,30 @@
 **Google Fonts:**
 ```
 https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700;800&family=Martian+Mono:wght@400;500;700&display=swap
+```
+
+**Alternativas tipográficas:** (mismo mundo, distinta ejecución; elegir una en el flujo de la skill)
+
+### Alt: red-hat — Red Hat Display + Red Hat Mono
+Misma familia para texto y cifras (por diseño, comparten métrica): panel de instrumentos más sistemático, menos "app de consumo".
+```css
+--cs-font-sans:    'Red Hat Display', ui-sans-serif, system-ui, sans-serif;
+--cs-font-heading: 'Red Hat Display', ui-sans-serif, system-ui, sans-serif;
+--cs-font-mono:    'Red Hat Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+```
+```
+https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@400;500;600;700;800&family=Red+Hat+Mono:wght@400;500;700&display=swap
+```
+
+### Alt: commissioner — Commissioner + Spline Sans Mono
+Trazo más cálido que Public Sans sin perder legibilidad en tabla; para dashboards que además tienen que convencer, no solo informar.
+```css
+--cs-font-sans:    'Commissioner', ui-sans-serif, system-ui, sans-serif;
+--cs-font-heading: 'Commissioner', ui-sans-serif, system-ui, sans-serif;
+--cs-font-mono:    'Spline Sans Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+```
+```
+https://fonts.googleapis.com/css2?family=Commissioner:wght@400;500;600;700;800&family=Spline+Sans+Mono:wght@400;500;600;700&display=swap
 ```
 
 **Composición:**

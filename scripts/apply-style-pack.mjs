@@ -8,12 +8,17 @@
  *
  *   node scripts/apply-style-pack.mjs styles/terminal.md deck.html
  *   node scripts/apply-style-pack.mjs styles/terminal.md template.html nuevo.html
+ *   node scripts/apply-style-pack.mjs styles/terminal.md deck.html --font=mono-tech
  *
  * Por que un script y no "copia el bloque :root": un pack solo declara los
  * tokens que le son propios (color y tipografia). Los que no declara
  * —padding, radios, sombras, easing— tienen que sobrevivir. Reemplazar el
  * bloque entero los borra y el deck pierde el padding sin ningun error
  * visible hasta que se renderiza.
+ *
+ * --font=<id> aplica una de las alternativas tipograficas del pack (seccion
+ * "Alternativas tipograficas", bloques `### Alt: <id> — <label>`) en vez de
+ * la tipografia por defecto. Sin el flag se usa siempre el default del pack.
  */
 
 import { readFileSync, writeFileSync } from 'node:fs';
@@ -28,17 +33,42 @@ const readPack = (file) => {
   }
   const fonts = /\*\*Google Fonts:\*\*\s*\n```\s*\n(https:\/\/fonts\.googleapis\.com[^\n]+)\n```/.exec(md);
   const name = (/^#\s+(.+)$/m.exec(md) || [, file])[1].trim();
-  return { name, tokens, fontsUrl: fonts?.[1]?.trim() ?? null };
+
+  const fontAlts = new Map();
+  for (const m of md.matchAll(/^### Alt: ([a-z0-9-]+) — (.+)\n([^\n]+)\n```css\n([\s\S]*?)```\n```\n(https:\/\/fonts\.googleapis\.com[^\n]+)\n```/gm)) {
+    const [, id, label, note, cssBlock] = m;
+    const altTokens = new Map();
+    for (const t of cssBlock.matchAll(/(--cs-[a-z0-9-]+)\s*:\s*([^;]+);/g)) altTokens.set(t[1], t[2].trim());
+    fontAlts.set(id, { label, note: note.trim(), tokens: altTokens, fontsUrl: m[5].trim() });
+  }
+
+  return { name, tokens, fontsUrl: fonts?.[1]?.trim() ?? null, fontAlts };
 };
 
 function main() {
-  const [packFile, deckFile, outArg] = process.argv.slice(2);
+  const args = process.argv.slice(2);
+  const fontFlag = args.find((a) => a.startsWith('--font='));
+  const [packFile, deckFile, outArg] = args.filter((a) => !a.startsWith('--font='));
   if (!packFile || !deckFile) {
-    console.error('uso: node scripts/apply-style-pack.mjs <pack.md> <deck.html> [salida.html]');
+    console.error('uso: node scripts/apply-style-pack.mjs <pack.md> <deck.html> [salida.html] [--font=<id>]');
     process.exit(1);
   }
   const out = outArg || deckFile;
   const pack = readPack(packFile);
+
+  if (fontFlag) {
+    const id = fontFlag.slice('--font='.length);
+    const alt = pack.fontAlts.get(id);
+    if (!alt) {
+      const ids = [...pack.fontAlts.keys()];
+      console.error(`${packFile}: no tiene la alternativa tipografica "${id}".${ids.length ? ` Disponibles: ${ids.join(', ')}` : ' Este pack no declara alternativas.'}`);
+      process.exit(1);
+    }
+    for (const [name, value] of alt.tokens) pack.tokens.set(name, value);
+    pack.fontsUrl = alt.fontsUrl;
+    console.log(`  Tipografia: ${alt.label} (${id}) en vez del default`);
+  }
+
   let deck = readFileSync(deckFile, 'utf8');
 
   const rootRe = /(:root\s*\{)([\s\S]*?)(\n\s*\})/;

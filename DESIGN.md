@@ -158,6 +158,8 @@ Cada pack define su pareja de fuentes. Lo invariante es **la escala y los roles*
 
 La proporción display/headline es de 2.2×, y esa escala extrema es parte de la jerarquía: aplanarla desdibuja el sistema.
 
+Cada pack trae su tipografía default más **2 alternativas curadas** (mismo mundo visual, distinta ejecución de fuente), documentadas en el propio archivo del pack y aplicables con `apply-style-pack.mjs --font=<id>`. No es personalización libre: las tres opciones de cada pack ya están validadas contra la lista de *training-data defaults*.
+
 ### Named Rules
 **The One-Line Title Rule.** Los títulos en una sola línea siempre que se pueda; un `<br>` solo se justifica por equilibrio visual, nunca por longitud.
 
@@ -176,6 +178,8 @@ El movimiento es opt-in por pasos (`.reveal` + `data-step`), y **la entrada var�
 | `r-mask` | Remates |
 
 Un contenedor con `.stagger` escalona sus hijos automáticamente. Las superficies con gradiente llevan grano (`--cs-grain`), sin `mix-blend-mode`: `overlay` es invisible sobre fondos oscuros.
+
+Los tres tokens de gradiente (`--cs-grad-radial`, `--cs-grad-linear`, `--cs-grad-text`) interpolan en **OKLCH** (`linear-gradient(135deg in oklch, ...)`), no en RGB: dos colores de matiz distinto (ej. cobalto → navy) mezclados en RGB pasan por un punto medio grisáceo y apagado; en OKLCH el color se mantiene vivo en todo el recorrido. Requiere Chrome 111+/Safari 16.4+/Firefox 128+ — ya asumido por el resto del sistema (el pipeline de PDF usa Chrome headless). Un pack nuevo debe declarar sus gradientes con `in oklch` desde el inicio.
 
 ## Layout
 
@@ -205,17 +209,17 @@ Slizdeck no tiene botones ni inputs (no es una app interactiva) — sus componen
 
 ### Cards
 - **Corner Style:** 26px (`--cs-radius-lg`)
-- **Background:** Surface White sobre fondo Paper Cream
+- **Background:** `--cs-surface` sobre `--cs-cream`
 - **Shadow Strategy:** shadow-2 (ver Elevation & Depth)
 - **Border:** 1px `rgba(0,0,0,0.08)`
 - **Internal Padding:** 40px 44px
 
 ### Badges
 - **Style:** fondo translúcido del color semántico (10-12% de opacidad) + texto sólido del mismo color; forma de píldora (999px)
-- **Variantes:** primary (teal), green, red, orange, muted — una por estado semántico, nunca decorativas
+- **Variantes:** primary, green, red, orange, muted — una por estado semántico, nunca decorativas
 
 ### Eyebrows / Labels
-- **Style:** uppercase, 24px, letter-spacing 0.22em, peso 700, color Founder's Teal sobre crema o blanco translúcido sobre gradiente
+- **Style:** uppercase, 24px, letter-spacing 0.22em, peso 700, color `--cs-primary` sobre `--cs-cream` o blanco translúcido sobre gradiente
 
 ### Act Marker (Signature Component)
 Indicador de paso ("1/2") en la esquina superior derecha de slides multi-paso, en fuente mono. Es el único elemento de navegación interna visible en pantalla — todo lo demás del viewer chrome (barra de progreso, botón de fullscreen) vive fuera del canvas de la slide. La barra de progreso anima con `transform: scaleX()` (no `width`), para evitar layout thrash.
@@ -229,14 +233,14 @@ El export a PDF es impresión nativa del navegador (`Cmd/Ctrl+P`), y el estado q
 ## Do's and Don'ts
 
 ### Do:
-- **Do** dejar que un solo color domine cada slide (Founder's Teal o el crema neutro) y usar Signal Ember en un solo elemento como máximo.
+- **Do** dejar que un solo color domine cada slide (`--cs-primary` o el fondo neutro) y usar `--cs-accent` en un solo elemento como máximo.
 - **Do** usar Display (168px) solo en cover y transition, nunca en slides de contenido.
-- **Do** mantener el gradiente (teal→navy) exclusivamente en cover y cierre.
-- **Do** verificar contraste ≥4.5:1 para texto normal y ≥3:1 para texto grande antes de dar por cerrado un color nuevo.
+- **Do** mantener el gradiente del pack exclusivamente en cover y cierre.
+- **Do** verificar contraste ≥4.5:1 para texto normal y ≥3:1 para texto grande antes de dar por cerrado un color nuevo (ver umbrales reales en `check-style-pack.mjs`, más estrictos que WCAG mínimo).
 
 ### Don't:
 - **Don't** poner líneas o barras decorativas bajo ningún título.
 - **Don't** usar iconografía de stock genérica (candados, engranajes, bombillas) cuando hay un ícono más específico disponible.
 - **Don't** dejar una slide de contenido sin ningún elemento visual (imagen, gráfica, ícono, número grande) — nunca solo texto/bullets.
 - **Don't** mezclar más de 3 colores con peso visual real en una misma slide (dominante + apoyo + acento).
-- **Don't** volver a Inter, Roboto, Fraunces, Geist, Plus Jakarta Sans o Space Grotesk como default, ni a paletas azul/violeta con gradiente.
+- **Don't** volver a las fuentes o paletas de la lista de *training-data defaults* (ver The No-Slop-Palette Rule) como default de ningún pack nuevo.
