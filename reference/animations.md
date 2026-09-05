@@ -2,7 +2,7 @@
 
 Catalog di tecniche di animazione per deck con `template.html`. Ogni tecnica include solo quello che serve per farla funzionare: snippet copia-incolla + i bug da evitare.
 
-**La decision logic "static vs animated" sta in `SKILL.md` Phase 4.5.** Qui ci sono solo le tecniche.
+**La decision logic "static vs animated" sta nella fase `build`, vedi `reference/build.md`.** Qui ci sono solo le tecniche.
 
 ---
 

@@ -26,10 +26,13 @@ node scripts/export-pptx.mjs deck.html deck.pptx
 
 Reconstruye cada slide con cajas de texto y formas nativas (no imágenes), leyendo los design tokens del propio HTML. La primera vez requiere `npm install` en la raíz de la skill.
 
-Advertir al usuario de las tres degradaciones inherentes al formato, que no son fallos del export:
+Advertir al usuario de las degradaciones inherentes al formato, que no son fallos del export:
 - **Sin animaciones**: PPTX no reproduce el sistema de reveals; se exporta el estado final.
 - **Fuentes sustituidas**: las fuentes web se mapean a fuentes seguras de Office (serif → Cambria, sans → Calibri) porque una fuente no instalada en la máquina del lector se sustituye sola y rompe el layout.
 - **Gradientes aplanados**: los fondos de cover/cierre se exportan en el color primario sólido.
+- **Imágenes como placeholder**: ninguna imagen real se incrusta (coherente con "cero imágenes, todo editable"); sale una forma con el alt como etiqueta.
+
+Y una limitación real, no una degradación aceptada: `export-pptx.mjs` solo reconoce un set cerrado de clases (ver el comentario de cabecera del script). Si el wireframe usa `.barras` o `.prop` de `reference/media-and-data.md`, ese contenido **no aparece en el `.pptx`**, sin aviso. Si el usuario va a necesitar el export a PPTX, evitar esos dos patrones o avisar explícitamente del hueco antes de generar.
 
 Si el usuario necesita fidelidad visual exacta, el PDF es el formato correcto; el PPTX es para cuando necesita **editar**.
 

@@ -17,6 +17,15 @@
  *    una fuente no instalada en la maquina del lector se sustituye sola y
  *    rompe el layout, asi que se prefiere uniformidad a fidelidad exacta.
  *  - Los gradientes de fondo se aplanan al color dominante.
+ *  - Las imagenes (patron .split/.bleed) no se embeben como archivo — sale
+ *    una forma placeholder con el alt como etiqueta, para mantener el
+ *    principio de cero imagenes incrustadas (ppt/media/ vacio).
+ *
+ * extractSlide() reconoce un set cerrado de clases (ver reference/deck-
+ * schema.md y media-and-data.md). Si se agrega un patron nuevo a esos
+ * catalogos con una clase que no esta aqui, su contenido se pierde en
+ * silencio al exportar — no hay warning. Extenderlo es la forma correcta
+ * de agregar soporte, no un post-proceso sobre el .pptx ya generado.
  */
 
 import { parse } from 'node-html-parser';
@@ -93,10 +102,20 @@ function counterText(el) {
   return n + unit;
 }
 
+// El propio deck-schema documenta .card como el unico contenedor con html
+// de clase abierta; todo lo demas (ej. el texto de un patron .split) vive
+// en tags sueltos (h3/p) que hay que reconocer por ancestro, no por clase.
+const hasAncestorClass = (el, cls) => {
+  for (let n = el?.parentNode; n; n = n.parentNode) {
+    if ((n.getAttribute?.('class') || '').split(/\s+/).includes(cls)) return true;
+  }
+  return false;
+};
+
 function extractSlide(section) {
   const isGrad = (section.getAttribute('class') || '').includes('grad');
   const centered = !!section.querySelector('.pad.center');
-  const out = { isGrad, centered, blocks: [], footer: '', cards: [] };
+  const out = { isGrad, centered, blocks: [], footer: '', cards: [], metrics: [] };
 
   const push = (role, text, extra = {}) => {
     if (text) out.blocks.push({ role, text, ...extra });
@@ -113,12 +132,24 @@ function extractSlide(section) {
   push('subtitle', clean(section.querySelector('.ts-tagline')));
   push('payoff', clean(section.querySelector('.payoff')));
 
+  // Imagen de un patron .split/.bleed (reference/media-and-data.md): no se
+  // embebe el archivo (principio "cero imagenes" del export, ppt/media/
+  // queda vacio), se deja una forma placeholder con el alt como etiqueta.
+  const img = section.querySelector('.split img, .bleed img');
+  if (img) push('image', img.getAttribute('alt') || 'Imagen');
+
   const counter = section.querySelector('[data-counter]');
-  if (counter) push('stat', counterText(counter));
+  if (counter && !hasAncestorClass(counter, 'metricas')) push('stat', counterText(counter));
 
   // Texto suelto de apoyo que no cae en ninguna clase conocida
   for (const sel of ['.stat-caption', '.ask-line', '.stat-source']) {
     push(sel === '.stat-source' ? 'caption' : 'body', clean(section.querySelector(sel)));
+  }
+
+  // Parrafos sueltos (ej. la mitad de texto de un patron .split) que no
+  // esten ya cubiertos por el body de una .card.
+  for (const p of section.querySelectorAll('p')) {
+    if (!hasAncestorClass(p, 'card')) push('body', clean(p));
   }
 
   for (const card of section.querySelectorAll('.card')) {
@@ -128,6 +159,15 @@ function extractSlide(section) {
       title: clean(card.querySelector('h3')),
       body: clean(card.querySelector('p')),
     });
+  }
+
+  // Fila de metricas (patron .metricas de media-and-data.md): cada .m trae
+  // una cifra (.n, texto o [data-counter]) y una etiqueta (.l).
+  for (const m of section.querySelectorAll('.metricas .m')) {
+    const nEl = m.querySelector('.n');
+    const n = nEl ? (nEl.getAttribute('data-counter') ? counterText(nEl) : clean(nEl)) : '';
+    const l = clean(m.querySelector('.l'));
+    if (n || l) out.metrics.push({ n, l });
   }
 
   out.footer = clean(section.querySelector('.footer'));
@@ -164,8 +204,23 @@ function renderSlide(pptx, data, t) {
     return t.body;
   };
 
-  // Bloques de texto apilados verticalmente
+  // Bloques de texto apilados verticalmente (mas la forma placeholder de imagen)
   for (const b of data.blocks) {
+    if (b.role === 'image') {
+      const h = 280;
+      slide.addShape(pptx.ShapeType.roundRect, {
+        x: px(t.padX), y: px(y), w: px(contentW), h: px(h),
+        fill: { color: onDark ? 'FFFFFF' : t.cream === 'FFFFFF' ? 'F4F5F6' : t.white },
+        line: { color: 'E6E6E6', width: 1 }, rectRadius: 0.1,
+      });
+      slide.addText(`[Imagen: ${b.text}]`, {
+        x: px(t.padX), y: px(y), w: px(contentW), h: px(h),
+        fontSize: pt(22), color: t.muted, fontFace: t.fontBody,
+        align: 'center', valign: 'middle', italic: true,
+      });
+      y += h + 34;
+      continue;
+    }
     const base = STYLE[b.role] ?? STYLE.body;
     const s = { ...base, size: b.size ?? base.size };
     const lineH = s.size * 1.25;
@@ -183,6 +238,29 @@ function renderSlide(pptx, data, t) {
       fit: 'shrink',
     });
     y += est + (b.role === 'eyebrow' ? 18 : 34);
+  }
+
+  // Fila de metricas: cifra grande + etiqueta, separadas por un filete superior
+  if (data.metrics.length) {
+    const gap = 56;
+    const n = data.metrics.length;
+    const colW = (contentW - gap * (n - 1)) / n;
+    data.metrics.forEach((m, i) => {
+      const mx = t.padX + i * (colW + gap);
+      slide.addShape(pptx.ShapeType.rect, {
+        x: px(mx), y: px(y), w: px(colW), h: px(2),
+        fill: { color: 'D9D9D9' },
+      });
+      slide.addText(m.n, {
+        x: px(mx), y: px(y + 20), w: px(colW), h: px(70),
+        fontSize: pt(56), bold: false, color: t.black, fontFace: t.fontHeading, fit: 'shrink',
+      });
+      slide.addText(m.l, {
+        x: px(mx), y: px(y + 96), w: px(colW), h: px(34),
+        fontSize: pt(24), color: t.muted, fontFace: t.fontBody,
+      });
+    });
+    y += 150;
   }
 
   // Grid de cards: se reparten el ancho disponible

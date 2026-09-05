@@ -1,6 +1,6 @@
 # Principios de diseño — estilo pitch deck de startup
 
-Estas reglas gobiernan tanto el **contenido** (qué tanto texto, qué se muestra) como el **acabado visual** (color, jerarquía, layout) de cada slide. Se aplican al construir el wireframe (paso 4 del flujo en `SKILL.md`) y otra vez al generar el HTML final. Están adaptadas de la guía de diseño anti-genérico que usa la skill oficial de PPTX de Anthropic, y ajustadas al estilo de pitch deck de startup (minimalista, denso en imagen, ligero en texto).
+Estas reglas gobiernan tanto el **contenido** (qué tanto texto, qué se muestra) como el **acabado visual** (color, jerarquía, layout) de cada slide. Se aplican al construir el wireframe (fase `brief`, ver `reference/brief.md`) y otra vez al generar el HTML final (fase `build`). Están adaptadas de la guía de diseño anti-genérico que usa la skill oficial de PPTX de Anthropic, y ajustadas al estilo de pitch deck de startup (minimalista, denso en imagen, ligero en texto).
 
 ## Contenido: poco texto, un mensaje por slide
 

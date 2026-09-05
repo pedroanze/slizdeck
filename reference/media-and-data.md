@@ -4,6 +4,8 @@ Patrones listos para las slides que llevan algo más que texto. Todo en CSS y SV
 
 Copiar el CSS al bloque de la slide y el HTML dentro del `.pad`.
 
+**Soporte en export a PPTX** (`scripts/export-pptx.mjs`): imagen a sangre/split y fila de métricas se reconocen y se exportan como texto/formas nativas. Barras comparativas y progreso/proporción **todavía no** — su contenido no aparece en el `.pptx` si se usan. Si el deck necesita export fiel a PowerPoint, preferir la fila de métricas sobre las barras para mostrar comparaciones.
+
 ---
 
 ## Cuándo pedirle imágenes al usuario

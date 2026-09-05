@@ -1,6 +1,6 @@
 # Esquema del deck: wireframe y estructura de slide
 
-## El wireframe (paso 4 de `SKILL.md`)
+## El wireframe (fase `brief`, ver `reference/brief.md`)
 
 Antes de generar HTML, se presenta un wireframe compacto, una línea por slide, y se espera aprobación del usuario:
 
@@ -44,7 +44,7 @@ Cada slide en `template.html` es un `<section>` con estas convenciones (ver ejem
 | `<div class="pad center">` | Frame centrado (transitions) |
 | `<div class="footer">` | Logo + nombre/org + número de slide — presente siempre |
 
-## Niveles de animación (elegir uno por deck, paso 4.5 de `SKILL.md`)
+## Niveles de animación (elegir uno por deck, fase `build`, ver `reference/build.md`)
 
 | Nivel | Qué incluye | Cuándo |
 |---|---|---|

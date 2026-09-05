@@ -10,13 +10,17 @@ Proponer un nivel (NONE/LIGHT/HEAVY, tabla y defaults en `reference/deck-schema.
 
 ## 2. Generar el deck
 
-1. **Assets**: usar los archivos resueltos en la fase `assets`; para los ítems marcados "seguir sin él", insertar el comentario `<!-- SLIZDECK-ASSET-PENDING: ... -->` justo antes del `<section>` afectado (ver `reference/assets.md`).
-2. Copiar `template.html` al directorio del proyecto con nombre basado en el tema (ej. `pitch-acme.html`).
-3. Sustituir las CSS variables de `:root` con los valores de `design-tokens.json` (mapeo completo en `reference/design-tokens-schema.md`). Si la tipografía cambia de Inter, actualizar también el `<link>` de Google Fonts en `<head>`.
-4. Por cada slide del wireframe: copiar el patrón elegido de `reference/components.md`, poblarlo con el contenido real; si el nivel es LIGHT o HEAVY, agregar `class="reveal" data-step="N"` a los elementos a revelar progresivamente y `data-steps="N"` en la `<section>`; si es HEAVY en esa slide, agregar la técnica de `reference/animations.md`.
-5. Insertar todas las `<section>` donde dice `INSERT SLIDES HERE`.
-6. Actualizar `<title>` y los footers (`Speaker · Org · NN`, numeración sin huecos ni duplicados).
-7. Aplicar `reference/design-guidelines.md` en cada slide (colores, jerarquía, variedad de layout, anti-clichés) antes de dar por cerrada la generación.
+1. Copiar `template.html` al directorio del proyecto con nombre basado en el tema (ej. `pitch-acme.html`). Este es el primer momento en que el archivo del deck existe — todo lo decidido en `init` (pack, alternativa tipográfica, colores de marca) se aplica recién aquí, sobre este archivo:
+   ```bash
+   node scripts/apply-style-pack.mjs styles/<pack>.md pitch-acme.html               # o con --font=<id> si se eligió una alternativa
+   node scripts/check-style-pack.mjs pitch-acme.html                                # confirmar que pasa antes de seguir
+   ```
+   Si `init` inyectó colores de marca sobre el pack, sobreescribirlos después de aplicar el pack y volver a validar.
+2. **Assets**: usar los archivos resueltos en la fase `assets`; para los ítems marcados "seguir sin él", insertar el comentario `<!-- SLIZDECK-ASSET-PENDING: ... -->` justo antes del `<section>` afectado (ver `reference/assets.md`).
+3. Por cada slide del wireframe: copiar el patrón elegido de `reference/components.md`, poblarlo con el contenido real; si el nivel es LIGHT o HEAVY, agregar `class="reveal" data-step="N"` a los elementos a revelar progresivamente y `data-steps="N"` en la `<section>`; si es HEAVY en esa slide, agregar la técnica de `reference/animations.md`.
+4. Insertar todas las `<section>` donde dice `INSERT SLIDES HERE`.
+5. Actualizar `<title>` y los footers (`Speaker · Org · NN`, numeración sin huecos ni duplicados).
+6. Aplicar `reference/design-guidelines.md` en cada slide (colores, jerarquía, variedad de layout, anti-clichés) antes de dar por cerrada la generación.
 
 ## 3. Abrir e iterar
 

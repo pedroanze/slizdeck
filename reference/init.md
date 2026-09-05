@@ -4,23 +4,15 @@ Se activa al empezar un deck desde cero, o cuando el usuario pide cambiar de pal
 
 Tres caminos, en este orden. El objetivo es que el usuario nunca escriba CSS ni JSON a mano.
 
-**a) El usuario ya tiene design system.** Buscar `design-tokens.json` en el directorio actual, o leer los tokens que el usuario señale (CSS de su sitio, guía de marca, variables de otro proyecto). Sus colores mandan. Aun así hay que elegir un pack de `styles/index.md`, porque el pack aporta lo que un archivo de tokens casi nunca trae: tipografía, composición y reglas de uso del color. Aplicar el pack y después sobreescribir sus colores con los de la marca:
+**Esta fase decide, no aplica.** El archivo del deck todavía no existe — se crea recién en `build` a partir de `template.html`. Lo que sale de aquí es: qué pack, qué alternativa tipográfica (o el default), y qué colores de marca si los hay. `build` ejecuta `apply-style-pack.mjs` y `check-style-pack.mjs` contra el archivo real una vez que existe, con estas decisiones ya tomadas.
 
-```bash
-node scripts/apply-style-pack.mjs styles/<pack>.md deck.html
-node scripts/check-style-pack.mjs deck.html    # confirmar que la marca no rompe contrastes
-```
+**a) El usuario ya tiene design system.** Buscar `design-tokens.json` en el directorio actual, o leer los tokens que el usuario señale (CSS de su sitio, guía de marca, variables de otro proyecto). Sus colores mandan. Aun así hay que elegir un pack de `styles/index.md`, porque el pack aporta lo que un archivo de tokens casi nunca trae: tipografía, composición y reglas de uso del color.
 
-Si al inyectar los colores de marca el validador falla, **decirlo y proponer el ajuste mínimo** (normalmente oscurecer el texto atenuado o separar acento de primario), nunca entregar un deck que no pasa.
+Si en algún momento posterior (`build`, o un ajuste sobre un deck ya generado) el validador falla al inyectar estos colores, **decirlo y proponer el ajuste mínimo** (normalmente oscurecer el texto atenuado o separar acento de primario), nunca entregar un deck que no pasa.
 
 **b) El usuario no tiene design system.** Mostrar la tabla de `styles/index.md` —solo esa tabla, son cinco líneas— y pedirle que elija. Si no elige, `paper-white`. Preguntar si tiene un color de marca para inyectar; si no lo tiene, el pack se usa tal cual.
 
-Con el pack elegido, mostrar también sus **2 alternativas tipográficas** (nombre + la línea de "cuándo preferirla" que trae el propio pack) y dejar elegir entre esas y el default. No es personalización libre — son 2-3 opciones curadas por pack, ya validadas contra clichés de IA — pero sí le da al usuario una decisión real sobre cómo se ve su tipografía. Si no elige, se usa el default del pack. Aplicar con:
-
-```bash
-node scripts/apply-style-pack.mjs styles/<pack>.md deck.html --font=<id>   # si eligió una alternativa
-node scripts/apply-style-pack.mjs styles/<pack>.md deck.html               # si se queda con el default
-```
+Con el pack elegido, mostrar también sus **2 alternativas tipográficas** (nombre + la línea de "cuándo preferirla" que trae el propio pack) y dejar elegir entre esas y el default. No es personalización libre — son 2-3 opciones curadas por pack, ya validadas contra clichés de IA — pero sí le da al usuario una decisión real sobre cómo se ve su tipografía. Si no elige, se usa el default del pack.
 
 **c) El usuario no tiene nada y quiere algo hecho a medida.** Generar una semilla con la skill de diseño `impeccable`:
 
@@ -28,7 +20,7 @@ node scripts/apply-style-pack.mjs styles/<pack>.md deck.html               # si 
 node ~/.claude/skills/impeccable/scripts/palette.mjs --from "<tema del deck>"
 ```
 
-Devuelve un color ancla en OKLCH y el mood que evoca. Componer los cinco roles (fondo, superficie, ink, acento, atenuado) siguiendo las reglas que el propio script imprime, tomando como base el pack cuya estructura mejor calce, y validar con `check-style-pack.mjs`. Presentar el resultado como propuesta, no como hecho consumado.
+Devuelve un color ancla en OKLCH y el mood que evoca. Componer los cinco roles (fondo, superficie, ink, acento, atenuado) siguiendo las reglas que el propio script imprime, tomando como base el pack cuya estructura mejor calce. Presentar el resultado como propuesta, no como hecho consumado; se valida con `check-style-pack.mjs` en `build`, contra el archivo real.
 
 **Reglas que no se negocian, vengan los colores de donde vengan:**
 - El fondo es blanco puro o casi negro salvo que el mood sea explícitamente ambiental (un panel de instrumentos, una pantalla de terminal). Un fondo crema "porque se ve cálido" es el cliché que hay que evitar: la calidez va en los colores de marca y en la tipografía, no en la superficie.
@@ -37,4 +29,4 @@ Devuelve un color ancla en OKLCH y el mood que evoca. Componer los cinco roles (
 
 Guardar `design-tokens.json` en el directorio del proyecto (no dentro de la skill) para reutilizarlo en futuros decks de la misma marca.
 
-**Al terminar esta fase:** el deck tiene pack, colores y tipografía resueltos. Sigue `brief` si es un deck nuevo, o queda listo tal cual si el usuario solo pidió cambiar el estilo de uno existente.
+**Al terminar esta fase:** pack, colores y tipografía están decididos (aunque el archivo del deck nuevo todavía no exista). Sigue `brief` si es un deck nuevo. Si el usuario pidió cambiar el estilo de un deck que ya existe, aquí sí se aplica de inmediato con `apply-style-pack.mjs` sobre ese archivo real.
