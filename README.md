@@ -98,6 +98,7 @@ npm install
 | `scripts/renumber.mjs` | Recalcula `data-label` y `<span class="num">` de todas las slides en orden de documento — usar después de insertar una slide en medio del deck. |
 | `scripts/smoke-test.mjs` | Test de regresión: ejercita cada pack con cada alternativa tipográfica. |
 | `examples/demo-deck.html` | Deck de ejemplo heredado del fork original, sin modificar (ver `NOTICE.md`). |
+| `examples/pitch-showcase.html` | Deck de ejemplo propio de slizdeck (7 slides, pack Paper White) — pasa limpio `audit.mjs` + `check-style-pack.mjs` + `check-reveal.mjs`, referencia de la calidad actual del output. |
 
 ## Diseño
 
@@ -148,7 +149,7 @@ pdftoppm -png -r 72 deck.pdf pagina
 - **PPTX: degradaciones inherentes al formato** (no son fallos del export, son el trade-off de "texto y formas nativas, cero imágenes incrustadas"): sin animaciones (se exporta el estado final), fuentes sustituidas por equivalentes seguros de Office, gradientes de cover/cierre aplanados a color sólido, imágenes reemplazadas por una forma con el `alt` como etiqueta.
 - **Speaker notes van a un `.md` aparte, no al campo nativo de notas de PowerPoint.** `[nombre-deck]-notes.md` con el discurso completo por slide — es una decisión de diseño (el PPTX ya no lleva ninguna otra lógica de contenido embebida), no algo pendiente de conectar.
 - **`check-reveal.mjs` puede fallar de forma intermitente** por arranques en frío de Chrome headless (contención de recursos, no relacionado con el deck evaluado) — reintenta automáticamente hasta 2 veces antes de reportarlo. Si sigue fallando, probablemente hay otro proceso pesado compitiendo por recursos en esa máquina (ej. un navegador real con muchas pestañas abiertas), no un bug del deck.
-- **`examples/demo-deck.html` no pasa `check-style-pack.mjs`.** Es el ejemplo heredado del fork original (ver `NOTICE.md`), preservado sin modificar — no usa el sistema de style packs de slizdeck, así que su paleta original no pasa la validación de contraste que sí aplica a un deck generado con esta skill.
+- **`examples/demo-deck.html` no pasa `check-style-pack.mjs`.** Es el ejemplo heredado del fork original (ver `NOTICE.md`), preservado sin modificar — no usa el sistema de style packs de slizdeck, así que su paleta original no pasa la validación de contraste que sí aplica a un deck generado con esta skill. `examples/pitch-showcase.html` es el ejemplo que sí usa el sistema de packs actual y pasa todo limpio.
 - **Documentación 100% en español**, por decisión de alcance (audiencia hispanohablante), no por traducción pendiente.
 
 ## Créditos y licencia

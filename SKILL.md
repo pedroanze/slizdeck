@@ -41,7 +41,8 @@ Fork/adaptación de [`claude-slides`](https://github.com/marcogalluccio/claude-s
 | `reference/media-and-data.md` | Patrones HTML/CSS de imágenes, métricas, barras y pantalla de inicio (usados desde la fase `build`). |
 | `reference/animations.md` | Catálogo de técnicas de animación (reveal por pasos, dibujo de SVG, popups) y gotchas conocidos — solo para nivel HEAVY. |
 | `reference/icons.md` | Librería de íconos SVG con estilo coherente. |
-| `examples/demo-deck.html` | Deck de ejemplo de 6 slides, referencia end-to-end. |
+| `examples/demo-deck.html` | Deck de ejemplo de 6 slides heredado del fork original, sin modificar (ver `NOTICE.md`) — no usa el sistema de packs. |
+| `examples/pitch-showcase.html` | Deck de ejemplo propio de slizdeck (7 slides, pack Paper White), pasa limpio `audit.mjs`/`check-style-pack.mjs`/`check-reveal.mjs` — referencia end-to-end del sistema de packs actual. |
 | `styles/index.md` | Catálogo de style packs. **Lo único que hay que leer para elegir estilo.** |
 | `styles/<pack>.md` | Un mundo visual completo: tokens, tipografía y reglas de composición. |
 | `scripts/apply-style-pack.mjs` | Aplica un pack a un deck fusionando tokens (no reemplaza el `:root`). |

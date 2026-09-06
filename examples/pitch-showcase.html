@@ -7,8 +7,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Claude Slides · [DECK NAME]</title>
-<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<title>Nimbus · Product Demo</title>
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <!-- Iconos lucide: opt-in. La mayoria de los decks no usa ninguno, y
      cargarlo siempre es una peticion de red que no hace falta. Descomentar
      solo si el deck usa <i data-lucide="nombre"> (ver reference/icons.md).
@@ -21,31 +21,31 @@
      ============================================================ */
   :root {
     /* --- Colores: primario/secundario dominan, acento se usa con cuentagotas --- */
-    --cs-primary:     #0E7C66;
-    --cs-secondary:   #1E3A5F;
-    --cs-accent:      #AD5407;
-    --cs-cream:       #F7F6F2;
-    --cs-cream-2:     #EDECE6;
-    --cs-black:       #000000;
-    --cs-body:        #454545;
-    --cs-muted:       #65696F;
+    --cs-primary:     #16181A;
+    --cs-secondary:   #5A6169;
+    --cs-accent:      #E23D1E;
+    --cs-cream:       #FFFFFF;
+    --cs-cream-2:     #F4F5F6;
+    --cs-black:       #0A0B0C;
+    --cs-body:        #3A4046;
+    --cs-muted:       #6B7278;
     --cs-white:       #FFFFFF;
     /* Superficie de cards/paneles y fondo del letterbox. Separados de
        --cs-white/--cs-black para que un style pack oscuro pueda invertirlos
        sin tocar el resto del sistema. */
-    --cs-surface:     #FFFFFF;
-    --cs-void:        #0C0C1A;
-    --cs-border:      rgba(0,0,0,0.08);
-    --cs-border-strong: rgba(0,0,0,0.16);
+    --cs-surface:     #FAFBFB;
+    --cs-void:        #0A0B0C;
+    --cs-border:      rgba(0,0,0,0.10);
+    --cs-border-strong: rgba(0,0,0,0.18);
     --cs-scrim:       rgba(0,0,0,0.05);
     --cs-grain:       .09;
-    --cs-grad-radial: radial-gradient(112% 150% at 0% 100% in oklch, #0E7C66 0%, #1E3A5F 100%);
-    --cs-grad-linear: linear-gradient(135deg in oklch, #0E7C66 0%, #1E3A5F 100%);
-    --cs-grad-text:   linear-gradient(135deg in oklch, #0E7C66 0%, #146E63 50%, #1E3A5F 100%);
+    --cs-grad-radial: radial-gradient(112% 150% at 0% 100% in oklch, #16181A 0%, #000000 100%);
+    --cs-grad-linear: linear-gradient(135deg in oklch, #16181A 0%, #000000 100%);
+    --cs-grad-text:   linear-gradient(135deg in oklch, #16181A 0%, #3A4046 50%, #16181A 100%);
 
     /* --- Tipografía: heading serif con carácter editorial, body sans funcional --- */
-    --cs-font-sans:   'IBM Plex Sans', ui-sans-serif, system-ui, -apple-system, sans-serif;
-    --cs-font-heading: 'Newsreader', Georgia, 'Times New Roman', serif;
+    --cs-font-sans:   'Schibsted Grotesk', ui-sans-serif, system-ui, sans-serif;
+    --cs-font-heading: 'Schibsted Grotesk', ui-sans-serif, system-ui, sans-serif;
     --cs-font-mono:   ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
 
     /* --- Radios: escala corta, todo el sistema de componentes usa estos 3 --- */
@@ -59,7 +59,7 @@
     --cs-pad-bottom:  120px;
 
     --cs-shadow-1:    0 1px 2px rgba(0,0,0,0.04), 0 1px 1px rgba(0,0,0,0.03);
-    --cs-shadow-2:    0 4px 12px rgba(0,0,0,0.06), 0 2px 4px rgba(0,0,0,0.04);
+    --cs-shadow-2:    none;
     --cs-shadow-3:    0 12px 32px rgba(0,0,0,0.08), 0 4px 10px rgba(0,0,0,0.05);
     --cs-fg-1:        var(--cs-black);
     --cs-fg-2:        var(--cs-body);
@@ -467,6 +467,57 @@
      mockups, etc.) or animations.md (popup, SVG paths, packets) here.
      ============================================================ */
 
+  /* Cifra + glosa (single stat) — media-and-data.md */
+  .metrica { display: flex; flex-direction: column; gap: 12px; }
+  .metrica .cifra {
+    font-family: var(--cs-font-heading);
+    font-size: 220px; line-height: .9; letter-spacing: -.03em;
+    color: var(--cs-accent); font-variant-numeric: tabular-nums;
+  }
+  .metrica .cifra .unit { font-size: .5em; }
+  .metrica .glosa { font-size: 32px; line-height: 1.4; color: var(--cs-body); max-width: 760px; }
+
+  /* Fila de metricas — media-and-data.md */
+  .metricas { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 56px; }
+  .metricas .m { border-top: 1px solid var(--cs-border); padding-top: 24px; }
+  .metricas .n {
+    font-family: var(--cs-font-heading); font-size: 96px; line-height: 1;
+    color: var(--cs-black); font-variant-numeric: tabular-nums;
+  }
+  .metricas .n .unit { font-size: .5em; }
+  .metricas .l { font-size: 24px; color: var(--cs-muted); margin-top: 14px; }
+
+  /* pq-card-2col (before/now) — components.md */
+  .pq-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 36px; margin-top: 8px; }
+  .pq-card {
+    background: #fff; border: 1px solid var(--cs-border); border-radius: 26px;
+    padding: 60px 56px; box-shadow: var(--cs-shadow-2); min-height: 440px;
+    display: flex; flex-direction: column; justify-content: center;
+  }
+  .pq-card .pq-eyebrow {
+    font-size: 18px; letter-spacing: 0.18em; text-transform: uppercase;
+    font-weight: 700; color: var(--cs-primary); margin-bottom: 20px;
+  }
+  .pq-card h3 { font-size: 64px; font-weight: 800; color: var(--cs-black); margin: 0 0 24px; line-height: 1.0; letter-spacing: -0.025em; }
+  .pq-card .pq-consequence {
+    font-family: var(--cs-font-mono); font-size: 22px; font-weight: 700; color: var(--cs-primary);
+    letter-spacing: 0.06em; text-transform: uppercase; margin: 0 0 32px;
+  }
+  .pq-card p { font-size: 24px; line-height: 1.5; color: var(--cs-body); margin: 0; }
+
+  /* flow-pipeline — components.md */
+  .pipeline { display: flex; align-items: center; justify-content: center; gap: 24px; margin-top: 56px; }
+  .pipe-card {
+    background: #fff; border: 1px solid var(--cs-border); border-radius: 18px;
+    padding: 28px 32px; text-align: center; box-shadow: var(--cs-shadow-2); min-width: 200px;
+  }
+  .pipe-eyebrow {
+    font-family: var(--cs-font-mono); font-size: 14px; letter-spacing: 0.18em;
+    text-transform: uppercase; color: var(--cs-muted); margin-bottom: 10px;
+  }
+  .pipe-name { font-size: 22px; font-weight: 700; color: var(--cs-black); letter-spacing: -0.01em; }
+  .pipe-arrow { font-size: 36px; color: var(--cs-muted); flex-shrink: 0; }
+
 </style>
 </head>
 <body>
@@ -490,51 +541,140 @@
        - icons.md       → SVG icons library
        ============================================================ -->
 
-  <!-- ────────── EXAMPLE 1: Cover slide (gradient, static) ────────── -->
+  <!-- ────────── 01 Cover ────────── -->
   <section class="grad" data-label="01 Cover" data-steps="1" data-current-step="1">
     <div class="pad center">
-      <div class="eyebrow">Workshop · DATE · ORG</div>
-      <h1 class="cover">Deck Title Here</h1>
-      <div class="subtitle">Optional subtitle that explains in one sentence what this is about</div>
+      <div class="eyebrow">Product demo · 2026</div>
+      <h1 class="cover">Nimbus</h1>
+      <div class="subtitle">Async standups that actually get read</div>
     </div>
     <div class="footer">
-      <div class="left">
-        <!-- Optional logo -->
-        <!-- <img src="assets/logos/logo-white.png" alt="Logo"> -->
-      </div>
-      <div>Speaker · Org · <span class="num">01</span></div>
+      <div class="left"></div>
+      <div>Demo · slizdeck · <span class="num">01</span></div>
     </div>
   </section>
 
-  <!-- ────────── EXAMPLE 2: Content slide (cream, multi-step animated) ────────── -->
-  <section data-label="02 Content example" data-steps="2" data-current-step="0">
+  <!-- ────────── 02 Problem (cifra + glosa, media-and-data.md) ────────── -->
+  <section data-label="02 Problem" data-steps="2" data-current-step="0">
     <div class="sweep"></div>
     <div class="pad">
       <div class="act-marker"><span class="step-num">1</span><span style="opacity:.4">/2</span></div>
-      <div class="eyebrow reveal" data-step="1">Section eyebrow</div>
-      <h2 class="title reveal" data-step="1" style="--d:80ms">Slide title goes here</h2>
+      <div class="eyebrow reveal" data-step="1">The problem</div>
+      <h2 class="title reveal" data-step="1" style="--d:80ms">Standups eat the morning</h2>
+      <p class="reveal r-fade" data-step="1" style="--d:140ms; max-width:900px; font-size:32px; color:var(--cs-body); margin-top:24px;">Every team syncs live, every day, whether or not there is anything to sync about.</p>
 
-      <div class="card reveal" data-step="2">
-        <div class="card-eyebrow">CARD EYEBROW</div>
-        <h3>Card heading</h3>
-        <p>Card body. Replace this with real content. For richer card patterns (consequence cards, mockups, terminals), see components.md.</p>
+      <div class="metrica reveal r-scale" data-step="2" style="margin-top:56px;">
+        <div class="cifra" data-counter="32" data-target-step="2">0<span class="unit"> min</span></div>
+        <div class="glosa">Lost per team, per day, to a meeting nobody prepared for</div>
       </div>
     </div>
     <div class="footer">
       <div class="left"></div>
-      <div>Speaker · Org · <span class="num">02</span></div>
+      <div>Demo · slizdeck · <span class="num">02</span></div>
     </div>
   </section>
 
-  <!-- ────────── EXAMPLE 3: Transition slide (cream, big centered, static) ────────── -->
-  <section data-label="03 Transition example" data-steps="1" data-current-step="1">
-    <div class="pad center">
-      <h1 class="ts-title">The <span class="grad-word">shift</span></h1>
-      <div class="ts-tagline">Optional subtitle below the big title</div>
+  <!-- ────────── 03 Solution (flow-pipeline, components.md) ────────── -->
+  <section data-label="03 Solution" data-steps="2" data-current-step="0">
+    <div class="sweep"></div>
+    <div class="pad">
+      <div class="act-marker"><span class="step-num">1</span><span style="opacity:.4">/2</span></div>
+      <div class="eyebrow reveal" data-step="1">The solution</div>
+      <h2 class="title reveal" data-step="1" style="--d:80ms">One voice note replaces the meeting</h2>
+
+      <div class="pipeline reveal r-left" data-step="2" style="margin-top:64px;">
+        <div class="pipe-card">
+          <div class="pipe-eyebrow">Input</div>
+          <div class="pipe-name">Voice note</div>
+        </div>
+        <div class="pipe-arrow">→</div>
+        <div class="pipe-card">
+          <div class="pipe-eyebrow">Nimbus</div>
+          <div class="pipe-name mono">transcribe + digest</div>
+        </div>
+        <div class="pipe-arrow">→</div>
+        <div class="pipe-card">
+          <div class="pipe-eyebrow">Output</div>
+          <div class="pipe-name">Team digest</div>
+        </div>
+      </div>
     </div>
     <div class="footer">
       <div class="left"></div>
-      <div>Speaker · Org · <span class="num">03</span></div>
+      <div>Demo · slizdeck · <span class="num">03</span></div>
+    </div>
+  </section>
+
+  <!-- ────────── 04 Before/Now (pq-card-2col, components.md) ────────── -->
+  <section data-label="04 Before and now" data-steps="3" data-current-step="0">
+    <div class="sweep"></div>
+    <div class="pad">
+      <div class="act-marker"><span class="step-num">1</span><span style="opacity:.4">/3</span></div>
+      <div class="eyebrow reveal" data-step="1">What changes</div>
+      <h2 class="title reveal" data-step="1" style="--d:80ms">Same update, zero live meeting</h2>
+
+      <div class="pq-grid" style="margin-top:40px;">
+        <div class="pq-card reveal r-scale" data-step="2">
+          <div class="pq-eyebrow">Before</div>
+          <h3>Live standup</h3>
+          <div class="pq-consequence">→ 15 min, every timezone awake</div>
+          <p>Everyone stops what they are doing, at the same time, whether they need to or not.</p>
+        </div>
+        <div class="pq-card reveal r-scale" data-step="3">
+          <div class="pq-eyebrow">With Nimbus</div>
+          <h3>Async digest</h3>
+          <div class="pq-consequence">→ Read in 2 min, any timezone</div>
+          <p>One voice note in, one written digest out, waiting when the team logs on.</p>
+        </div>
+      </div>
+    </div>
+    <div class="footer">
+      <div class="left"></div>
+      <div>Demo · slizdeck · <span class="num">04</span></div>
+    </div>
+  </section>
+
+  <!-- ────────── 05 Traction (fila de métricas, media-and-data.md) ────────── -->
+  <section data-label="05 Traction" data-steps="2" data-current-step="0">
+    <div class="sweep"></div>
+    <div class="pad">
+      <div class="act-marker"><span class="step-num">1</span><span style="opacity:.4">/2</span></div>
+      <div class="eyebrow reveal" data-step="1">Traction</div>
+      <h2 class="title reveal" data-step="1" style="--d:80ms">Six months in</h2>
+
+      <div class="metricas stagger" style="margin-top:64px;">
+        <div class="m reveal r-scale" data-step="2"><div class="n" data-counter="40" data-target-step="2">0</div><div class="l">Teams onboarded</div></div>
+        <div class="m reveal r-scale" data-step="2" style="--d:90ms"><div class="n" data-counter="94" data-target-step="2">0<span class="unit">%</span></div><div class="l">Weekly adoption</div></div>
+        <div class="m reveal r-scale" data-step="2" style="--d:180ms"><div class="n" data-counter="12" data-target-step="2">0<span class="unit"> min</span></div><div class="l">Saved daily, per team</div></div>
+      </div>
+    </div>
+    <div class="footer">
+      <div class="left"></div>
+      <div>Demo · slizdeck · <span class="num">05</span></div>
+    </div>
+  </section>
+
+  <!-- ────────── 06 Transition (frase sola, estática) ────────── -->
+  <section data-label="06 Payoff" data-steps="1" data-current-step="1">
+    <div class="pad center">
+      <h1 class="ts-title">Meetings shrink. <span class="grad-word">Context</span> doesn't</h1>
+    </div>
+    <div class="footer">
+      <div class="left"></div>
+      <div>Demo · slizdeck · <span class="num">06</span></div>
+    </div>
+  </section>
+
+  <!-- ────────── 07 Cierre ────────── -->
+  <section class="grad" data-label="07 Closing" data-steps="1" data-current-step="1">
+    <div class="pad center">
+      <div class="eyebrow">Get started</div>
+      <h1 class="cover-md">Try Nimbus with your team</h1>
+      <div class="subtitle">nimbus.example · free for teams under 10</div>
+    </div>
+    <div class="footer">
+      <div class="left"></div>
+      <div>Demo · slizdeck · <span class="num">07</span></div>
     </div>
   </section>
 
