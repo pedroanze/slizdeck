@@ -2,6 +2,14 @@
 
 Se activa antes de dar un deck por terminado, y siempre que el usuario pida explícitamente "audita el deck" o "revisa que esté bien" sobre uno ya generado.
 
+## Doctrina de severidad
+
+Todo hallazgo de esta skill —de `audit.mjs`, `check-reveal.mjs` o `doctor.mjs`— cae en uno de tres niveles. `reference/fix.md` y `reference/add.md` usan estos mismos tres nombres en vez de reinventar su propia forma de describir qué bloquea y qué no:
+
+- **Bloqueante** (✗): hay que corregirlo antes de entregar, sin excepción. Contraste, balance de HTML, footers mal numerados, bugs de cascada CSS.
+- **Aviso** (⚠): se informa al usuario pero no bloquea la entrega — típicamente assets pendientes ya aceptados, o un caso donde el script no tiene contexto suficiente para decidir.
+- **A decidir**: no es ni bloqueante ni un simple aviso — el script encontró algo real pero la acción correcta depende de una decisión del usuario, no hay un "correcto" único. Ejemplos: un hallazgo de `doctor.mjs` (¿le aplica este fix viejo a mi deck ya customizado?), o un falso positivo de `audit.mjs` (un título de dos oraciones con punto, deliberado como remate retórico). En estos casos: decírselo al usuario con el hallazgo concreto y que él confirme el curso de acción, nunca decidir en su nombre ni silenciarlo editando el detector a ciegas.
+
 ## Correr el script
 
 ```bash
@@ -26,7 +34,15 @@ Un fallo (✗) hay que corregirlo antes de entregar. Un aviso (⚠) se reporta a
 
 `check-reveal.mjs` es un chequeo aparte, en Chrome headless: `audit.mjs` solo mira el HTML estático, así que nunca puede detectar bugs de la cascada CSS que solo aparecen cuando un `.reveal` se revela de verdad en el navegador (por ejemplo, `.reveal.is-on` perdiendo contra `.reveal.r-left`/`.r-rise`/`.r-scale`/`.r-blur` por orden de declaración — mismo nivel de especificidad, gana el que está después en el archivo). Un fallo acá también hay que corregirlo antes de entregar: es exactamente la clase de bug que se ve a ojo navegando el deck en vivo pero nunca aparece en el PDF exportado (`@media print` fuerza los transforms/filters a `none` con `!important` y lo tapa).
 
-**Si el script marca un falso positivo** (por ejemplo, un título de dos líneas donde cada línea es su propia oración con punto, como remate retórico deliberado), no lo silencies editando el regex a ciegas: decírselo al usuario y que confirme si es una excepción válida para ese deck en concreto.
+**Si el script marca un falso positivo** (por ejemplo, un título de dos líneas donde cada línea es su propia oración con punto, como remate retórico deliberado) es un hallazgo **a decidir**, no lo silencies editando el regex a ciegas: decírselo al usuario y que confirme si es una excepción válida para ese deck en concreto.
+
+## `doctor.mjs` — deck generado con una versión vieja del engine
+
+```bash
+node scripts/doctor.mjs deck.html
+```
+
+Compara el `slizdeck-engine-version` embebido al principio del deck contra la versión actual de `template.html`, y si es anterior, imprime las entradas de `CHANGELOG.md` entre esas versiones — por ejemplo, el fix de cascada CSS de `.reveal.is-on`. Es puramente informativo (**a decidir**, no bloqueante): los decks están fuertemente customizados a mano, así que no hay auto-fix seguro. Recomendado especialmente al retomar un deck viejo con `add`/`fix`, para saber si le falta algún fix de engine antes de seguir editándolo. Un deck sin la marca de versión (generado antes de que existiera) es en sí mismo un hallazgo, no un error del script.
 
 ## Lo que el script no puede revisar
 

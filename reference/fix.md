@@ -2,6 +2,10 @@
 
 Se activa cuando el usuario señala una o más slides específicas de un deck ya generado para arreglar, mejorar o rehacer ("la slide 7 se ve genérica, mejórala", "arregla el texto de la 12", "la 20 no combina con las de al lado").
 
+## 0. Si es un deck retomado después de un tiempo
+
+Antes de tocar nada, correr `node scripts/doctor.mjs deck.html` — un deck viejo puede estar generado con una versión del engine anterior a algún fix relevante (ver `CHANGELOG.md`). Es un hallazgo **a decidir** (ver doctrina de severidad en `reference/audit.md`), no bloqueante: revisarlo antes de decidir si el fix puntual pedido también debería incluir ese arreglo de fondo.
+
 ## 1. Acotar el alcance
 
 Tocar **solo** la(s) slide(s) señaladas. No aprovechar para tocar otras, aunque se note un problema parecido en una vecina — si el problema es sistémico (afecta a varias slides por igual, ej. un tamaño de fuente mal calibrado en todo un patrón), decirlo explícitamente y preguntar si el fix debe quedarse puntual o si conviene escalarlo a `init` (cambio de design system) o a un ajuste de `reference/design-guidelines.md` / `template.html` (cambio de sistema, no de una slide).

@@ -2,6 +2,10 @@
 
 Se activa cuando el usuario pide agregar una o más slides a un deck ya generado ("agrega una slide sobre X", "mete 2 slides de tracción entre la 9 y la 10", "suma un cierre con FAQ al final").
 
+## 0. Si es un deck retomado después de un tiempo
+
+Antes de agregar nada, correr `node scripts/doctor.mjs deck.html` — un deck viejo puede estar generado con una versión del engine anterior a algún fix relevante (ver `CHANGELOG.md`). Es un hallazgo **a decidir** (ver doctrina de severidad en `reference/audit.md`), no bloqueante, pero vale la pena saberlo antes de seguir construyendo sobre esa base.
+
 ## 1. Ubicar dónde va
 
 Si no es obvio, preguntar en una ronda: después de qué slide va (o si va al final), cuántas se agregan, y de qué trata cada una.

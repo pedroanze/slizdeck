@@ -72,6 +72,8 @@ npm install
 | `reference/export.md` | Fase export — PDF, PPTX, deck sin red, speaker notes. |
 | `reference/add.md` | Fase add — agregar slides a un deck existente sin romper la numeración. |
 | `reference/fix.md` | Fase fix — corregir o mejorar una slide puntual sin romper el resto. |
+| `reference/hooks.md` | Hook opcional de Claude Code: audita un deck automáticamente después de cada edición. |
+| `CHANGELOG.md` | Historial de versiones del engine (`template.html`) — lo que lee `scripts/doctor.mjs`. |
 | `reference/design-tokens-schema.md` | Esquema del design system y su mapeo a variables CSS. |
 | `reference/design-guidelines.md` | Principios visuales y lista de anti-clichés. |
 | `reference/deck-schema.md` | Formato del wireframe, arcos narrativos, niveles de animación. |
@@ -85,6 +87,8 @@ npm install
 | `scripts/check-style-pack.mjs` | Valida contrastes y avisa de clichés visuales de IA. |
 | `scripts/audit.mjs` | Valida un deck ya generado: contraste, balance HTML, reglas de voz, assets pendientes. |
 | `scripts/check-reveal.mjs` | Verifica en Chrome headless que la cascada CSS de `.reveal` resuelva bien al revelarse (`.is-on` gana contra cualquier `r-*`) — atrapa bugs de orden de cascada invisibles en el HTML estático. |
+| `scripts/doctor.mjs` | Compara la versión de engine embebida en un deck contra `CHANGELOG.md` y avisa (sin reparar) si le falta algún fix conocido. |
+| `scripts/verify-hook.mjs` | Hook opcional de Claude Code que corre `audit.mjs` automáticamente después de editar un deck — ver `reference/hooks.md`. |
 | `scripts/export-pptx.mjs` | Exporta un deck a `.pptx` editable (texto y formas nativas, no imágenes). |
 | `scripts/make-offline.mjs` | Incrusta las fuentes como `data:` URI para presentar sin depender de red. |
 | `scripts/renumber.mjs` | Recalcula `data-label` y `<span class="num">` de todas las slides en orden de documento — usar después de insertar una slide en medio del deck. |

@@ -6,6 +6,9 @@ description: |
   DISPARADORES: crea un pitch deck, hazme un deck, presentación para X, slides para X, deck de startup, prepara una presentación, build slides, crea slides.
 license: MIT
 compatibility: Requiere un agente con capacidad de ejecutar comandos de shell (crear/copiar archivos, abrir el navegador) y búsqueda web. Probado en Claude Code; compatible con cualquier cliente del estándar Agent Skills (agentskills.io).
+metadata:
+  version: "1.0.0"
+allowed-tools: Bash Read Write Edit WebSearch WebFetch
 ---
 
 # Slizdeck
@@ -27,6 +30,8 @@ Fork/adaptación de [`claude-slides`](https://github.com/marcogalluccio/claude-s
 | `reference/export.md` | Fase export: PDF, PPTX, deck sin red, speaker notes. |
 | `reference/add.md` | Fase add: agregar slides a un deck existente sin romper la numeración. |
 | `reference/fix.md` | Fase fix: corregir o mejorar una slide puntual sin romper el resto del deck. |
+| `reference/hooks.md` | Hook opcional de Claude Code que audita un deck automáticamente después de cada edición — ver `scripts/verify-hook.mjs`. |
+| `CHANGELOG.md` | Historial de versiones del engine (`template.html`) — lo que lee `scripts/doctor.mjs` para detectar drift. |
 | `reference/design-tokens-schema.md` | Esquema del design system (`design-tokens.json`) y cómo se mapea a las CSS variables del template. |
 | `reference/design-guidelines.md` | Principios de diseño: poco texto, un color dominante, anti-clichés, variedad de layout. Aplicar al construir el wireframe y al generar el HTML. |
 | `reference/deck-schema.md` | Formato del wireframe, arcos narrativos por tipo de deck, niveles de animación, estructura de cada `<section>`. |
@@ -41,6 +46,8 @@ Fork/adaptación de [`claude-slides`](https://github.com/marcogalluccio/claude-s
 | `scripts/check-style-pack.mjs` | Valida contrastes, distinción primario/acento y clichés de IA. |
 | `scripts/audit.mjs` | Valida un deck generado: contraste, balance HTML, reglas de voz, assets pendientes. |
 | `scripts/check-reveal.mjs` | Verifica que la cascada CSS de `.reveal` resuelva bien al revelarse (`.is-on` debe ganar contra cualquier variante `r-*`) — detecta bugs de orden de cascada que `audit.mjs` no puede ver porque solo mira el HTML estático. |
+| `scripts/doctor.mjs` | Compara la versión de engine embebida en un deck contra `CHANGELOG.md` y avisa (sin reparar) si le falta algún fix conocido — ver `reference/audit.md`. |
+| `scripts/verify-hook.mjs` | Hook opcional de Claude Code: corre `audit.mjs` automáticamente después de editar un deck — ver `reference/hooks.md`. |
 | `scripts/export-pptx.mjs` | Exporta un deck HTML a `.pptx` editable (texto y formas nativas). |
 | `scripts/make-offline.mjs` | Incrusta las fuentes como `data:` URI para presentar sin red. |
 | `scripts/renumber.mjs` | Recalcula `data-label` y `<span class="num">` de todas las slides en orden de documento — usar siempre después de insertar una slide en medio del deck. |
@@ -65,7 +72,8 @@ El flujo completo es multi-turno: una vez cargada esta skill, sigue vigente en t
 | **fix** | "la slide 7 se ve genérica, mejórala", "arregla el texto de la 12" | Corregir o mejorar una o más slides puntuales sin tocar el resto del deck | [reference/fix.md](reference/fix.md) |
 
 **Ruteo:**
-- **Deck nuevo, sin más contexto:** recorrer `init` → `brief` → `assets` → `build` → `audit` → `export` en orden, una por una, esperando la confirmación que cada archivo de referencia pide antes de avanzar a la siguiente. No saltarse `assets` nunca, aunque el usuario no lo mencione — es la fase que existe precisamente porque se saltaba antes.
+- **Paso 0, antes de asumir nada:** si el pedido no nombra un archivo concreto, chequear el directorio actual antes de decidir que es un deck nuevo — `grep -l "data-steps=" *.html 2>/dev/null` (o buscar `<deck-stage`). Si aparece uno o más `.html` con esa firma, no asumir "deck nuevo, sin más contexto": confirmar primero si el pedido es sobre alguno de esos decks existentes. Este chequeo es lo que evita, por ejemplo, arrancar `init`→`brief` desde cero cuando el usuario en realidad quería decir "agregale una slide" sobre un deck que ya está en la carpeta.
+- **Deck nuevo, sin más contexto (confirmado por el paso 0):** recorrer `init` → `brief` → `assets` → `build` → `audit` → `export` en orden, una por una, esperando la confirmación que cada archivo de referencia pide antes de avanzar a la siguiente. No saltarse `assets` nunca, aunque el usuario no lo mencione — es la fase que existe precisamente porque se saltaba antes.
 - **Petición puntual sobre un deck que ya existe** ("cambia la paleta a X", "agrega una slide de tracción", "arregla la slide 12", "audita esto", "pásalo a PDF"): identificar qué fase la cubre por su columna "Se activa con", cargar solo esa referencia, y resolver sin repetir las fases anteriores. `add` y `fix` terminan siempre corriendo `audit` antes de darse por cerradas — ver sus propios archivos.
 - **Ambiguo entre dos fases:** preguntar una vez cuál corresponde, en vez de adivinar.
 
