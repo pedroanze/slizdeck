@@ -9,6 +9,14 @@ compatibility: Requiere un agente con capacidad de ejecutar comandos de shell (c
 metadata:
   version: "1.0.0"
 allowed-tools: Bash Read Write Edit WebSearch WebFetch
+# user-invocable / argument-hint son extensiones de Claude Code, no del
+# estandar portable de agentskills.io (que solo define name/description/
+# license/compatibility/metadata/allowed-tools) — habilitan el tab-completion
+# de "/slizdeck" en Claude Code. Otros clientes deberian ignorar claves de
+# frontmatter que no reconocen sin romper el parseo, pero no está verificado
+# en Gemini CLI/Codex/OpenCode especificamente.
+user-invocable: true
+argument-hint: "[init|brief|assets|build|audit|export|add|fix] [detalle o deck.html]"
 ---
 
 # Slizdeck
@@ -76,6 +84,7 @@ El flujo completo es multi-turno: una vez cargada esta skill, sigue vigente en t
 | **fix** | "la slide 7 se ve genérica, mejórala", "arregla el texto de la 12" | Corregir o mejorar una o más slides puntuales sin tocar el resto del deck | [reference/fix.md](reference/fix.md) |
 
 **Ruteo:**
+- **Invocación sin argumento ni pedido claro** (ej. `/slizdeck` a secas, o "¿qué puede hacer esta skill?"): no adivinar ni arrancar `init` a ciegas. Mostrar la tabla de fases de arriba como menú — es la lista completa de lo que se puede pedir — y preguntar cuál corresponde. Si el paso 0 de abajo encuentra un deck existente en el directorio, mencionarlo también como opción ("ya hay un deck.html acá, ¿seguimos con ese o arrancamos uno nuevo?").
 - **Paso 0, antes de asumir nada:** si el pedido no nombra un archivo concreto, chequear el directorio actual antes de decidir que es un deck nuevo — `grep -l "data-steps=" *.html 2>/dev/null` (o buscar `<deck-stage`). Si aparece uno o más `.html` con esa firma, no asumir "deck nuevo, sin más contexto": confirmar primero si el pedido es sobre alguno de esos decks existentes. Este chequeo es lo que evita, por ejemplo, arrancar `init`→`brief` desde cero cuando el usuario en realidad quería decir "agregale una slide" sobre un deck que ya está en la carpeta.
 - **Deck nuevo, sin más contexto (confirmado por el paso 0):** recorrer `init` → `brief` → `assets` → `build` → `audit` → `export` en orden, una por una, esperando la confirmación que cada archivo de referencia pide antes de avanzar a la siguiente. No saltarse `assets` nunca, aunque el usuario no lo mencione — es la fase que existe precisamente porque se saltaba antes.
 - **Petición puntual sobre un deck que ya existe** ("cambia la paleta a X", "agrega una slide de tracción", "arregla la slide 12", "audita esto", "pásalo a PDF"): identificar qué fase la cubre por su columna "Se activa con", cargar solo esa referencia, y resolver sin repetir las fases anteriores. `add` y `fix` terminan siempre corriendo `audit` antes de darse por cerradas — ver sus propios archivos.
