@@ -2,7 +2,18 @@
 
 Historial de cambios al engine (`template.html`) y a los scripts de la skill. Cada entrada de versión corresponde al comentario `slizdeck-engine-version` embebido al principio de todo deck generado — `scripts/doctor.mjs <deck.html>` lo lee para avisar si un deck viejo se generó antes de un fix relevante.
 
-No sigue un versionado semántico estricto todavía (proyecto de un solo mantenedor, sin releases públicos aún) — cada entrada nueva simplemente sube el número cuando cambia algo en `template.html` que pueda afectar un deck ya generado.
+Una sola versión gobierna todo el proyecto y vive en cuatro sitios que deben coincidir siempre: `package.json`, el `metadata.version` de `SKILL.md`, el marcador `slizdeck-engine-version` de `template.html`, y la primera entrada de este archivo. `node scripts/check-versions.mjs` lo verifica y falla si alguno se desalinea.
+
+## 1.2.0
+
+Sin cambios en el engine: un deck generado con 1.1.0 no necesita ninguna corrección. Esta versión son fixes en los scripts de validación y export, todos en la misma dirección — ninguna herramienta debe afirmar algo que no verificó.
+
+- **Fix: `renumber.mjs` saltaba las slides con número provisional no numérico.** `add.md` promete que se puede insertar una slide con "cualquier `data-label`/`<span class="num">` provisional", pero el script exigía `\d+` y trataba un `0X` como "slide sin número de footer", dejándola fuera de la numeración *y* reportando "sin cambios". Ahora renumera cualquier `<span class="num">` no vacío, informa cuántas slides saltó, y enmascara los comentarios HTML antes de buscar (una `<section>` de ejemplo comentada desbalanceaba la cuenta).
+- **Fix: `export-pptx.mjs` perdía contenido en silencio.** El export reconoce un set cerrado de patrones; lo que caía fuera desaparecía con exit 0 y un `✓ N slides` que sugería que todo había viajado (en un pitch real se perdieron los nombres de los fundadores). Ahora compara el texto visible del DOM contra el exportado y lista, por slide, cada elemento que no llegó al `.pptx`.
+- **Fix: `check-reveal.mjs` culpaba a la máquina por un problema del deck.** Si un deck carga un `<script src>` externo bloqueante, `DOMContentLoaded` nunca dispara y el chequeo se cuelga; el mensaje decía "no es un problema del deck evaluado: revisar que Chrome headless funcione en esta máquina". Ahora detecta los scripts externos y los nombra como causa probable, y solo apunta a la máquina cuando el deck no tiene ninguno.
+- **Fix: `make-offline.mjs` prometía "sin red" sin verificarlo.** Solo incrusta fuentes, pero afirmaba que el deck ya no dependía de la red aunque quedaran scripts, hojas de estilo o imágenes remotas. Ahora las detecta y las lista como aviso.
+- **Docs:** `PRODUCT.md` y `design.json` estaban congelados en el sistema visual anterior a los style packs (paleta y fuentes que la propia skill prohíbe); el ejemplo de `design-tokens-schema.md` enseñaba justo esas fuentes. Regenerados contra el estado actual. Corregidos además varios claims que atribuían a los validadores comprobaciones que no hacen.
+- **Nuevo: `scripts/check-versions.mjs`**, que verifica en CI que los cuatro sitios de versión coincidan.
 
 ## 1.1.0
 

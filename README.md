@@ -8,7 +8,7 @@
 
 Genera decks de slides **HTML animados** a partir de tu propio design system, con el contenido investigado en internet. Pensado para pitch decks de startup: minimalista, poco texto, mucha imagen y dato duro — también sirve para charlas, demos y recaps de evento.
 
-Es una [Agent Skill](https://agentskills.io) — funciona en Claude Code, Gemini CLI, Codex, OpenCode y cualquier cliente que soporte el estándar abierto.
+Es una [Agent Skill](https://agentskills.io), escrita contra el subconjunto portable del estándar abierto. Verificada en Claude Code; en Gemini CLI, Codex y OpenCode debería funcionar por el estándar, pero todavía no está probada ahí.
 
 ## Qué produce
 
@@ -64,6 +64,18 @@ La primera vez que se necesite exportar a PPTX, instalar dependencias en la raí
 npm install
 ```
 
+**Requisitos:** Node 20+ para todo. Los validadores que miden en navegador real (`check-reveal.mjs`, `check-overflow.mjs`, `smoke-test.mjs`) necesitan además Google Chrome o Chromium instalado — se detecta solo, o se le indica la ruta con la variable de entorno `CHROME_PATH`.
+
+## Actualizar y desinstalar
+
+```bash
+cd ~/.claude/skills/slizdeck && git pull      # actualizar
+```
+
+Después de actualizar, `node scripts/doctor.mjs deck.html` dice si un deck generado con una versión anterior del engine se quedó sin algún fix conocido (avisa, no repara).
+
+Para desinstalar basta con `rm -rf ~/.claude/skills/slizdeck`. Lo único que slizdeck puede dejar fuera de esa carpeta es el hook opcional de `reference/hooks.md`: si lo instalaste, hay que quitar su entrada de `~/.claude/settings.json` a mano.
+
 ## Estructura
 
 | Archivo | Rol |
@@ -81,7 +93,7 @@ npm install
 | `reference/hooks.md` | Hook opcional de Claude Code: audita un deck automáticamente después de cada edición. |
 | `CHANGELOG.md` | Historial de versiones del engine (`template.html`) — lo que lee `scripts/doctor.mjs`. |
 | `CONTRIBUTING.md` | Cómo agregar un style pack/patrón nuevo, correr los tests locales, convención de commits. |
-| `.github/workflows/ci.yml` | CI: corre `smoke-test.mjs`, `audit.mjs` y `check-reveal.mjs` en cada push/PR sobre un deck de humo generado en el momento. |
+| `.github/workflows/ci.yml` | CI en cada push/PR: `check-versions.mjs`, el smoke-test de packs, y la validación completa (`audit`/`check-reveal`/`check-overflow`/`doctor`) sobre un deck generado al vuelo y sobre `examples/pitch-showcase.html`. |
 | `reference/design-tokens-schema.md` | Esquema del design system y su mapeo a variables CSS. |
 | `reference/design-guidelines.md` | Principios visuales y lista de anti-clichés. |
 | `reference/deck-schema.md` | Formato del wireframe, arcos narrativos, niveles de animación. |
@@ -100,6 +112,7 @@ npm install
 | `scripts/verify-hook.mjs` | Hook opcional de Claude Code que corre `audit.mjs` automáticamente después de editar un deck — ver `reference/hooks.md`. |
 | `scripts/export-pptx.mjs` | Exporta un deck a `.pptx` editable (texto y formas nativas, no imágenes). |
 | `scripts/make-offline.mjs` | Incrusta las fuentes como `data:` URI para presentar sin depender de red. |
+| `scripts/check-versions.mjs` | Verifica que la versión coincida en los cuatro sitios donde se declara (`package.json`, `SKILL.md`, `template.html`, `CHANGELOG.md`). |
 | `scripts/renumber.mjs` | Recalcula `data-label` y `<span class="num">` de todas las slides en orden de documento — usar después de insertar una slide en medio del deck. |
 | `scripts/smoke-test.mjs` | Test de regresión: ejercita cada pack con cada alternativa tipográfica. |
 | `examples/demo-deck.html` | Deck de ejemplo heredado del fork original, sin modificar (ver `NOTICE.md`). |
@@ -125,9 +138,7 @@ node scripts/check-style-pack.mjs styles/terminal.md
 
 Comprueba los contrastes WCAG, que primario y acento sean distinguibles entre sí, y avisa si la paleta cae en una zona atractora conocida o si la tipografía está en la lista de *training-data defaults*. Sirve igual para un pack propio armado con los colores de tu marca, o para un deck ya generado (`node scripts/audit.mjs deck.html` lo incluye automáticamente).
 
-Las reglas de composición están en `reference/design-guidelines.md`, verificables mecánicamente con `scripts/check-style-pack.mjs` de arriba. Si además tenés instalada alguna herramienta externa de detección de patrones de diseño, puede dar una segunda opinión más granular sobre los mismos criterios — pero no es necesaria, `check-style-pack.mjs` solo ya alcanza.
-
-No es necesaria para usar slizdeck — es un complemento si ya la tenés instalada.
+Las reglas de composición están en `reference/design-guidelines.md`. Ojo con el alcance: de esa guía, `check-style-pack.mjs` solo verifica automáticamente los contrastes, las fuentes sobreusadas y las zonas de paleta atractoras. El resto (bullets, iconografía de stock, cards anidadas, variedad de layout) queda a criterio del modelo que genera el deck.
 
 ## Verificar cambios visuales
 
@@ -152,6 +163,7 @@ pdftoppm -png -r 72 deck.pdf pagina
 - **`check-reveal.mjs` y `check-overflow.mjs` pueden fallar de forma intermitente** por arranques en frío de Chrome headless (contención de recursos, no relacionado con el deck evaluado) — ambos reintentan automáticamente hasta 2 veces antes de reportarlo. Si sigue fallando, probablemente hay otro proceso pesado compitiendo por recursos en esa máquina (ej. un navegador real con muchas pestañas abiertas), no un bug del deck.
 - **`check-overflow.mjs` no detecta superposición entre elementos** (`no_overlapping_text`), solo desborde de canvas y truncamiento de una línea — generalizar la detección de superposición sin falsos positivos (un badge sobre una esquina es intencional, dos bloques de texto pisándose no) queda fuera del alcance actual.
 - **`examples/demo-deck.html` no pasa `check-style-pack.mjs`.** Es el ejemplo heredado del fork original (ver `NOTICE.md`), preservado sin modificar — no usa el sistema de style packs de slizdeck, así que su paleta original no pasa la validación de contraste que sí aplica a un deck generado con esta skill. `examples/pitch-showcase.html` es el ejemplo que sí usa el sistema de packs actual y pasa todo limpio.
+- **`npm install` reporta 2 vulnerabilidades `high`** en `image-size`, una dependencia transitiva de `pptxgenjs` (DoS parseando imágenes malformadas). No hay fix sin downgrade breaking del export. El riesgo real acá es bajo: `export-pptx.mjs` no parsea imágenes (el export es de texto y formas, `ppt/media/` queda vacío) y solo procesa decks del propio usuario. Las deps además solo hacen falta para exportar a PPTX.
 - **Documentación 100% en español**, por decisión de alcance (audiencia hispanohablante), no por traducción pendiente.
 
 ## Créditos y licencia

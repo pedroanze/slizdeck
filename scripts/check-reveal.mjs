@@ -32,12 +32,13 @@
  * ruta típica, setear la variable de entorno CHROME_PATH con la ruta
  * completa al ejecutable.
  *
- * El harness espera `DOMContentLoaded`, no `load`: si un deck carga un
- * <script src> externo bloqueante (ej. Lucide sin comentar, en vez del
- * default de template.html) y la red esta caida o lenta, `load` puede
- * no disparar nunca y el chequeo cuelga sin necesidad — la cascada CSS
- * que este script valida no depende de que ese script externo llegue a
- * ejecutarse.
+ * El harness espera `DOMContentLoaded`, no `load`, para no depender de que
+ * carguen imagenes o iframes. OJO: eso NO evita el cuelgue por un <script
+ * src> externo bloqueante (ej. Lucide sin comentar, en vez del default de
+ * template.html), porque `DOMContentLoaded` tambien espera a los scripts
+ * sincronos. Por eso, si el chequeo no termina, primero se reporta si el
+ * deck tiene scripts externos: esa es la causa mucho mas probable que un
+ * problema de Chrome en la maquina.
  *
  * Reintenta hasta 2 veces si Chrome headless no llega a terminar (arranque
  * en frio, contencion de recursos — confirmado no relacionado con el deck
@@ -119,7 +120,16 @@ try {
 }
 
 if (!m) {
-  console.error(`No se pudo leer el resultado tras ${MAX_ATTEMPTS} intentos — Chrome headless no termino. No es un problema del deck evaluado: revisar que Chrome headless funcione en esta maquina.`);
+  console.error(`No se pudo leer el resultado tras ${MAX_ATTEMPTS} intentos — Chrome headless no termino.`);
+  const externos = [...html.matchAll(/<script\b[^>]*\bsrc=["'](https?:\/\/[^"']+)["']/gi)].map((x) => x[1]);
+  if (externos.length) {
+    console.error(`\n  Causa mas probable: el deck carga ${externos.length} script(s) externo(s) bloqueante(s):`);
+    for (const u of externos) console.error(`    ${u}`);
+    console.error('  DOMContentLoaded espera a los scripts sincronos, asi que si esa URL no responde el chequeo nunca termina.');
+    console.error('  Fix: comentar o quitar ese <script src> del deck (template.html lo trae comentado por default).');
+  } else {
+    console.error('  El deck no tiene scripts externos, asi que probablemente sea la maquina: revisar que Chrome headless funcione aca.');
+  }
   process.exit(1);
 }
 

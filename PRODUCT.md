@@ -10,11 +10,11 @@ Estático: HTML/CSS/JS vanilla, sin frameworks ni build tools. Sin librerías de
 
 ## Users
 
-Pedro (fundador/creador de contenido), único usuario por ahora. Genera pitch decks para inversores y charlas/presentaciones para conferencias, que él mismo presenta en vivo desde el navegador.
+Fundadores y creadores de contenido técnico que generan pitch decks para inversores y charlas para conferencias, y los presentan en vivo desde el navegador. Público inicial: hispanohablante (la documentación está solo en español, por decisión de alcance).
 
 ## Product Purpose
 
-Slizdeck es una skill de Claude Code (no una app) que genera decks de slides en HTML animado a partir de un design system propio, con contenido investigado en internet. Existe para que armar un pitch deck o una charla completos —de marca coherente, visualmente pulidos, con research real— no tome más que una conversación.
+Slizdeck es una Agent Skill (no una app) que genera decks de slides en HTML animado a partir de un design system propio, con contenido investigado en internet. Existe para que armar un pitch deck o una charla completos, de marca coherente, visualmente pulidos y con research real, no tome más que una conversación.
 
 ## Positioning
 
@@ -22,32 +22,33 @@ A diferencia de PowerPoint/Google Slides, Slidev o generadores de slides basados
 
 ## Operating Context
 
-Cada deck se genera dentro de la carpeta de un proyecto específico (no dentro de la skill). Flujo típico: definir o detectar el design system → brief + research en internet → arco narrativo → wireframe aprobado por el usuario → generación del HTML → iteración en conversación normal → exportar a PDF (impresión nativa del navegador). El presentador usa navegación por teclado (←/→/space) en vivo, frente a audiencia de inversores o asistentes a una conferencia.
+Cada deck se genera dentro de la carpeta de un proyecto específico (no dentro de la skill); los scripts de validación y export se corren desde la raíz de la skill. Flujo típico: ocho fases (`init` → `brief` → `assets` → `build` → `audit` → `export`, más `add` y `fix` sueltas sobre un deck existente). El presentador usa navegación por teclado (←/→/space) en vivo, frente a audiencia de inversores o asistentes a una conferencia.
 
 ## Capabilities and Constraints
 
 - Salida: un archivo `.html` por deck (canvas 1920×1080, navegación por teclado, fullscreen, barra de progreso), exportable a PDF vía impresión nativa del navegador.
-- Export a PPTX: pendiente (Fase 3 del plan del proyecto); se delegará a la skill oficial `document-skills@anthropic-agent-skills` de Anthropic en vez de reimplementarse.
+- Export a PPTX propio (`scripts/export-pptx.mjs`): texto y formas nativas de PowerPoint, cero imágenes incrustadas. Reconoce un set cerrado de patrones de layout; lo que queda fuera se reporta como aviso al exportar, no se pierde en silencio.
+- Cinco style packs calibrados (terminal, paper-white, committed, instrument, editorial), cada uno con 2 alternativas tipográficas, validados contra contraste WCAG y clichés visuales de IA.
+- Versionado de engine: cada deck lleva embebida la versión de `template.html`; `scripts/doctor.mjs` detecta drift contra `CHANGELOG.md` en decks generados meses atrás.
 - Fork/adaptación de `claude-slides` (MIT) — debe conservar el aviso de licencia (`LICENSE`, `NOTICE.md`).
-- Debe mantenerse instalable en Claude Code, Gemini CLI, Codex y OpenCode (estándar abierto Agent Skills) — el frontmatter de `SKILL.md` se mantiene al subconjunto portable del spec.
-- Un solo estilo visual calibrado por ahora (Fase 1); el catálogo de múltiples estilos ("style packs") queda pendiente de referencias visuales del usuario (Fase 2).
+- Escrita contra el subconjunto portable del estándar Agent Skills, para no atarse a un solo cliente. Verificada en Claude Code; el resto de clientes debería funcionar por el estándar, pero no está probado.
 
 ## Brand Commitments
 
-Sin marca propia definida para slizdeck-la-herramienta. El design system se define por deck (por proyecto/marca del usuario), no es fijo.
+El design system se define por deck (por proyecto/marca del usuario), no es fijo: slizdeck no impone una identidad propia sobre el deck generado. La marca de la herramienta vive solo en su repo y su README.
 
 ## Evidence on Hand
 
-Sin testimonios, datos de clientes ni casos de estudio: es una herramienta interna/personal, no un producto con evidencia de mercado propia.
+Sin testimonios ni casos de estudio de terceros todavía. La evidencia disponible es la del propio repo: `examples/pitch-showcase.html` como referencia end-to-end del sistema de packs, y la batería de validación en CI (smoke-test de 5 packs × 3 tipografías, audit, reveal, overflow, doctor). No inventar métricas de adopción ni testimonios.
 
 ## Product Principles
 
 1. Nunca pedirle al usuario que escriba CSS/JSON a mano — el design system se define por conversación guiada o detectando tokens existentes.
 2. Un archivo HTML autónomo, sin build step, siempre presentable con solo abrirlo en el navegador.
 3. Diseño anti-genérico por default: un color domina, un acento con cuentagotas, cada slide con elemento visual, nunca solo texto/bullets.
-4. No reinventar lo que ya existe con calidad de producción (PPTX se delega a la skill oficial de Anthropic en vez de reimplementarse).
+4. Ninguna validación miente: si un script no puede verificar algo, lo dice; si un export deja contenido afuera, lo reporta. Nunca un ✓ que sugiera más de lo comprobado.
 5. Portabilidad multi-herramienta como restricción de diseño desde el día uno, no como afterthought.
 
 ## Accessibility & Inclusion
 
-Sin requisito específico definido aún más allá de lo que ya cubre el motor heredado de `claude-slides` (`prefers-reduced-motion`, navegación por teclado).
+El motor cubre `prefers-reduced-motion`, navegación por teclado y foco visible en los controles del viewer. Todo pack debe pasar el umbral de contraste WCAG que valida `scripts/check-style-pack.mjs` — es requisito, no aspiración: un deck proyectado en una sala grande falla antes que una pantalla de escritorio.

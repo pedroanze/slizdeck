@@ -25,12 +25,12 @@ Directamente prohibido, sin importar qué tan "de diseño" parezca:
 - Fondos beige/crema aplicados sin razón a cada slide por default — el `--cs-cream` del template es intencional y ya está calibrado; no añadir más decoración encima.
 - Iconografía genérica de stock (candados, engranajes, bombillas) cuando hay un ícono más específico disponible en `icons.md` o un mockup/diagrama real en `components.md`.
 - Bullets como única forma de presentar información — ver "Contenido" arriba.
-- Texto centrado en slides de contenido (solo cover y transition van centradas — ver `SKILL.md`, regla de voz #9).
+- Texto centrado en slides de contenido (solo cover y transition van centradas — ver "Layout" mas abajo en este mismo archivo).
 - Gradientes decorativos en elementos que no sean el fondo de cover/transition o `--cs-grad-text` en una palabra de énfasis.
 - **Fuentes y paletas sobreusadas en UI generada por IA**: ver la lista completa y las zonas atractoras en `reference/init.md` y `styles/index.md` (`check-style-pack.mjs` las detecta automáticamente). No hay un único default que evitarlas por sí solo — cada style pack ya está calibrado contra esta lista.
 - **Nunca anidar una card dentro de otra card** (`.card`/`.pq-card`/`.num-card` dentro de otra card). Si el contenido necesita agruparse dentro de una card, usar espaciado y tipografía para la jerarquía interna, no un segundo contenedor con su propio borde/sombra.
 
-`check-style-pack.mjs` (bundleado con slizdeck, siempre disponible) ya detecta estas dos reglas automáticamente. Si además hay instalada alguna herramienta externa de detección de patrones de diseño, puede dar una segunda opinión más granular sobre los mismos criterios — pero no es necesaria para que esta validación funcione; si no está instalada, `check-style-pack.mjs` solo ya alcanza.
+De esta lista, `check-style-pack.mjs` solo verifica automáticamente **las fuentes sobreusadas y las zonas de paleta atractoras** (más los contrastes WCAG). Todo lo demás de esta sección (barras decorativas, iconografía de stock, bullets, texto centrado, gradientes decorativos, cards anidadas) **queda a criterio del modelo**: no hay validador que lo atrape, así que hay que revisarlo a ojo antes de dar el deck por cerrado.
 
 ## Layout: variar, no repetir la misma composición
 
@@ -43,7 +43,7 @@ Directamente prohibido, sin importar qué tan "de diseño" parezca:
 
 - **Cover fuerte, cierre fuerte.** El primer y último slide son gradiente/alto contraste (`.grad`); las intermedias respiran en `--cs-cream`.
 - **Alternar densidad.** Después de una slide con mucha data/mockup, una slide de transición (`.ts-title`, estática, gran tipografía) para que el público respire.
-- **La narrativa manda el orden**, no la plantilla. Usar los arcos narrativos de `SKILL.md` (hook → problema → solución → tracción → ask, para pitch) como columna vertebral del wireframe.
+- **La narrativa manda el orden**, no la plantilla. Usar los arcos narrativos de `reference/deck-schema.md` (hook → problema → solución → tracción → ask, para pitch) como columna vertebral del wireframe.
 
 ## Frase sola / transition: elegir el tamaño por longitud, nunca el default a ciegas
 

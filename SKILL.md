@@ -7,8 +7,8 @@ description: |
 license: MIT
 compatibility: Requiere un agente con capacidad de ejecutar comandos de shell (crear/copiar archivos, abrir el navegador) y búsqueda web. Probado en Claude Code; compatible con cualquier cliente del estándar Agent Skills (agentskills.io).
 metadata:
-  version: "1.0.0"
-allowed-tools: Bash Read Write Edit WebSearch WebFetch
+  version: "1.2.0"
+allowed-tools: Bash, Read, Write, Edit, WebSearch, WebFetch
 # user-invocable / argument-hint son extensiones de Claude Code, no del
 # estandar portable de agentskills.io (que solo define name/description/
 # license/compatibility/metadata/allowed-tools) — habilitan el tab-completion
@@ -41,7 +41,7 @@ Fork/adaptación de [`claude-slides`](https://github.com/marcogalluccio/claude-s
 | `reference/hooks.md` | Hook opcional de Claude Code que audita un deck automáticamente después de cada edición — ver `scripts/verify-hook.mjs`. |
 | `CHANGELOG.md` | Historial de versiones del engine (`template.html`) — lo que lee `scripts/doctor.mjs` para detectar drift. |
 | `CONTRIBUTING.md` | Cómo agregar un style pack/patrón nuevo, correr los tests locales, convención de commits. |
-| `.github/workflows/ci.yml` | CI: corre `smoke-test.mjs`, `audit.mjs` y `check-reveal.mjs` en cada push/PR sobre un deck de humo generado en el momento. |
+| `.github/workflows/ci.yml` | CI en cada push/PR: coherencia de versiones, smoke-test de packs, y la validación completa sobre un deck generado al vuelo y sobre `examples/pitch-showcase.html`. |
 | `reference/design-tokens-schema.md` | Esquema del design system (`design-tokens.json`) y cómo se mapea a las CSS variables del template. |
 | `reference/design-guidelines.md` | Principios de diseño: poco texto, un color dominante, anti-clichés, variedad de layout. Aplicar al construir el wireframe y al generar el HTML. |
 | `reference/deck-schema.md` | Formato del wireframe, arcos narrativos por tipo de deck, niveles de animación, estructura de cada `<section>`. |
@@ -62,6 +62,7 @@ Fork/adaptación de [`claude-slides`](https://github.com/marcogalluccio/claude-s
 | `scripts/verify-hook.mjs` | Hook opcional de Claude Code: corre `audit.mjs` automáticamente después de editar un deck — ver `reference/hooks.md`. |
 | `scripts/export-pptx.mjs` | Exporta un deck HTML a `.pptx` editable (texto y formas nativas). |
 | `scripts/make-offline.mjs` | Incrusta las fuentes como `data:` URI para presentar sin red. |
+| `scripts/check-versions.mjs` | Verifica que la versión coincida en `package.json`, `SKILL.md`, `template.html` y `CHANGELOG.md` — corre en CI. |
 | `scripts/renumber.mjs` | Recalcula `data-label` y `<span class="num">` de todas las slides en orden de documento — usar siempre después de insertar una slide en medio del deck. |
 
 ## Cuándo activar esta skill
@@ -92,6 +93,15 @@ El flujo completo es multi-turno: una vez cargada esta skill, sigue vigente en t
 
 Al reconocer el disparador inicial: *"Te armo el deck. Antes, defino tu design system y el brief."*
 
+## Dónde se corre cada cosa
+
+El deck vive en la carpeta del proyecto del usuario; los scripts viven en la skill. Todos los `node scripts/...` de esta documentación se corren **desde la raíz de la skill**, pasando la ruta (absoluta o relativa) al deck:
+
+```bash
+cd ~/.claude/skills/slizdeck        # o donde esté instalada
+node scripts/audit.mjs ~/proyectos/mi-startup/deck.html
+```
+
 ## Reglas de voz — aplicar siempre
 
 1. **Sintético en pantalla, el presentador habla.** Nada de párrafos largos en la slide — el discurso completo va en las speaker notes.
@@ -101,12 +111,12 @@ Al reconocer el disparador inicial: *"Te armo el deck. Antes, defino tu design s
 5. **Sin em-dash** (— o --). Usar comas, dos puntos, punto y aparte, o paréntesis.
 6. **Sin emojis en las slides** (salvo pedido explícito) — usar SVG de `reference/icons.md`.
 7. **Puente entre slides** lo dice el presentador — las slides son marco, no discurso completo.
-8. **Cover y cierre en gradiente** (`class="grad"`); slides intermedias en `--cs-cream`.
+8. **Cover y cierre en gradiente** (`class="grad"`); slides intermedias en `--cs-cream`. Es el default del sistema: si el style pack elegido pide otra cosa (committed manda una de cada tres slides a gradiente), manda el pack.
 9. **Cover y transition siempre estáticas** (`data-steps="1" data-current-step="1"`, sin `.reveal`).
 10. **Corte directo entre slides** (ya está en el template, 120ms). Sin sweep/gradiente al entrar.
 11. **Footer siempre presente**: logo (si hay) + nombre/org + número de slide.
 
-Estas reglas son las que `scripts/audit.mjs` verifica automáticamente en la fase `audit` — ver [reference/audit.md](reference/audit.md) para la checklist completa y qué queda a criterio del modelo.
+`scripts/audit.mjs` verifica automáticamente **solo algunas** de estas reglas: em-dash (5), punto final en `h1/h2/h3/.subtitle` (2), numeración de footers (4, 11) y estáticas sin `.reveal` (9). Las demás (síntesis en pantalla, títulos de una línea, emojis, puente entre slides, gradiente de cover/cierre) **quedan a criterio del modelo** y hay que revisarlas a ojo — ver [reference/audit.md](reference/audit.md) para la checklist completa.
 
 ## Notas finales
 

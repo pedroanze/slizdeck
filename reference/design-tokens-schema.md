@@ -9,28 +9,30 @@ Este archivo es la fuente de verdad de la identidad visual de un deck. Vive en e
 
 ## Esquema
 
+Este ejemplo son los valores reales del pack `paper-white` (ver `styles/paper-white.md`), para que copiarlo tal cual produzca un deck que pasa la validación. Dos detalles que el ejemplo enseña a propósito: los gradientes llevan `in oklch` (interpolación sin zona muerta grisácea a mitad de camino), y las fuentes están fuera de la lista de *training-data defaults* del final de este archivo.
+
 ```json
 {
   "colors": {
-    "primary":   "#0E7C66",
-    "secondary": "#1E3A5F",
-    "accent":    "#AD5407",
-    "cream":     "#F7F6F2",
-    "creamAlt":  "#EDECE6",
-    "black":     "#000000",
-    "body":      "#454545",
-    "muted":     "#65696F",
+    "primary":   "#16181A",
+    "secondary": "#5A6169",
+    "accent":    "#E23D1E",
+    "cream":     "#FFFFFF",
+    "creamAlt":  "#F4F5F6",
+    "black":     "#0A0B0C",
+    "body":      "#3A4046",
+    "muted":     "#6B7278",
     "white":     "#FFFFFF"
   },
   "gradient": {
-    "radial": "radial-gradient(112% 150% at 0% 100%, #0E7C66 0%, #1E3A5F 100%)",
-    "linear": "linear-gradient(135deg, #0E7C66 0%, #1E3A5F 100%)",
-    "text":   "linear-gradient(135deg, #0E7C66 0%, #146E63 50%, #1E3A5F 100%)"
+    "radial": "radial-gradient(112% 150% at 0% 100% in oklch, #16181A 0%, #000000 100%)",
+    "linear": "linear-gradient(135deg in oklch, #16181A 0%, #000000 100%)",
+    "text":   "linear-gradient(135deg in oklch, #16181A 0%, #3A4046 50%, #16181A 100%)"
   },
   "typography": {
-    "headingFont": "'Newsreader', Georgia, 'Times New Roman', serif",
-    "bodyFont":    "'IBM Plex Sans', ui-sans-serif, system-ui, -apple-system, sans-serif",
-    "googleFontsUrl": "https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap"
+    "headingFont": "'Schibsted Grotesk', ui-sans-serif, system-ui, sans-serif",
+    "bodyFont":    "'Schibsted Grotesk', ui-sans-serif, system-ui, sans-serif",
+    "googleFontsUrl": "https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800;900&display=swap"
   },
   "radius": {
     "sm": "12px",
@@ -84,4 +86,4 @@ Si el usuario solo da un color de marca (ej. "verde esmeralda" o `#10B981`), Cla
 - **`primary`** = el color dado.
 - **`secondary`** = un tono análogo o complementario que funcione bien en el gradiente (ni demasiado parecido a `primary`, ni en conflicto de temperatura).
 - **`accent`** = un color de acento nítido y distinto en matiz de `primary`/`secondary` (ej. si la paleta es fría azul/verde, un acento cálido ámbar/coral) — es el único color "que grita", y se usa en el 5-10% del peso visual del deck, no más.
-- **`cream`/`creamAlt`** = neutros cálidos por default (no blanco puro) salvo que el "vibe" pedido sea explícitamente "oscuro" o "tech" — en ese caso invertir a fondo oscuro con texto claro (ver variante dark en `design-guidelines.md`).
+- **`cream`/`creamAlt`** = **blanco puro o casi negro, nunca un crema cálido intermedio.** Es la regla no negociable de `init.md` y `check-style-pack.mjs` la verifica: el fondo beige "porque se ve cálido" es justo el cliché de IA que hay que evitar. Si el vibe es claro, `#FFFFFF` (ver `styles/paper-white.md`); si es oscuro o "tech", invertir a fondo casi negro con texto claro (ver `styles/terminal.md`). El nombre `cream` es heredado del fork original y hoy significa solo "fondo de las slides intermedias", no un color cálido.

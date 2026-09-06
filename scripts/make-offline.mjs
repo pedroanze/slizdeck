@@ -71,7 +71,22 @@ async function main() {
   const kb = (n) => `${Math.round(n / 1024)} KB`;
   console.log(`✓ ${out}`);
   console.log(`  ${urls.length} fuentes incrustadas · ${kb(bytes)} de fuentes · archivo final ${kb(Buffer.byteLength(html))}`);
-  console.log('  El deck ya no depende de la red. Se puede presentar sin wifi.');
+
+  // Solo se incrustan fuentes. Cualquier otro recurso remoto sigue necesitando
+  // red, asi que no se puede prometer "presentable sin wifi" sin revisarlo.
+  const remotos = [
+    ...html.matchAll(/<script\b[^>]*\bsrc=["'](https?:\/\/[^"']+)["']/gi),
+    ...html.matchAll(/<link\b[^>]*\bhref=["'](https?:\/\/[^"']+)["']/gi),
+    ...html.matchAll(/<img\b[^>]*\bsrc=["'](https?:\/\/[^"']+)["']/gi),
+  ].map((x) => x[1]);
+
+  if (!remotos.length) {
+    console.log('  El deck ya no depende de la red. Se puede presentar sin wifi.');
+  } else {
+    console.log(`  ⚠ Quedan ${remotos.length} recurso(s) remoto(s) sin incrustar — el deck TODAVIA depende de la red:`);
+    for (const u of [...new Set(remotos)]) console.log(`      ${u}`);
+    console.log('    Este script solo incrusta fuentes. Descargar esos recursos a local o quitarlos antes de presentar sin wifi.');
+  }
 }
 
 main().catch((e) => { console.error(e.message); process.exit(1); });

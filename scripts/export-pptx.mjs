@@ -219,8 +219,47 @@ function extractSlide(section) {
   }
 
   out.footer = clean(section.querySelector('.footer'));
+  out.lost = findLostText(section, out);
   return out;
 }
+
+// El export reconoce un set cerrado de patrones (ver arriba). Un layout que
+// no este en ese set no se exporta — y antes desaparecia en silencio, con
+// exit 0 y un "✓ N slides" que sugeria que todo habia viajado. Este pase
+// compara el texto visible del DOM contra el texto realmente exportado y
+// devuelve lo que se quedo afuera, para poder avisarlo.
+function findLostText(section, out) {
+  const exported = new Set();
+  const add = (t) => { if (t) exported.add(norm(t)); };
+  for (const b of out.blocks) {
+    add(b.text);
+    for (const i of b.items || []) add(i.text);
+  }
+  for (const c of out.cards) { add(c.num); add(c.eyebrow); add(c.title); add(c.body); }
+  for (const m of out.metrics) { add(m.n); add(m.l); }
+  for (const b of out.bars) { add(b.etiqueta); for (const s of b.segs) add(s.text); }
+  for (const p of out.props) { add(p.label); add(p.value); }
+  add(out.footer);
+
+  const joined = [...exported].join('   ');
+  const lost = [];
+  for (const el of section.querySelectorAll('*')) {
+    if (el.querySelectorAll('*').length) continue;        // solo hojas de texto
+    if (hasAncestorClass(el, 'footer')) continue;
+    if (el.getAttribute?.('data-counter') !== undefined && el.getAttribute('data-counter') !== null) continue;
+    const text = norm(clean(el));
+    if (text.length < 3) continue;                        // ruido: simbolos, digitos sueltos
+    if (joined.includes(text)) continue;
+    lost.push({
+      tag: el.tagName ? el.tagName.toLowerCase() : '?',
+      cls: (el.getAttribute?.('class') || '').trim(),
+      text: text.slice(0, 48),
+    });
+  }
+  return lost;
+}
+
+const norm = (s) => (s || '').replace(/\s+/g, ' ').trim();
 
 /* ── Composicion de la slide en PPTX ─────────────────────────────────── */
 const STYLE = {
@@ -472,11 +511,32 @@ async function main() {
   const title = clean(doc.querySelector('title')) || basename(out, '.pptx');
   pptx.title = title;
 
-  for (const section of sections) renderSlide(pptx, extractSlide(section), tokens);
+  const perdidas = [];
+  sections.forEach((section, i) => {
+    const data = extractSlide(section);
+    renderSlide(pptx, data, tokens);
+    if (data.lost.length) perdidas.push({ n: String(i + 1).padStart(2, '0'), lost: data.lost });
+  });
 
   await pptx.writeFile({ fileName: out });
   console.log(`✓ ${out} · ${sections.length} slides · ${tokens.fontHeading}/${tokens.fontBody}`);
   console.log('  Editable en PowerPoint y Google Slides. Sin animaciones (estado final de cada slide).');
+
+  if (perdidas.length) {
+    const total = perdidas.reduce((s, p) => s + p.lost.length, 0);
+    console.log(`\n⚠ ${total} elemento(s) de texto no viajaron al .pptx, en ${perdidas.length} slide(s).`);
+    console.log('  Son patrones de layout fuera del set que el export reconoce (ver cabecera de este script).');
+    for (const { n, lost } of perdidas) {
+      console.log(`\n  slide ${n} — ${lost.length} elemento(s):`);
+      for (const l of lost.slice(0, 6)) {
+        const cls = l.cls ? `.${l.cls.split(/\s+/).join('.')}` : '';
+        console.log(`    <${l.tag}${cls}>  "${l.text}"`);
+      }
+      if (lost.length > 6) console.log(`    … y ${lost.length - 6} mas`);
+    }
+    console.log('\n  Opciones: reescribir esas slides con un patron soportado, sumar soporte al script,');
+    console.log('  o completar el contenido a mano en PowerPoint despues de exportar.');
+  }
 }
 
 main().catch((err) => { console.error(err); process.exit(1); });

@@ -4,5 +4,8 @@ node_modules/
 # Salida de scripts/smoke-test.mjs (regenerable)
 .smoke-test-out/
 
+# Config local del editor/agente (permisos personales, no del proyecto)
+.claude/settings.local.json
+
 # macOS
 .DS_Store

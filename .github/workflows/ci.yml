@@ -18,6 +18,11 @@ jobs:
       - name: Instalar dependencias
         run: npm ci
 
+      - name: Coherencia de versiones (los 4 sitios)
+        env:
+          GITHUB_REF_NAME: ${{ github.ref_name }}
+        run: node scripts/check-versions.mjs
+
       - name: Instalar Chrome
         id: setup-chrome
         uses: browser-actions/setup-chrome@v2
@@ -61,6 +66,20 @@ jobs:
           node scripts/check-reveal.mjs examples/pitch-showcase.html
           node scripts/check-overflow.mjs examples/pitch-showcase.html
           node scripts/doctor.mjs examples/pitch-showcase.html
+
+      - name: export-pptx.mjs y make-offline.mjs (cobertura del export)
+        run: |
+          node scripts/export-pptx.mjs examples/pitch-showcase.html /tmp/ci-deck.pptx
+          test -s /tmp/ci-deck.pptx || { echo "el .pptx salio vacio"; exit 1; }
+          cp examples/pitch-showcase.html /tmp/ci-offline.html
+          node scripts/make-offline.mjs /tmp/ci-offline.html
+          grep -q "data:font/woff2;base64," /tmp/ci-offline.html || { echo "make-offline no incrusto ninguna fuente"; exit 1; }
+
+      - name: renumber.mjs es idempotente sobre un deck ya ordenado
+        run: |
+          cp examples/pitch-showcase.html /tmp/ci-renum.html
+          node scripts/renumber.mjs /tmp/ci-renum.html
+          diff -q examples/pitch-showcase.html /tmp/ci-renum.html || { echo "renumber modifico un deck que ya estaba en orden"; exit 1; }
 
       - name: audit.mjs sobre el ejemplo heredado (no bloqueante)
         if: always()

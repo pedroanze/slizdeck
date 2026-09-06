@@ -21,9 +21,17 @@ Si el cambio toca `template.html`, algún `scripts/*.mjs`, o `styles/*.md`:
    node scripts/smoke-test.mjs
    ```
    Tiene que seguir dando 15/15. Si tocaste `template.html` y una sola variante falla, es una regresión real — no un problema del pack.
-3. Si el cambio es en `template.html` y afecta algo que un deck ya generado podría necesitar (un fix de CSS, no un ajuste cosmético), sumar una entrada a `CHANGELOG.md` y subir `slizdeck-engine-version` en el comentario de cabecera del archivo — así `scripts/doctor.mjs` puede avisarle a alguien con un deck viejo.
+3. Si el cambio amerita subir de versión (ver la nota del final sobre cuándo), la versión vive en **cuatro sitios que deben coincidir siempre**: `package.json`, el `metadata.version` de `SKILL.md`, el marcador `slizdeck-engine-version` de `template.html` y la primera entrada de `CHANGELOG.md`. Tocarlos todos, y verificar con:
 
-`.github/workflows/ci.yml` corre estos mismos pasos (más `check-style-pack.mjs`) en cada push/PR contra un deck de humo generado en el momento — no hace falta correrlo todo a mano si ya vas a abrir el PR, pero sí antes de pedir revisión si el ciclo de CI es lento.
+   ```bash
+   node scripts/check-versions.mjs
+   ```
+
+   Se agregó justamente porque los cuatro se desalinearon en silencio una vez. Corre en CI, y en el push de un tag exige además que el tag (`vX.Y.Z`) coincida.
+
+4. Para publicar: PR con el bump → merge → `git tag vX.Y.Z && git push --tags` → crear el Release en GitHub apuntando a ese tag.
+
+`.github/workflows/ci.yml` corre estos mismos pasos (más la coherencia de versiones y la cobertura de export) en cada push/PR contra un deck de humo generado en el momento — no hace falta correrlo todo a mano si ya vas a abrir el PR, pero sí antes de pedir revisión si el ciclo de CI es lento.
 
 ## Agregar un style pack nuevo
 
@@ -51,4 +59,4 @@ No hace falta más que eso: sin prefijos tipo `feat:`/`fix:`, sin body extenso s
 
 - **`examples/demo-deck.html`** — protegido por `NOTICE.md`/licencia, heredado del fork original sin modificar. Si necesitás un ejemplo que sí pase la validación de contraste con el sistema de packs actual, es un archivo nuevo, no una edición de este.
 - **`template.html`** — lo usa todo deck generado. Un cambio acá es un cambio de *engine*, no de una slide puntual: pasa por el checklist de arriba completo, no solo `audit.mjs`.
-- **La numeración de versión en `template.html` / `CHANGELOG.md`** — solo sube cuando el cambio es algo que un deck ya generado podría necesitar reaplicar (ver punto 3 de arriba). Un typo en un comentario no amerita bump de versión.
+- **La numeración de versión** — sube cuando el cambio es algo que un deck ya generado podría necesitar reaplicar, o cuando cambia el comportamiento de un script que la gente corre (ver punto 3 de arriba). Un typo en un comentario no amerita bump. Cuando sube, suben los cuatro sitios a la vez: `check-versions.mjs` no deja publicar de otra forma.
