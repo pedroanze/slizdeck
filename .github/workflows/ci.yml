@@ -48,6 +48,20 @@ jobs:
           CHROME_PATH: ${{ steps.setup-chrome.outputs.chrome-path }}
         run: node scripts/check-reveal.mjs /tmp/ci-deck.html
 
+      - name: check-overflow.mjs sobre el deck de humo
+        env:
+          CHROME_PATH: ${{ steps.setup-chrome.outputs.chrome-path }}
+        run: node scripts/check-overflow.mjs /tmp/ci-deck.html
+
+      - name: Validar examples/pitch-showcase.html (el ejemplo propio)
+        env:
+          CHROME_PATH: ${{ steps.setup-chrome.outputs.chrome-path }}
+        run: |
+          node scripts/audit.mjs examples/pitch-showcase.html
+          node scripts/check-reveal.mjs examples/pitch-showcase.html
+          node scripts/check-overflow.mjs examples/pitch-showcase.html
+          node scripts/doctor.mjs examples/pitch-showcase.html
+
       - name: audit.mjs sobre el ejemplo heredado (no bloqueante)
         if: always()
         run: |

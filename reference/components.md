@@ -314,7 +314,7 @@ Slide title
 .warn-icon {
   width: 54px; height: 54px;
   border-radius: 14px;
-  background: rgba(37,99,235,0.10);
+  background: color-mix(in srgb, var(--cs-primary) 10%, transparent);
   color: var(--cs-primary);
   display: grid; place-items: center;
 }
@@ -559,7 +559,7 @@ Para hacer meta-referencias (mostrar el propio deck, la app del cliente, un docu
 .ph-action-big {
   background: var(--cs-grad-linear);
   border-radius: 11px;
-  box-shadow: 0 4px 12px rgba(37,99,235,0.25);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--cs-primary) 25%, transparent);
 }
 .ph-action-mini {
   background: #fff;
@@ -676,7 +676,7 @@ Para hacer meta-referencias (mostrar el propio deck, la app del cliente, un docu
 .bubble {
   position: absolute;
   left: var(--x, 50%); top: var(--y, 50%);
-  background: rgba(37,99,235,0.10);
+  background: color-mix(in srgb, var(--cs-primary) 10%, transparent);
   color: var(--cs-primary);
   font-family: var(--cs-font-mono);
   font-size: 18px;
@@ -741,7 +741,7 @@ Para hacer meta-referencias (mostrar el propio deck, la app del cliente, un docu
   font-size: 11px; color: var(--cs-muted);
   place-items: center;
 }
-.chat-mini.active { background: rgba(37,99,235,0.10); color: var(--cs-primary); }
+.chat-mini.active { background: color-mix(in srgb, var(--cs-primary) 10%, transparent); color: var(--cs-primary); }
 ```
 
 **Cuidado:** `.way-card .diag` NO debe setear `display` directamente — las variantes (`.diag-isolated` flex / `.diag-merge` grid) manejan su propio display. Ver gotchas en `animations.md`.
@@ -1023,7 +1023,7 @@ my-kb/<br>
   background: var(--cs-grad-linear);
   color: #fff;
   border-color: transparent;
-  box-shadow: 0 8px 24px rgba(37,99,235,0.30);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--cs-primary) 30%, transparent);
 }
 .skill-row .tag {
   font-size: 14px; letter-spacing: 0.12em;
@@ -1096,8 +1096,8 @@ qrencode -o assets/qr/alex.png -s 20 -m 2 -l H "https://www.linkedin.com/in/your
   width: 280px; height: 280px;
   border-radius: 50%;
   padding: 5px;
-  background: linear-gradient(135deg, var(--cs-primary), #7C3AED);
-  box-shadow: 0 12px 48px rgba(37,99,235,0.18);
+  background: var(--cs-grad-linear);
+  box-shadow: 0 12px 48px color-mix(in srgb, var(--cs-primary) 18%, transparent);
   box-sizing: border-box;
 }
 .speaker-photo img {

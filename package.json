@@ -5,13 +5,13 @@
   "license": "MIT",
   "private": true,
   "type": "module",
-  "homepage": "https://github.com/<tu-usuario>/slizdeck#readme",
+  "homepage": "https://github.com/pedroanze/slizdeck#readme",
   "repository": {
     "type": "git",
-    "url": "https://github.com/<tu-usuario>/slizdeck.git"
+    "url": "https://github.com/pedroanze/slizdeck.git"
   },
   "bugs": {
-    "url": "https://github.com/<tu-usuario>/slizdeck/issues"
+    "url": "https://github.com/pedroanze/slizdeck/issues"
   },
   "keywords": [
     "agent-skill",

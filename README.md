@@ -1,6 +1,8 @@
+<img src="SlizDeck.png" alt="SlizDeck" width="360">
+
 # Slizdeck
 
-[![CI](https://github.com/<tu-usuario>/slizdeck/actions/workflows/ci.yml/badge.svg)](https://github.com/<tu-usuario>/slizdeck/actions/workflows/ci.yml)
+[![CI](https://github.com/pedroanze/slizdeck/actions/workflows/ci.yml/badge.svg)](https://github.com/pedroanze/slizdeck/actions/workflows/ci.yml)
 
 Genera decks de slides **HTML animados** a partir de tu propio design system, con el contenido investigado en internet. Pensado para pitch decks de startup: minimalista, poco texto, mucha imagen y dato duro — también sirve para charlas, demos y recaps de evento.
 
@@ -35,22 +37,22 @@ Clona el repo directo en la carpeta de skills de tu herramienta:
 
 ```bash
 # Claude Code
-git clone https://github.com/<tu-usuario>/slizdeck ~/.claude/skills/slizdeck
+git clone https://github.com/pedroanze/slizdeck ~/.claude/skills/slizdeck
 
 # Gemini CLI
-git clone https://github.com/<tu-usuario>/slizdeck ~/.gemini/skills/slizdeck
+git clone https://github.com/pedroanze/slizdeck ~/.gemini/skills/slizdeck
 
 # Codex
-git clone https://github.com/<tu-usuario>/slizdeck ~/.codex/skills/slizdeck
+git clone https://github.com/pedroanze/slizdeck ~/.codex/skills/slizdeck
 
 # OpenCode
-git clone https://github.com/<tu-usuario>/slizdeck ~/.opencode/skills/slizdeck
+git clone https://github.com/pedroanze/slizdeck ~/.opencode/skills/slizdeck
 ```
 
 Para trabajar en la skill sin duplicarla, clona donde prefieras y enlaza:
 
 ```bash
-git clone https://github.com/<tu-usuario>/slizdeck ~/proyectos/slizdeck
+git clone https://github.com/pedroanze/slizdeck ~/proyectos/slizdeck
 ln -s ~/proyectos/slizdeck ~/.claude/skills/slizdeck
 ```
 
@@ -91,6 +93,7 @@ npm install
 | `scripts/check-style-pack.mjs` | Valida contrastes y avisa de clichés visuales de IA. |
 | `scripts/audit.mjs` | Valida un deck ya generado: contraste, balance HTML, reglas de voz, assets pendientes. |
 | `scripts/check-reveal.mjs` | Verifica en Chrome headless que la cascada CSS de `.reveal` resuelva bien al revelarse (`.is-on` gana contra cualquier `r-*`) — atrapa bugs de orden de cascada invisibles en el HTML estático. |
+| `scripts/check-overflow.mjs` | Verifica en Chrome headless que ningún texto desborde el canvas 1920×1080 ni se trunque en una línea que no cabe. |
 | `scripts/doctor.mjs` | Compara la versión de engine embebida en un deck contra `CHANGELOG.md` y avisa (sin reparar) si le falta algún fix conocido. |
 | `scripts/verify-hook.mjs` | Hook opcional de Claude Code que corre `audit.mjs` automáticamente después de editar un deck — ver `reference/hooks.md`. |
 | `scripts/export-pptx.mjs` | Exporta un deck a `.pptx` editable (texto y formas nativas, no imágenes). |
@@ -148,7 +151,8 @@ pdftoppm -png -r 72 deck.pdf pagina
 - **PPTX: set cerrado de patrones reconocidos.** `scripts/export-pptx.mjs` reconoce todos los patrones documentados en `reference/media-and-data.md` (imagen a sangre/split, fila de métricas, barras comparativas, progreso/proporción) y los de `reference/components.md` que ya tiene soporte explícito. Un patrón de layout nuevo que no se haya sumado al script **no aparece en el `.pptx` generado, sin aviso** — avisar antes de exportar si el deck usa algo fuera de lo ya soportado.
 - **PPTX: degradaciones inherentes al formato** (no son fallos del export, son el trade-off de "texto y formas nativas, cero imágenes incrustadas"): sin animaciones (se exporta el estado final), fuentes sustituidas por equivalentes seguros de Office, gradientes de cover/cierre aplanados a color sólido, imágenes reemplazadas por una forma con el `alt` como etiqueta.
 - **Speaker notes van a un `.md` aparte, no al campo nativo de notas de PowerPoint.** `[nombre-deck]-notes.md` con el discurso completo por slide — es una decisión de diseño (el PPTX ya no lleva ninguna otra lógica de contenido embebida), no algo pendiente de conectar.
-- **`check-reveal.mjs` puede fallar de forma intermitente** por arranques en frío de Chrome headless (contención de recursos, no relacionado con el deck evaluado) — reintenta automáticamente hasta 2 veces antes de reportarlo. Si sigue fallando, probablemente hay otro proceso pesado compitiendo por recursos en esa máquina (ej. un navegador real con muchas pestañas abiertas), no un bug del deck.
+- **`check-reveal.mjs` y `check-overflow.mjs` pueden fallar de forma intermitente** por arranques en frío de Chrome headless (contención de recursos, no relacionado con el deck evaluado) — ambos reintentan automáticamente hasta 2 veces antes de reportarlo. Si sigue fallando, probablemente hay otro proceso pesado compitiendo por recursos en esa máquina (ej. un navegador real con muchas pestañas abiertas), no un bug del deck.
+- **`check-overflow.mjs` no detecta superposición entre elementos** (`no_overlapping_text`), solo desborde de canvas y truncamiento de una línea — generalizar la detección de superposición sin falsos positivos (un badge sobre una esquina es intencional, dos bloques de texto pisándose no) queda fuera del alcance actual.
 - **`examples/demo-deck.html` no pasa `check-style-pack.mjs`.** Es el ejemplo heredado del fork original (ver `NOTICE.md`), preservado sin modificar — no usa el sistema de style packs de slizdeck, así que su paleta original no pasa la validación de contraste que sí aplica a un deck generado con esta skill. `examples/pitch-showcase.html` es el ejemplo que sí usa el sistema de packs actual y pasa todo limpio.
 - **Documentación 100% en español**, por decisión de alcance (audiencia hispanohablante), no por traducción pendiente.
 

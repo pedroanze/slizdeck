@@ -28,6 +28,7 @@ Directamente prohibido, sin importar qué tan "de diseño" parezca:
 - Texto centrado en slides de contenido (solo cover y transition van centradas — ver `SKILL.md`, regla de voz #9).
 - Gradientes decorativos en elementos que no sean el fondo de cover/transition o `--cs-grad-text` en una palabra de énfasis.
 - **Fuentes y paletas sobreusadas en UI generada por IA**: ver la lista completa y las zonas atractoras en `reference/init.md` y `styles/index.md` (`check-style-pack.mjs` las detecta automáticamente). No hay un único default que evitarlas por sí solo — cada style pack ya está calibrado contra esta lista.
+- **Nunca anidar una card dentro de otra card** (`.card`/`.pq-card`/`.num-card` dentro de otra card). Si el contenido necesita agruparse dentro de una card, usar espaciado y tipografía para la jerarquía interna, no un segundo contenedor con su propio borde/sombra.
 
 `check-style-pack.mjs` (bundleado con slizdeck, siempre disponible) ya detecta estas dos reglas automáticamente. Si además está instalada la skill externa **opcional** `impeccable` (`https://github.com/pbakaus/impeccable`), su detector da una segunda opinión más granular (`node ~/.claude/skills/impeccable/scripts/detect.mjs --json <archivo>`, marca los hallazgos como `overused-font` y `ai-color-palette`) — pero no es necesaria para que esta validación funcione; si no está instalada, `check-style-pack.mjs` solo ya alcanza.
 

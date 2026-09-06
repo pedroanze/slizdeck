@@ -49,6 +49,7 @@ Fork/adaptación de [`claude-slides`](https://github.com/marcogalluccio/claude-s
 | `scripts/check-style-pack.mjs` | Valida contrastes, distinción primario/acento y clichés de IA. |
 | `scripts/audit.mjs` | Valida un deck generado: contraste, balance HTML, reglas de voz, assets pendientes. |
 | `scripts/check-reveal.mjs` | Verifica que la cascada CSS de `.reveal` resuelva bien al revelarse (`.is-on` debe ganar contra cualquier variante `r-*`) — detecta bugs de orden de cascada que `audit.mjs` no puede ver porque solo mira el HTML estático. |
+| `scripts/check-overflow.mjs` | Detecta texto que desborda el canvas 1920×1080 o se trunca en una línea que no cabe (`white-space: nowrap` con contenido más ancho que su caja) — mide con Chrome headless, con los `data-counter` forzados a su valor final. |
 | `scripts/doctor.mjs` | Compara la versión de engine embebida en un deck contra `CHANGELOG.md` y avisa (sin reparar) si le falta algún fix conocido — ver `reference/audit.md`. |
 | `scripts/verify-hook.mjs` | Hook opcional de Claude Code: corre `audit.mjs` automáticamente después de editar un deck — ver `reference/hooks.md`. |
 | `scripts/export-pptx.mjs` | Exporta un deck HTML a `.pptx` editable (texto y formas nativas). |
