@@ -4,6 +4,17 @@ Historial de cambios al engine (`template.html`) y a los scripts de la skill. Ca
 
 Una sola versión gobierna todo el proyecto y vive en cuatro sitios que deben coincidir siempre: `package.json`, el `metadata.version` de `SKILL.md`, el marcador `slizdeck-engine-version` de `template.html`, y la primera entrada de este archivo. `node scripts/check-versions.mjs` lo verifica y falla si alguno se desalinea.
 
+## 1.3.0
+
+- **Fix de accesibilidad: el total del act-marker era ilegible.** El indicador de paso de las slides multi-step (`2 /3`) marcaba el total con un `style="opacity:.4"` inline, que dejaba `--cs-muted` en **1.7:1** sobre blanco — muy por debajo de cualquier umbral WCAG. Ahora es una clase `.act-marker .step-total` con `opacity: .8` (~3.3:1, el mínimo AA para 24px). Un deck ya generado con el inline sigue teniendo el problema: reemplazar `<span style="opacity:.4">` por `<span class="step-total">` y añadir la regla al `<style>`.
+- **Nuevo: `scripts/check-contrast.mjs`.** Mide el contraste de cada texto ya renderizado contra su fondo efectivo, que es distinto de lo que valida `check-style-pack.mjs` (pares de tokens en `:root`). Encontró justamente el bug de arriba, invisible para la validación de tokens porque `--cs-muted` sobre blanco sí pasa: lo que fallaba era la opacidad encima. Los textos sobre gradiente o imagen se reportan como no medidos, nunca como aprobados.
+- **Nuevo: `tests/validators.test.js`** (`npm test`, solo `node:test`, cero dependencias): mete defectos concretos en el deck de referencia y verifica que cada validador los detecte. Un validador que siempre dice ✓ es peor que no tenerlo. Encontró de paso que `audit.mjs`, `doctor.mjs` y `export-pptx.mjs` escupían un stack trace de Node ante un archivo inexistente, ya corregido.
+- **Portabilidad:** `audit.mjs` y `smoke-test.mjs` resolvían su ruta con `new URL(...).pathname`, que deja `%20` en rutas con espacios y devuelve `/C:/...` en Windows. Ahora usan `fileURLToPath`, como el resto.
+- **`renumber.mjs` mantiene sincronizados los marcadores `SLIZDECK-ASSET-PENDING: slide NN`**, que tras insertar una slide apuntaban a la equivocada.
+- **Índice al principio de `components.md` y `animations.md`**, para saltar al patrón que pide el wireframe en vez de leer 1200 líneas y quedarse con los primeros.
+- **Branding heredado:** el placeholder del `<title>` pasa a `Slizdeck · [DECK NAME]` y los tokens dejan de titularse "CLAUDE SLIDES". El `<html lang>` lleva ahora un recordatorio de ajustarlo al idioma del deck.
+- **Nuevo: `scripts/shoot.mjs`.** Renderiza cada slide a PNG en su estado final para que el modelo pueda mirar el deck en la fase `audit`, en vez de deducirlo del HTML. Es el único paso que puede juzgar jerarquía, variedad de composición y peso visual.
+
 ## 1.2.0
 
 Sin cambios en el engine: un deck generado con 1.1.0 no necesita ninguna corrección. Esta versión son fixes en los scripts de validación y export, todos en la misma dirección — ninguna herramienta debe afirmar algo que no verificó.

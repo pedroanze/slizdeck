@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- slizdeck-engine-version: 1.2.0 — no borrar este comentario. scripts/doctor.mjs
+<!-- slizdeck-engine-version: 1.3.0 — no borrar este comentario. scripts/doctor.mjs
      lo lee para saber contra qué versión del engine se generó este deck y
      detectar si hay fixes de template.html posteriores que no llegaron acá
      (ver CHANGELOG.md). Se copia tal cual al generar un deck nuevo en build. -->
@@ -395,6 +395,7 @@
   .grad .act-marker { color: rgba(255,255,255,0.5); }
   .act-marker .step-num { color: var(--cs-fg-1); font-weight: 700; }
   .grad .act-marker .step-num { color: #fff; }
+  .act-marker .step-total { opacity: .8; }
 
   /* Reduced motion — show everything immediately */
   @media (prefers-reduced-motion: reduce) {
@@ -558,7 +559,7 @@
   <section data-label="02 Problem" data-steps="2" data-current-step="0">
     <div class="sweep"></div>
     <div class="pad">
-      <div class="act-marker"><span class="step-num">1</span><span style="opacity:.4">/2</span></div>
+      <div class="act-marker"><span class="step-num">1</span><span class="step-total">/2</span></div>
       <div class="eyebrow reveal" data-step="1">The problem</div>
       <h2 class="title reveal" data-step="1" style="--d:80ms">Standups eat the morning</h2>
       <p class="reveal r-fade" data-step="1" style="--d:140ms; max-width:900px; font-size:32px; color:var(--cs-body); margin-top:24px;">Every team syncs live, every day, whether or not there is anything to sync about.</p>
@@ -578,7 +579,7 @@
   <section data-label="03 Solution" data-steps="2" data-current-step="0">
     <div class="sweep"></div>
     <div class="pad">
-      <div class="act-marker"><span class="step-num">1</span><span style="opacity:.4">/2</span></div>
+      <div class="act-marker"><span class="step-num">1</span><span class="step-total">/2</span></div>
       <div class="eyebrow reveal" data-step="1">The solution</div>
       <h2 class="title reveal" data-step="1" style="--d:80ms">One voice note replaces the meeting</h2>
 
@@ -609,7 +610,7 @@
   <section data-label="04 Before and now" data-steps="3" data-current-step="0">
     <div class="sweep"></div>
     <div class="pad">
-      <div class="act-marker"><span class="step-num">1</span><span style="opacity:.4">/3</span></div>
+      <div class="act-marker"><span class="step-num">1</span><span class="step-total">/3</span></div>
       <div class="eyebrow reveal" data-step="1">What changes</div>
       <h2 class="title reveal" data-step="1" style="--d:80ms">Same update, zero live meeting</h2>
 
@@ -638,7 +639,7 @@
   <section data-label="05 Traction" data-steps="2" data-current-step="0">
     <div class="sweep"></div>
     <div class="pad">
-      <div class="act-marker"><span class="step-num">1</span><span style="opacity:.4">/2</span></div>
+      <div class="act-marker"><span class="step-num">1</span><span class="step-total">/2</span></div>
       <div class="eyebrow reveal" data-step="1">Traction</div>
       <h2 class="title reveal" data-step="1" style="--d:80ms">Six months in</h2>
 

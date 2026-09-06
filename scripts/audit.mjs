@@ -19,16 +19,24 @@
  *   node scripts/audit.mjs deck.html
  */
 
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const file = process.argv[2];
 if (!file) {
   console.error('uso: node scripts/audit.mjs <deck.html>');
   process.exit(1);
 }
-const ROOT = path.resolve(new URL('.', import.meta.url).pathname, '..');
+// fileURLToPath y no .pathname: .pathname deja los espacios como %20 y en
+// Windows devuelve rutas tipo /C:/... que no resuelven.
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+
+if (!existsSync(file)) {
+  console.error(`no existe el archivo: ${file}`);
+  process.exit(1);
+}
 const html = readFileSync(file, 'utf8');
 
 let fail = 0, warn = 0;

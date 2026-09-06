@@ -19,7 +19,7 @@ Proponer un nivel (NONE/LIGHT/HEAVY, tabla y defaults en `reference/deck-schema.
 2. **Assets**: usar los archivos resueltos en la fase `assets`; para los ítems marcados "seguir sin él", insertar el comentario `<!-- SLIZDECK-ASSET-PENDING: ... -->` justo antes del `<section>` afectado (ver `reference/assets.md`).
 3. Por cada slide del wireframe: copiar el patrón elegido de `reference/components.md`, poblarlo con el contenido real; si el nivel es LIGHT o HEAVY, agregar `class="reveal" data-step="N"` a los elementos a revelar progresivamente y `data-steps="N"` en la `<section>`; si es HEAVY en esa slide, agregar la técnica de `reference/animations.md`.
 4. Insertar todas las `<section>` donde dice `INSERT SLIDES HERE`.
-5. Actualizar `<title>` y los footers (`Speaker · Org · NN`, numeración sin huecos ni duplicados).
+5. Actualizar `<title>` y el `lang` de `<html>` y los footers (`Speaker · Org · NN`, numeración sin huecos ni duplicados).
 6. Aplicar `reference/design-guidelines.md` en cada slide (colores, jerarquía, variedad de layout, anti-clichés) antes de dar por cerrada la generación.
 
 ## 3. Abrir e iterar

@@ -14,6 +14,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: npm
 
       - name: Instalar dependencias
         run: npm ci
@@ -29,6 +30,9 @@ jobs:
         with:
           chrome-version: stable
 
+      - name: Tests de los validadores
+        run: npm test
+
       - name: Regresión de style packs (smoke-test)
         env:
           CHROME_PATH: ${{ steps.setup-chrome.outputs.chrome-path }}
@@ -41,7 +45,7 @@ jobs:
           node -e "
             const fs = require('node:fs');
             const p = '/tmp/ci-deck.html';
-            const html = fs.readFileSync(p, 'utf8').replace('Claude Slides · [DECK NAME]', 'CI Smoke Deck');
+            const html = fs.readFileSync(p, 'utf8').replace('Slizdeck · [DECK NAME]', 'CI Smoke Deck');
             fs.writeFileSync(p, html);
           "
 
@@ -63,9 +67,11 @@ jobs:
           CHROME_PATH: ${{ steps.setup-chrome.outputs.chrome-path }}
         run: |
           node scripts/audit.mjs examples/pitch-showcase.html
+          node scripts/check-contrast.mjs examples/pitch-showcase.html
           node scripts/check-reveal.mjs examples/pitch-showcase.html
           node scripts/check-overflow.mjs examples/pitch-showcase.html
           node scripts/doctor.mjs examples/pitch-showcase.html
+          node scripts/shoot.mjs examples/pitch-showcase.html --slides=1 --out=/tmp/ci-shots
 
       - name: export-pptx.mjs y make-offline.mjs (cobertura del export)
         run: |

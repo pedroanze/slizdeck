@@ -1,8 +1,28 @@
-# Claude Slides — Animations
+# Animations
 
-Catálogo de técnicas de animación para decks con `template.html`. Cada técnica incluye solo lo necesario para hacerla funcionar: snippet listo para copiar + los bugs a evitar.
+Catálogo de técnicas de animación para decks de slizdeck (`template.html`). Cada técnica incluye solo lo necesario para hacerla funcionar: snippet listo para copiar + los bugs a evitar.
 
 **La lógica de decisión "estática vs animada" está en la fase `build`, ver `reference/build.md`.** Acá solo están las técnicas.
+
+---
+
+## Índice
+
+Solo para nivel HEAVY (ver `deck-schema.md`). **Leer únicamente la técnica que vas a usar** — cada una trae sus propios gotchas al final de su sección, y son lo que evita el bug, no la receta.
+
+- Foundation — el modelo de steps
+- Reveal stagger — varios elementos, mismo step, delay creciente
+- Counter ticking — número que sube hasta un target
+- SVG path drawing — la flecha que se dibuja
+- SVG marker — punta de flecha
+- Pulso disparado por el step actual
+- Wrap arrow con bifurcación
+- Connector trunk + N branches que se bifurcan
+- Popup overlay con backdrop-blur
+- SVG packets animados a lo largo de un path (loop continuo)
+- Anillos pulsantes (ping concéntrico)
+- Magic-move: archivos que vuelan
+- Cuidados críticos (transversales)
 
 ---
 

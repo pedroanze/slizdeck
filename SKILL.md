@@ -7,7 +7,7 @@ description: |
 license: MIT
 compatibility: Requiere un agente con capacidad de ejecutar comandos de shell (crear/copiar archivos, abrir el navegador) y búsqueda web. Probado en Claude Code; compatible con cualquier cliente del estándar Agent Skills (agentskills.io).
 metadata:
-  version: "1.2.0"
+  version: "1.3.0"
 allowed-tools: Bash, Read, Write, Edit, WebSearch, WebFetch
 # user-invocable / argument-hint son extensiones de Claude Code, no del
 # estandar portable de agentskills.io (que solo define name/description/
@@ -57,6 +57,8 @@ Fork/adaptación de [`claude-slides`](https://github.com/marcogalluccio/claude-s
 | `scripts/check-style-pack.mjs` | Valida contrastes, distinción primario/acento y clichés de IA. |
 | `scripts/audit.mjs` | Valida un deck generado: contraste, balance HTML, reglas de voz, assets pendientes. |
 | `scripts/check-reveal.mjs` | Verifica que la cascada CSS de `.reveal` resuelva bien al revelarse (`.is-on` debe ganar contra cualquier variante `r-*`) — detecta bugs de orden de cascada que `audit.mjs` no puede ver porque solo mira el HTML estático. |
+| `scripts/shoot.mjs` | Renderiza cada slide a PNG en su estado final para **mirar** el deck en la fase `audit` — el único paso que juzga jerarquía, variedad de composición y peso visual. |
+| `scripts/check-contrast.mjs` | Mide el contraste de cada texto renderizado contra su fondo real (complementa `check-style-pack.mjs`, que solo valida pares de tokens). |
 | `scripts/check-overflow.mjs` | Detecta texto que desborda el canvas 1920×1080 o se trunca en una línea que no cabe (`white-space: nowrap` con contenido más ancho que su caja) — mide con Chrome headless, con los `data-counter` forzados a su valor final. |
 | `scripts/doctor.mjs` | Compara la versión de engine embebida en un deck contra `CHANGELOG.md` y avisa (sin reparar) si le falta algún fix conocido — ver `reference/audit.md`. |
 | `scripts/verify-hook.mjs` | Hook opcional de Claude Code: corre `audit.mjs` automáticamente después de editar un deck — ver `reference/hooks.md`. |
@@ -105,7 +107,7 @@ node scripts/audit.mjs ~/proyectos/mi-startup/deck.html
 ## Reglas de voz — aplicar siempre
 
 1. **Sintético en pantalla, el presentador habla.** Nada de párrafos largos en la slide — el discurso completo va en las speaker notes.
-2. **Sin punto final** en títulos (h1/h2/h3), subtítulos, eyebrows y payoffs de título. Sí llevan punto los párrafos de cuerpo, quotes y captions.
+2. **Sin punto final** en `h1`/`h2`/`h3`, `.subtitle`, `.ts-tagline`, `.eyebrow` y `.payoff` — son rótulos, no oraciones. **Sí llevan punto** los párrafos de cuerpo (`<p>`), las quotes y los captions (`.stat-caption`, `.stat-source`). `audit.mjs` solo verifica los cuatro primeros; el resto es criterio del modelo.
 3. **Títulos en una sola línea** cuando sea posible.
 4. **Numeración 01/02/03**, no A/B/C.
 5. **Sin em-dash** (— o --). Usar comas, dos puntos, punto y aparte, o paréntesis.

@@ -43,6 +43,7 @@ const masked = html.replace(/<!--[\s\S]*?-->/g, (c) => ' '.repeat(c.length));
 let n = 0;
 const renamed = [];
 let skipped = 0;
+let assetsFixed = 0;
 const edits = [];   // { start, end, text } sobre indices del original
 
 for (const sec of masked.matchAll(/<section\b[^>]*>[\s\S]*?<\/section>/g)) {
@@ -69,6 +70,22 @@ for (const sec of masked.matchAll(/<section\b[^>]*>[\s\S]*?<\/section>/g)) {
 
   edits.push({ start: base + num.index, end: base + num.index + num[0].length, text: `<span class="num">${nn}</span>` });
 
+  // Los marcadores de la fase assets llevan el numero de slide en el texto
+  // ("SLIZDECK-ASSET-PENDING: slide 04 - foto del equipo"). Si no se
+  // actualizan, despues de insertar una slide apuntan a la equivocada y
+  // audit.mjs reporta un pendiente sobre una slide que no es. Se busca en
+  // el HTML original, no en el enmascarado: aca el comentario si importa.
+  const original = html.slice(base, base + body.length);
+  const pend = /(SLIZDECK-ASSET-PENDING:\s*slide\s+)(\d+)/i.exec(original);
+  if (pend && pend[2] !== nn) {
+    edits.push({
+      start: base + pend.index,
+      end: base + pend.index + pend[0].length,
+      text: `${pend[1]}${nn}`,
+    });
+    assetsFixed++;
+  }
+
   if (beforeLabel !== nn || beforeNum !== nn) {
     renamed.push(`${beforeNum}${beforeLabel && beforeLabel !== beforeNum ? ` (label ${beforeLabel})` : ''} → ${nn}`);
   }
@@ -88,6 +105,9 @@ writeFileSync(file, outHtml);
 console.log(`✓ ${n} slides numeradas 01..${String(n).padStart(2, '0')} en ${file}`);
 if (renamed.length) console.log(`  Renumeradas: ${renamed.join(', ')}`);
 else console.log('  Ya estaban en orden, sin cambios de numero.');
+if (assetsFixed) {
+  console.log(`  ${assetsFixed} marcador(es) SLIZDECK-ASSET-PENDING reapuntado(s) a su slide.`);
+}
 if (skipped) {
   console.log(`  ${skipped} slide(s) saltada(s) por no llevar <span class="num"> (esperado en la pantalla de standby).`);
 }

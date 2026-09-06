@@ -107,6 +107,8 @@ Para desinstalar basta con `rm -rf ~/.claude/skills/slizdeck`. Lo único que sli
 | `scripts/check-style-pack.mjs` | Valida contrastes y avisa de clichés visuales de IA. |
 | `scripts/audit.mjs` | Valida un deck ya generado: contraste, balance HTML, reglas de voz, assets pendientes. |
 | `scripts/check-reveal.mjs` | Verifica en Chrome headless que la cascada CSS de `.reveal` resuelva bien al revelarse (`.is-on` gana contra cualquier `r-*`) — atrapa bugs de orden de cascada invisibles en el HTML estático. |
+| `scripts/shoot.mjs` | Renderiza cada slide a PNG (estado final) para revisar el deck mirándolo, no leyendo el HTML. |
+| `scripts/check-contrast.mjs` | Mide en Chrome headless el contraste de cada texto contra su fondo real; los textos sobre gradiente los reporta como no medidos. |
 | `scripts/check-overflow.mjs` | Verifica en Chrome headless que ningún texto desborde el canvas 1920×1080 ni se trunque en una línea que no cabe. |
 | `scripts/doctor.mjs` | Compara la versión de engine embebida en un deck contra `CHANGELOG.md` y avisa (sin reparar) si le falta algún fix conocido. |
 | `scripts/verify-hook.mjs` | Hook opcional de Claude Code que corre `audit.mjs` automáticamente después de editar un deck — ver `reference/hooks.md`. |
@@ -114,6 +116,7 @@ Para desinstalar basta con `rm -rf ~/.claude/skills/slizdeck`. Lo único que sli
 | `scripts/make-offline.mjs` | Incrusta las fuentes como `data:` URI para presentar sin depender de red. |
 | `scripts/check-versions.mjs` | Verifica que la versión coincida en los cuatro sitios donde se declara (`package.json`, `SKILL.md`, `template.html`, `CHANGELOG.md`). |
 | `scripts/renumber.mjs` | Recalcula `data-label` y `<span class="num">` de todas las slides en orden de documento — usar después de insertar una slide en medio del deck. |
+| `tests/validators.test.js` | Suite `node:test` (cero deps): comprueba que los validadores distingan un deck bueno de uno roto. `npm test`. |
 | `scripts/smoke-test.mjs` | Test de regresión: ejercita cada pack con cada alternativa tipográfica. |
 | `examples/demo-deck.html` | Deck de ejemplo heredado del fork original, sin modificar (ver `NOTICE.md`). |
 | `examples/pitch-showcase.html` | Deck de ejemplo propio de slizdeck (7 slides, pack Paper White) — pasa limpio `audit.mjs` + `check-style-pack.mjs` + `check-reveal.mjs`, referencia de la calidad actual del output. |

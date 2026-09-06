@@ -4,7 +4,7 @@ Se activa antes de dar un deck por terminado, y siempre que el usuario pida expl
 
 ## Doctrina de severidad
 
-Todo hallazgo de esta skill —de `audit.mjs`, `check-reveal.mjs`, `check-overflow.mjs` o `doctor.mjs`— cae en uno de tres niveles. `reference/fix.md` y `reference/add.md` usan estos mismos tres nombres en vez de reinventar su propia forma de describir qué bloquea y qué no:
+Todo hallazgo de esta skill —de `audit.mjs`, `check-contrast.mjs`, `check-reveal.mjs`, `check-overflow.mjs` o `doctor.mjs`— cae en uno de tres niveles. `reference/fix.md` y `reference/add.md` usan estos mismos tres nombres en vez de reinventar su propia forma de describir qué bloquea y qué no:
 
 - **Bloqueante** (✗): hay que corregirlo antes de entregar, sin excepción. Contraste, balance de HTML, footers mal numerados, bugs de cascada CSS.
 - **Aviso** (⚠): se informa al usuario pero no bloquea la entrega — típicamente assets pendientes ya aceptados, o un caso donde el script no tiene contexto suficiente para decidir.
@@ -14,9 +14,12 @@ Todo hallazgo de esta skill —de `audit.mjs`, `check-reveal.mjs`, `check-overfl
 
 ```bash
 node scripts/audit.mjs deck.html
+node scripts/check-contrast.mjs deck.html
 node scripts/check-reveal.mjs deck.html
 node scripts/check-overflow.mjs deck.html
 ```
+
+Los cuatro se corren desde la raíz de la skill (ver `SKILL.md` → "Dónde se corre cada cosa"). Después viene el paso que ningún script puede hacer: **mirar el deck** (`shoot.mjs`, más abajo).
 
 `audit.mjs` verifica automáticamente lo que **sí** se puede confirmar con una regex sobre el HTML final:
 
@@ -45,6 +48,29 @@ node scripts/check-overflow.mjs deck.html
 
 Otro chequeo aparte en Chrome headless, en el mismo espíritu que `check-reveal.mjs`: detecta (1) contenido más ancho o alto que el canvas 1920×1080 del `<deck-stage>`, y (2) cualquier elemento con `white-space: nowrap` cuyo texto real sea más ancho que su caja (se trunca sin verse a simple vista en el HTML). Los `[data-counter]` se miden con su valor final, no el "0" inicial. Un fallo acá es **bloqueante** — texto truncado o que se sale del canvas nunca se lee, tanto en vivo como en el PDF exportado. No detecta superposición entre elementos (`no_overlapping_text`) — ver la nota en `README.md` → Limitaciones conocidas.
 
+## `check-contrast.mjs` — contraste real, no el de los tokens
+
+```bash
+node scripts/check-contrast.mjs deck.html
+```
+
+Mide el color computado de cada texto contra el fondo que le queda detrás, ya renderizado. Es distinto de lo que hace `check-style-pack.mjs`, que valida los pares de tokens declarados en `:root`: un `--cs-muted` que pasa sobre `--cs-cream` puede ser ilegible dentro de una card de fondo oscuro, o quedar por debajo del umbral porque encima lleva un `opacity`. Esa combinación solo existe en el render. Un fallo acá es **bloqueante**.
+
+Los textos sobre gradiente, imagen de fondo o `background-clip: text` (el cover, el cierre, `.grad-word`) **no se miden**: su fondo no es un color plano, así que un solo ratio no lo describiría. El script los cuenta y los reporta aparte, para revisarlos a ojo — nunca los da por aprobados.
+
+## `shoot.mjs` — mirar el deck, no deducirlo del HTML
+
+```bash
+node scripts/shoot.mjs deck.html            # todas las slides
+node scripts/shoot.mjs deck.html --slides=3,7-9
+```
+
+Renderiza cada slide a un PNG 1920×1080 en su estado final (reveals aplicados, contadores en su cifra real). **Después hay que abrir esas imágenes y mirarlas** — leerlas como imagen, no solo comprobar que el archivo existe.
+
+Es el único paso del flujo que puede juzgar lo que ninguna regex ni ninguna medición puntual alcanza: si la jerarquía se lee de un vistazo, si tres slides seguidas comparten la misma composición, si una imagen pelea con el título, si el peso de color está desbalanceado, si la slide respira o está toda apelotonada en el tercio superior. Es exactamente la lista de "lo que el script no puede revisar" de más abajo, que hasta ahora se revisaba de memoria sobre el HTML.
+
+**Una sola ronda, acotada.** Generar el deck completo → una tanda de capturas → mirarlas todas y anotar → un batch de correcciones → como mucho una segunda vuelta. Un loop abierto de screenshot-y-retoque consume el presupuesto del usuario sin converger; si a la segunda ronda algo sigue sin cerrar, se le reporta a él en vez de seguir iterando.
+
 ## `doctor.mjs` — deck generado con una versión vieja del engine
 
 ```bash
@@ -55,7 +81,7 @@ Compara el `slizdeck-engine-version` embebido al principio del deck contra la ve
 
 ## Lo que el script no puede revisar
 
-Esto sigue siendo criterio del modelo, no de una regex — aplicar `reference/design-guidelines.md` al leerlo de nuevo:
+Esto sigue siendo criterio del modelo, no de una regex. Se juzga **sobre las capturas de `shoot.mjs`**, no sobre el HTML — aplicar `reference/design-guidelines.md` al mirarlas:
 
 - Que el mensaje de cada slide aterrice en una idea, no en un párrafo.
 - Que haya variedad real de layout entre slides consecutivas (no la misma composición 5 veces seguidas).
@@ -66,12 +92,14 @@ Esto sigue siendo criterio del modelo, no de una regex — aplicar `reference/de
 ## Checklist completa (script + criterio)
 
 - [ ] `node scripts/audit.mjs <deck>.html` pasa sin fallos
+- [ ] `node scripts/check-contrast.mjs <deck>.html` pasa sin fallos (y los textos sobre gradiente se revisaron a ojo)
 - [ ] `node scripts/check-reveal.mjs <deck>.html` pasa sin fallos
 - [ ] `node scripts/check-overflow.mjs <deck>.html` pasa sin fallos
+- [ ] `node scripts/shoot.mjs <deck>.html` y **las capturas se miraron una por una**
 - [ ] Títulos en una línea donde tiene sentido
 - [ ] Cada slide tiene un elemento visual, no es solo texto/bullets
 - [ ] Un color domina cada slide, el acento se usa con cuentagotas
 - [ ] Variedad de layout entre slides consecutivas
 - [ ] Las notas de composición del pack elegido se aplicaron
 
-**Al terminar esta fase:** el deck pasa el script sin fallos y el modelo confirmó los puntos de criterio. Sigue `export` si el usuario necesita PDF o PPTX; si no, el deck ya está listo para presentarse desde el navegador.
+**Al terminar esta fase:** el deck pasa los scripts sin fallos y el modelo miró las capturas y confirmó los puntos de criterio. Sigue `export` si el usuario necesita PDF o PPTX; si no, el deck ya está listo para presentarse desde el navegador.

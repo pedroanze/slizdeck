@@ -1,13 +1,15 @@
 <!doctype html>
-<!-- slizdeck-engine-version: 1.2.0 — no borrar este comentario. scripts/doctor.mjs
+<!-- slizdeck-engine-version: 1.3.0 — no borrar este comentario. scripts/doctor.mjs
      lo lee para saber contra qué versión del engine se generó este deck y
      detectar si hay fixes de template.html posteriores que no llegaron acá
      (ver CHANGELOG.md). Se copia tal cual al generar un deck nuevo en build. -->
+<!-- lang: ajustar al idioma del deck (es, en, pt...). Afecta la
+     hifenizacion, el corrector y como lo lee un lector de pantalla. -->
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Claude Slides · [DECK NAME]</title>
+<title>Slizdeck · [DECK NAME]</title>
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
 <!-- Iconos lucide: opt-in. La mayoria de los decks no usa ninguno, y
      cargarlo siempre es una peticion de red que no hace falta. Descomentar
@@ -17,7 +19,7 @@
 <!-- <script src="https://unpkg.com/lucide@0.469.0"></script> -->
 <style>
   /* ============================================================
-     CLAUDE SLIDES DESIGN TOKENS
+     SLIZDECK DESIGN TOKENS
      ============================================================ */
   :root {
     /* --- Colores: primario/secundario dominan, acento se usa con cuentagotas --- */
@@ -395,6 +397,11 @@
   .grad .act-marker { color: rgba(255,255,255,0.5); }
   .act-marker .step-num { color: var(--cs-fg-1); font-weight: 700; }
   .grad .act-marker .step-num { color: #fff; }
+  /* El total ("/3") va atenuado respecto al paso actual, pero sigue siendo
+     informacion legible, no decoracion. El inline `opacity:.4` que se usaba
+     antes dejaba --cs-muted en 1.7:1 sobre blanco: por debajo de cualquier
+     umbral. .8 lo deja en ~3.3:1, que es el minimo AA para 24px. */
+  .act-marker .step-total { opacity: .8; }
 
   /* Reduced motion — show everything immediately */
   @media (prefers-reduced-motion: reduce) {
@@ -510,7 +517,7 @@
   <section data-label="02 Content example" data-steps="2" data-current-step="0">
     <div class="sweep"></div>
     <div class="pad">
-      <div class="act-marker"><span class="step-num">1</span><span style="opacity:.4">/2</span></div>
+      <div class="act-marker"><span class="step-num">1</span><span class="step-total">/2</span></div>
       <div class="eyebrow reveal" data-step="1">Section eyebrow</div>
       <h2 class="title reveal" data-step="1" style="--d:80ms">Slide title goes here</h2>
 

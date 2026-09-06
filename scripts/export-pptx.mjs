@@ -30,7 +30,7 @@
 
 import { parse } from 'node-html-parser';
 import PptxGenJS from 'pptxgenjs';
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { basename, extname } from 'node:path';
 
 /* ── Lienzo ──────────────────────────────────────────────────────────────
@@ -495,6 +495,10 @@ async function main() {
   }
   const out = outArg || basename(input, extname(input)) + '.pptx';
 
+  if (!existsSync(input)) {
+    console.error(`no existe el archivo: ${input}`);
+    process.exit(1);
+  }
   const html = readFileSync(input, 'utf8');
   const tokens = readTokens(html);
   const doc = parse(html);
@@ -539,4 +543,9 @@ async function main() {
   }
 }
 
-main().catch((err) => { console.error(err); process.exit(1); });
+main().catch((err) => {
+  // Un stack trace de Node no le dice nada a quien solo queria exportar.
+  console.error(`fallo el export: ${err.message}`);
+  if (process.env.SLIZDECK_DEBUG) console.error(err);
+  process.exit(1);
+});

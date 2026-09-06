@@ -49,8 +49,8 @@ Cada slide en `template.html` es un `<section>` con estas convenciones (ver ejem
 | Nivel | Qué incluye | Cuándo |
 |---|---|---|
 | **NONE** | Todo estático, sin `.reveal` | Decks que se van a compartir async, sin presentador en vivo |
-| **LIGHT** | Reveal por pasos (`.reveal`, fade-in escalonado) en cards/elementos, sin animaciones SVG grandes | Default para pitch decks largos (>10 slides) y para presentar en vivo sin sobrecargar |
-| **HEAVY** | LIGHT + animaciones SVG "signature" de `animations.md` (dibujo de paths, popups, pulsos) | Pitch decks cortos (<10 slides) donde cada slide cuenta — máximo 1-2 slides HEAVY por deck, nunca todo el deck |
+| **LIGHT** | Reveal por pasos (`.reveal`, fade-in escalonado) en cards/elementos, sin animaciones SVG grandes | Default para pitch decks largos (10 slides o más) y para presentar en vivo sin sobrecargar |
+| **HEAVY** | LIGHT + animaciones SVG "signature" de `animations.md` (dibujo de paths, popups, pulsos) | Pitch decks cortos (menos de 10 slides) donde cada slide cuenta — máximo 1-2 slides HEAVY por deck, nunca todo el deck |
 
 Reglas fijas (no negociables): cover y transition **siempre** estáticas (`data-steps="1" data-current-step="1"`, sin `.reveal`); nunca HEAVY en más de 18 slides sin pedido explícito del usuario.
 

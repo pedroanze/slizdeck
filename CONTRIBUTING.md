@@ -12,7 +12,7 @@ Si el cambio toca `template.html`, algún `scripts/*.mjs`, o `styles/*.md`:
    ```bash
    cp template.html /tmp/test-deck.html
    node scripts/apply-style-pack.mjs styles/paper-white.md /tmp/test-deck.html /tmp/test-deck-final.html
-   sed -i '' 's/Claude Slides · \[DECK NAME\]/Test Deck/' /tmp/test-deck-final.html   # en Linux: sed -i sin el '' extra
+   sed -i '' 's/Slizdeck · \[DECK NAME\]/Test Deck/' /tmp/test-deck-final.html   # en Linux: sed -i sin el '' extra
    node scripts/audit.mjs /tmp/test-deck-final.html
    node scripts/check-reveal.mjs /tmp/test-deck-final.html
    ```

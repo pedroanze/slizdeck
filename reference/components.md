@@ -9,6 +9,22 @@ Catálogo de layout patterns compatibles con `template.html` (deck-stage 1920×1
 - CSS base (tipografía, footer, `.reveal`, `.act-marker`, viewer chrome) **ya está en template.html** — no hace falta repetirlo
 - Para las animaciones (popup, SVG path drawing, magic-move, packets) ver **`animations.md`**
 
+## Índice
+
+23 patrones. **Ir directo al que pide el wireframe** — este archivo son 1200+ líneas y leerlo entero de corrido gasta contexto y termina sesgando hacia los primeros patrones (justo el anti-patrón "la misma composición cinco veces" que `audit.md` pide evitar). Si no sabés cuál elegir, la tabla del final ("Resumen — patrón por mensaje") mapea mensaje → patrón.
+
+| Familia | Patrones |
+|---|---|
+| 1 · Cover & Transition | `cover-gradient` · `transition-cream` |
+| 2 · Comparison cards | `pq-card-2col` · `pq-card-3col` |
+| 3 · Card grids | `card-grid-3col-numbered` · `card-grid-4col` |
+| 4 · Mockups | `file-mockup` · `terminal-dark` · `terminal-light` · `mobile-mockup` · `deck-cover-replica` |
+| 5 · Diagramas y flujos | `bubble-cloud` · `mini-diagram-in-card` · `tools-split` · `counter-bars` · `flow-pipeline` |
+| 6 · Special | `kb-tree` · `skill-list-with-workflow` |
+| 7 · Intro / About | `speaker-card` · `org-hero` |
+
+Métricas, barras comparativas, imágenes a sangre y pantalla de standby viven en `media-and-data.md`, no acá.
+
 ---
 
 ## Familia 1 — Cover & Transition

@@ -26,9 +26,12 @@
 import { readFileSync, writeFileSync, mkdirSync, rmSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { findChrome } from './lib/find-chrome.mjs';
 
-const ROOT = path.resolve(new URL('.', import.meta.url).pathname, '..');
+// fileURLToPath y no .pathname: .pathname deja %20 en las rutas con
+// espacios y en Windows devuelve /C:/... que no resuelve.
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OUT_DIR = path.join(ROOT, '.smoke-test-out');
 
 const args = process.argv.slice(2);

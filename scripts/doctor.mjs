@@ -13,7 +13,7 @@
  *   node scripts/doctor.mjs deck.html
  */
 
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -63,6 +63,10 @@ function changelogEntriesAfter(version) {
   return relevant;
 }
 
+if (!existsSync(file)) {
+  console.error(`no existe el archivo: ${file}`);
+  process.exit(1);
+}
 const html = readFileSync(file, 'utf8');
 const current = currentEngineVersion();
 const m = VERSION_RE.exec(html);
