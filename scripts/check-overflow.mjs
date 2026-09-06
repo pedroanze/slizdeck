@@ -127,7 +127,7 @@ try {
   for (let attempt = 1; attempt <= MAX_ATTEMPTS && !m; attempt++) {
     const dom = execFileSync(
       CHROME,
-      ['--headless', '--disable-gpu', '--dump-dom', '--virtual-time-budget=12000', `file://${tmp}`],
+      ['--headless', '--disable-gpu', '--no-sandbox', '--dump-dom', '--virtual-time-budget=12000', `file://${tmp}`],
       { stdio: 'pipe', timeout: 30000 },
     ).toString();
     m = /<title>DONE::(.*?)<\/title>/s.exec(dom);

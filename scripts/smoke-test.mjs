@@ -71,12 +71,13 @@ async function renderAndCheck(file) {
   const png = file.replace(/\.html$/, '.png');
   try {
     execFileSync(chromePath(), [
-      '--headless', '--disable-gpu', '--force-device-scale-factor=1',
+      '--headless', '--disable-gpu', '--no-sandbox', '--force-device-scale-factor=1',
       '--window-size=1920,1080', `--screenshot=${png}`,
       '--virtual-time-budget=4000', `file://${file}`,
     ], { stdio: 'pipe', timeout: 30000 });
   } catch (e) {
-    return `render fallo: ${e.message.split('\n')[0]}`;
+    const stderr = e.stderr ? e.stderr.toString().trim() : '';
+    return `render fallo: ${stderr || e.message.split('\n')[0]}`;
   }
   return null;
 }
