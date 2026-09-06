@@ -155,7 +155,7 @@ try {
 
 console.log();
 if (failed.length) {
-  const externos = [...html.matchAll(/<script\b[^>]*\bsrc=["'](https?:\/\/[^"']+)["']/gi)].map((x) => x[1]);
+  const externos = [...html.replace(/<!--[\s\S]*?-->/g, (c) => ' '.repeat(c.length)).matchAll(/<script\b[^>]*\bsrc=["'](https?:\/\/[^"']+)["']/gi)].map((x) => x[1]);
   console.log(`✗ ${failed.length} slide(s) sin captura.`);
   if (externos.length) {
     console.log(`  El deck carga ${externos.length} script(s) externo(s) (${externos[0]}${externos.length > 1 ? ', …' : ''}):`);

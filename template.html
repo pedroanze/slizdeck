@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- slizdeck-engine-version: 1.3.0 — no borrar este comentario. scripts/doctor.mjs
+<!-- slizdeck-engine-version: 1.4.0 — no borrar este comentario. scripts/doctor.mjs
      lo lee para saber contra qué versión del engine se generó este deck y
      detectar si hay fixes de template.html posteriores que no llegaron acá
      (ver CHANGELOG.md). Se copia tal cual al generar un deck nuevo en build. -->
@@ -575,7 +575,7 @@
         overflow: hidden;
       }
       .stage { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
-      .canvas { position: relative; transform-origin: center center; flex-shrink: 0; background: #fff; will-change: transform; }
+      .canvas { position: relative; transform-origin: center center; flex-shrink: 0; background: var(--cs-cream); will-change: transform; }
       ::slotted(*) {
         position: absolute !important; inset: 0 !important;
         width: 100% !important; height: 100% !important;

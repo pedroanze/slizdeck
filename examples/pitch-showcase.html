@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- slizdeck-engine-version: 1.3.0 — no borrar este comentario. scripts/doctor.mjs
+<!-- slizdeck-engine-version: 1.4.0 — no borrar este comentario. scripts/doctor.mjs
      lo lee para saber contra qué versión del engine se generó este deck y
      detectar si hay fixes de template.html posteriores que no llegaron acá
      (ver CHANGELOG.md). Se copia tal cual al generar un deck nuevo en build. -->
@@ -491,7 +491,7 @@
   /* pq-card-2col (before/now) — components.md */
   .pq-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 36px; margin-top: 8px; }
   .pq-card {
-    background: #fff; border: 1px solid var(--cs-border); border-radius: 26px;
+    background: var(--cs-surface); border: 1px solid var(--cs-border); border-radius: 26px;
     padding: 60px 56px; box-shadow: var(--cs-shadow-2); min-height: 440px;
     display: flex; flex-direction: column; justify-content: center;
   }
@@ -509,7 +509,7 @@
   /* flow-pipeline — components.md */
   .pipeline { display: flex; align-items: center; justify-content: center; gap: 24px; margin-top: 56px; }
   .pipe-card {
-    background: #fff; border: 1px solid var(--cs-border); border-radius: 18px;
+    background: var(--cs-surface); border: 1px solid var(--cs-border); border-radius: 18px;
     padding: 28px 32px; text-align: center; box-shadow: var(--cs-shadow-2); min-width: 200px;
   }
   .pipe-eyebrow {
@@ -709,7 +709,7 @@
         overflow: hidden;
       }
       .stage { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
-      .canvas { position: relative; transform-origin: center center; flex-shrink: 0; background: #fff; will-change: transform; }
+      .canvas { position: relative; transform-origin: center center; flex-shrink: 0; background: var(--cs-cream); will-change: transform; }
       ::slotted(*) {
         position: absolute !important; inset: 0 !important;
         width: 100% !important; height: 100% !important;

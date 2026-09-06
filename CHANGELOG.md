@@ -4,6 +4,19 @@ Historial de cambios al engine (`template.html`) y a los scripts de la skill. Ca
 
 Una sola versión gobierna todo el proyecto y vive en cuatro sitios que deben coincidir siempre: `package.json`, el `metadata.version` de `SKILL.md`, el marcador `slizdeck-engine-version` de `template.html`, y la primera entrada de este archivo. `node scripts/check-versions.mjs` lo verifica y falla si alguno se desalinea.
 
+## 1.4.0
+
+Ronda de endurecimiento salida de auditar el propio repo: el engine deja de anunciar validaciones que nadie hacía, y las que hay dejan de tener puntos ciegos.
+
+- **`no_overlapping_text` implementado.** Cada slide declara `data-om-validate="no_overflowing_text,no_overlapping_text,slide_sized_text"`, pero el segundo token no lo verificaba ningún script. Ahora `check-overflow.mjs` detecta dos textos superpuestos midiendo la caja del **texto** (vía `Range`), no la del elemento: un `<div>` block ocupa todo el ancho de la slide aunque su texto sean 80px en una esquina, y compararlo por bounding box daba falsos positivos en cada slide. Acotado a texto-contra-texto; `data-overlap-ok` excluye un solape intencional. Cero falsos positivos en las 15 variantes del smoke-test.
+- **Fix: las superficies de card usaban `#fff` literal.** 10 patrones de `components.md` (y las dos cards del deck de ejemplo) fijaban `background: #fff`, que sobrevive al cambio de pack: en `terminal`, donde `--cs-black` es claro, una card blanca dejaba el texto **blanco sobre blanco (1:1)**. Ahora usan `var(--cs-surface)`. La excepción documentada es el QR, que necesita fondo blanco real. Encontrado al validar cada pack sobre contenido real, no sobre el template vacío.
+- **El canvas de `<deck-stage>` toma `var(--cs-cream)`** en vez de `#fff`, para no dar un destello blanco al cargar un deck de pack oscuro.
+- **`check-style-pack.mjs` explica la consecuencia de `--cs-accent-on`:** cuando un pack declara que su acento vive sobre el primario, ahora dice cuánto daría ese acento sobre el fondo de las slides y para qué no sirve. El mecanismo ya existía y era correcto; lo que faltaba era que el modelo supiera la restricción al componer.
+- **`smoke-test.mjs` valida además cada pack sobre contenido real** (el deck de ejemplo, no el template vacío): 20 variantes. La estructura es bloqueante (una regresión de engine se ve ahí); el contraste es informativo, porque cruzar un deck compuesto para un pack con las reglas de otro puede fallar legítimamente.
+- **Nuevo: `scripts/check-docs.mjs`**, canario contra el drift docs↔repo: que todo script y toda referencia estén en las tablas, que los links relativos resuelvan, que `DESIGN.md` y `design.json` coincidan, y que ningún pack use una fuente que el propio validador rechaza. Corre en CI.
+- **Fix: los recursos remotos se contaban dentro de comentarios.** `make-offline.mjs` avisaba de una dependencia de red que no existía (y `check-reveal`/`check-contrast`/`shoot` culpaban a un script inexistente) porque `template.html` trae el `<script>` de lucide comentado como opt-in. Ahora se enmascaran los comentarios antes de buscar.
+- **`check-overflow.mjs` diagnostica como `check-reveal`:** si no termina, nombra los scripts externos del deck como causa probable en vez de mandar a revisar Chrome.
+
 ## 1.3.0
 
 - **Fix de accesibilidad: el total del act-marker era ilegible.** El indicador de paso de las slides multi-step (`2 /3`) marcaba el total con un `style="opacity:.4"` inline, que dejaba `--cs-muted` en **1.7:1** sobre blanco — muy por debajo de cualquier umbral WCAG. Ahora es una clase `.act-marker .step-total` con `opacity: .8` (~3.3:1, el mínimo AA para 24px). Un deck ya generado con el inline sigue teniendo el problema: reemplazar `<span style="opacity:.4">` por `<span class="step-total">` y añadir la regla al `<style>`.

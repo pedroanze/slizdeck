@@ -147,6 +147,25 @@ test('renumber.mjs renumera una slide con provisional no numerico', () => {
   } finally { cleanup(); }
 });
 
+/* ── El canario de documentacion ────────────────────────────────────── */
+
+test('check-docs.mjs pasa con el repo tal como esta', () => {
+  const { code, out } = run('check-docs.mjs');
+  assert.equal(code, 0, `la documentacion driftó:\n${out}`);
+});
+
+test('make-offline no cuenta como remoto un <script> comentado', () => {
+  // template.html trae el <script> de lucide comentado como opt-in: contarlo
+  // haria que el deck mas comun reportase una dependencia de red que no tiene.
+  const { file, cleanup } = deckWith((h) => h);
+  try {
+    const { code, out } = run('make-offline.mjs', [file]);
+    assert.equal(code, 0, out);
+    assert.doesNotMatch(out, /TODAVIA depende de la red/,
+      `falso positivo: conto un recurso que esta dentro de un comentario\n${out}`);
+  } finally { cleanup(); }
+});
+
 /* ── check-versions.mjs: el gate que evita publicar desalineado ─────── */
 
 test('check-versions.mjs falla si el tag no coincide con la version', () => {

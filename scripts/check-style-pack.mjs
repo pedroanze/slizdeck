@@ -96,6 +96,15 @@ function main() {
     if (!ok) fail++;
     const shown = fg === 'accent' && accentOn !== 'cream' ? `acento vs ${accentOn}` : label;
     console.log(`  ${ok ? '✓' : '✗'} ${shown.padEnd(24)} ${c.toFixed(2)}:1  (min ${min})`);
+    // Un acento declarado sobre el primario no esta validado contra el fondo
+    // de las slides: usarlo ahi como color de texto puede quedar ilegible.
+    if (fg === 'accent' && accentOn !== 'cream') {
+      const sobreFondo = asHex(t.cream) && contrast(a, asHex(t.cream));
+      if (sobreFondo && sobreFondo < 3) {
+        console.log(`      (--cs-accent-on: ${accentOn}) sobre el fondo de las slides daria ${sobreFondo.toFixed(2)}:1 —`);
+        console.log('      este acento es para elementos sobre el primario, no para texto sobre el fondo claro.');
+      }
+    }
   }
 
   const p = asHex(t.primary), acc = asHex(t.accent);

@@ -121,7 +121,7 @@ try {
 
 if (!m) {
   console.error(`No se pudo leer el resultado tras ${MAX_ATTEMPTS} intentos — Chrome headless no termino.`);
-  const externos = [...html.matchAll(/<script\b[^>]*\bsrc=["'](https?:\/\/[^"']+)["']/gi)].map((x) => x[1]);
+  const externos = [...html.replace(/<!--[\s\S]*?-->/g, (c) => ' '.repeat(c.length)).matchAll(/<script\b[^>]*\bsrc=["'](https?:\/\/[^"']+)["']/gi)].map((x) => x[1]);
   if (externos.length) {
     console.error(`\n  Causa mas probable: el deck carga ${externos.length} script(s) externo(s) bloqueante(s):`);
     for (const u of externos) console.error(`    ${u}`);

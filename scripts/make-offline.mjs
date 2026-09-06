@@ -74,10 +74,13 @@ async function main() {
 
   // Solo se incrustan fuentes. Cualquier otro recurso remoto sigue necesitando
   // red, asi que no se puede prometer "presentable sin wifi" sin revisarlo.
+  // Con los comentarios enmascarados: template.html trae el <script> de
+  // lucide comentado como opt-in, y contarlo seria un falso positivo.
+  const visible = html.replace(/<!--[\s\S]*?-->/g, (c) => ' '.repeat(c.length));
   const remotos = [
-    ...html.matchAll(/<script\b[^>]*\bsrc=["'](https?:\/\/[^"']+)["']/gi),
-    ...html.matchAll(/<link\b[^>]*\bhref=["'](https?:\/\/[^"']+)["']/gi),
-    ...html.matchAll(/<img\b[^>]*\bsrc=["'](https?:\/\/[^"']+)["']/gi),
+    ...visible.matchAll(/<script\b[^>]*\bsrc=["'](https?:\/\/[^"']+)["']/gi),
+    ...visible.matchAll(/<link\b[^>]*\bhref=["'](https?:\/\/[^"']+)["']/gi),
+    ...visible.matchAll(/<img\b[^>]*\bsrc=["'](https?:\/\/[^"']+)["']/gi),
   ].map((x) => x[1]);
 
   if (!remotos.length) {

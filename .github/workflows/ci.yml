@@ -30,6 +30,9 @@ jobs:
         with:
           chrome-version: stable
 
+      - name: Coherencia docs ↔ repo
+        run: node scripts/check-docs.mjs
+
       - name: Tests de los validadores
         run: npm test
 

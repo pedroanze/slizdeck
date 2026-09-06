@@ -7,6 +7,7 @@ Catálogo de layout patterns compatibles con `template.html` (deck-stage 1920×1
 - Frame estándar: `<div class="pad">` (padding 96/120, contenido alineado arriba) o `<div class="pad center">` (centrado, para cover/transition)
 - Footer siempre al fondo: `<div class="footer">...<span class="num">NN</span></div>`
 - CSS base (tipografía, footer, `.reveal`, `.act-marker`, viewer chrome) **ya está en template.html** — no hace falta repetirlo
+- **Las superficies van en `var(--cs-surface)`, nunca en `#fff` literal.** Un blanco hardcodeado sobrevive al cambio de pack y deja el texto ilegible: en `terminal` o `committed`, `var(--cs-black)` (el color de texto principal) es claro, así que sobre una card blanca queda blanco sobre blanco. La única excepción legítima es un QR, que necesita fondo blanco real para escanearse.
 - Para las animaciones (popup, SVG path drawing, magic-move, packets) ver **`animations.md`**
 
 ## Índice
@@ -152,7 +153,7 @@ Slide title
   margin-top: 8px;
 }
 .pq-card {
-  background: #fff;
+  background: var(--cs-surface);
   border: 1px solid var(--cs-border);
   border-radius: 26px;
   padding: 60px 56px;
@@ -255,7 +256,7 @@ Slide title
   margin-top: 8px;
 }
 .num-card {
-  background: #fff;
+  background: var(--cs-surface);
   border: 1px solid var(--cs-border);
   border-radius: 22px;
   padding: 36px 38px;
@@ -310,7 +311,7 @@ Slide title
   margin-top: 16px;
 }
 .warn-card {
-  background: #fff;
+  background: var(--cs-surface);
   border: 1px solid var(--cs-border);
   border-radius: 26px;
   padding: 38px 44px;
@@ -389,7 +390,7 @@ Para hacer meta-referencias (mostrar el propio deck, la app del cliente, un docu
 }
 .file-mockup {
   width: 130px; height: 170px;
-  background: #fff;
+  background: var(--cs-surface);
   border-radius: 8px;
   box-shadow: 0 8px 24px rgba(0,0,0,0.10);
   padding: 12px;
@@ -578,7 +579,7 @@ Para hacer meta-referencias (mostrar el propio deck, la app del cliente, un docu
   box-shadow: 0 4px 12px color-mix(in srgb, var(--cs-primary) 25%, transparent);
 }
 .ph-action-mini {
-  background: #fff;
+  background: var(--cs-surface);
   border-radius: 11px;
   box-shadow: 0 2px 5px rgba(0,0,0,0.04);
 }
@@ -710,7 +711,7 @@ Para hacer meta-referencias (mostrar el propio deck, la app del cliente, un docu
   display: flex; gap: 24px;
 }
 .src {
-  background: #fff;
+  background: var(--cs-surface);
   border: 1px solid var(--cs-border);
   border-radius: 18px;
   padding: 28px 36px;
@@ -807,7 +808,7 @@ Para hacer meta-referencias (mostrar el propio deck, la app del cliente, un docu
 }
 .ts-tools { display: flex; flex-direction: column; gap: 18px; height: 100%; }
 .ts-tool {
-  background: #fff;
+  background: var(--cs-surface);
   border: 1px solid var(--cs-border);
   border-radius: 22px;
   padding: 22px 32px;
@@ -933,7 +934,7 @@ section[data-active="true"] .tk-fill.is-on { width: var(--w, 0%); }
   gap: 24px; margin-top: 56px;
 }
 .pipe-card {
-  background: #fff;
+  background: var(--cs-surface);
   border: 1px solid var(--cs-border);
   border-radius: 18px;
   padding: 28px 32px;
@@ -1026,7 +1027,7 @@ my-kb/<br>
 .sk-grid { display: grid; grid-template-columns: 0.85fr 1.15fr; gap: 36px; margin-top: 8px; }
 .skill-list { display: flex; flex-direction: column; gap: 14px; }
 .skill-row {
-  background: #fff;
+  background: var(--cs-surface);
   border: 1px solid var(--cs-border);
   border-radius: 14px;
   padding: 18px 22px;
@@ -1050,7 +1051,7 @@ my-kb/<br>
 }
 .skill-row.featured .tag { background: rgba(255,255,255,0.18); color: #fff; }
 .workflow-box {
-  background: #fff;
+  background: var(--cs-surface);
   border: 1px solid var(--cs-border);
   border-radius: 22px;
   padding: 28px 32px;
@@ -1146,7 +1147,7 @@ qrencode -o assets/qr/alex.png -s 20 -m 2 -l H "https://www.linkedin.com/in/your
   flex-shrink: 0; display: block;
 }
 .speaker-qr {
-  background: #fff;
+  background: #fff;   /* blanco literal a proposito: un QR necesita fondo blanco para escanearse, aunque el pack sea oscuro */
   padding: 10px;
   border-radius: 12px;
   box-shadow: 0 4px 24px rgba(0,0,0,0.08);

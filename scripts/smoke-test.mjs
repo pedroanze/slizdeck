@@ -23,7 +23,7 @@
  * CHROME_PATH con la ruta completa al ejecutable.
  */
 
-import { readFileSync, writeFileSync, mkdirSync, rmSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, rmSync, existsSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -136,6 +136,57 @@ async function main() {
     }
   }
 
+  // ── Fase 2: cada pack sobre CONTENIDO REAL ───────────────────────────
+  // La fase de arriba aplica los packs al template vacio: verifica que los
+  // tokens entren y la fuente cargue, pero un deck vacio no tiene texto que
+  // desborde, ni cards que se pisen, ni contraste que medir sobre una
+  // composicion de verdad. Aplicar cada pack al deck de ejemplo cubre eso:
+  // si un cambio de engine rompe la composicion de `terminal`, se ve aca.
+  const showcase = path.join(ROOT, 'examples', 'pitch-showcase.html');
+  if (existsSync(showcase)) {
+    for (const pack of PACKS) {
+      const label = `${pack} sobre contenido real`;
+      const outFile = path.join(OUT_DIR, `contenido-${pack}.html`);
+      const issues = [];
+      writeFileSync(outFile, readFileSync(showcase, 'utf8'));
+      try {
+        execFileSync('node', ['scripts/apply-style-pack.mjs', `styles/${pack}.md`, outFile], { cwd: ROOT, stdio: 'pipe' });
+      } catch (e) {
+        issues.push(`apply-style-pack fallo: ${e.stderr?.toString().trim() || e.message}`);
+        results.push({ label, issues });
+        continue;
+      }
+      // Estructura (audit, overflow, solape): independiente del pack, asi que
+      // un fallo aqui SI es una regresion de engine y bloquea.
+      // Contraste: informativo. El deck de ejemplo esta compuesto para
+      // paper-white, y un pack puede tener reglas propias sobre su acento
+      // (`--cs-accent-on: primary` en committed). Que su lima no sirva como
+      // texto sobre fondo claro no es un bug del engine, es esa restriccion
+      // aplicada a un contenido que no la respeta.
+      const bloqueantes = noRender
+        ? [['audit.mjs', 'audit']]
+        : [['audit.mjs', 'audit'], ['check-overflow.mjs', 'overflow/solape']];
+      for (const [script, nombre] of bloqueantes) {
+        try {
+          execFileSync('node', [`scripts/${script}`, outFile], { cwd: ROOT, stdio: 'pipe' });
+        } catch (e) {
+          issues.push(`${nombre} fallo:\n${(e.stdout?.toString() || e.stderr?.toString() || '').trim()}`);
+        }
+      }
+      let nota = null;
+      if (!noRender) {
+        try {
+          execFileSync('node', ['scripts/check-contrast.mjs', outFile], { cwd: ROOT, stdio: 'pipe' });
+        } catch (e) {
+          const out = (e.stdout?.toString() || '').trim();
+          const n = /✗ (\d+) texto/.exec(out)?.[1];
+          nota = `contraste: ${n || '?'} texto(s) bajo umbral al aplicar este pack a un contenido compuesto para otro`;
+        }
+      }
+      results.push({ label, issues, nota });
+    }
+  }
+
   console.log('\n=== slizdeck smoke-test ===\n');
   let failCount = 0;
   for (const r of results) {
@@ -143,6 +194,8 @@ async function main() {
     if (!ok) failCount++;
     console.log(`${ok ? '✓' : '✗'} ${r.label}${r.fonts ? `  [${r.fonts.heading || r.fonts.sans}${r.fonts.mono ? ' + ' + r.fonts.mono : ''}]` : ''}`);
     for (const issue of r.issues) console.log(`    ${issue.split('\n').join('\n    ')}`);
+    // Informativo, no cuenta como fallo: ver la nota de la fase 2.
+    if (r.nota) console.log(`    ℹ ${r.nota}`);
   }
   console.log(`\n${failCount ? `✗ ${failCount}/${results.length} variantes con problemas` : `✓ ${results.length}/${results.length} variantes OK`}`);
   console.log(`Screenshots en ${OUT_DIR}\n`);

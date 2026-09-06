@@ -7,7 +7,7 @@ description: |
 license: MIT
 compatibility: Requiere un agente con capacidad de ejecutar comandos de shell (crear/copiar archivos, abrir el navegador) y búsqueda web. Probado en Claude Code; compatible con cualquier cliente del estándar Agent Skills (agentskills.io).
 metadata:
-  version: "1.3.0"
+  version: "1.4.0"
 allowed-tools: Bash, Read, Write, Edit, WebSearch, WebFetch
 # user-invocable / argument-hint son extensiones de Claude Code, no del
 # estandar portable de agentskills.io (que solo define name/description/
@@ -64,6 +64,8 @@ Fork/adaptación de [`claude-slides`](https://github.com/marcogalluccio/claude-s
 | `scripts/verify-hook.mjs` | Hook opcional de Claude Code: corre `audit.mjs` automáticamente después de editar un deck — ver `reference/hooks.md`. |
 | `scripts/export-pptx.mjs` | Exporta un deck HTML a `.pptx` editable (texto y formas nativas). |
 | `scripts/make-offline.mjs` | Incrusta las fuentes como `data:` URI para presentar sin red. |
+| `scripts/check-docs.mjs` | Canario de drift docs↔repo: cobertura de scripts/referencias en las tablas, links relativos, DESIGN.md vs design.json, fuentes de los packs. |
+| `scripts/smoke-test.mjs` | Regresión de los 5 packs × 3 alternativas tipográficas, renderizando cada variante en Chrome headless. |
 | `scripts/check-versions.mjs` | Verifica que la versión coincida en `package.json`, `SKILL.md`, `template.html` y `CHANGELOG.md` — corre en CI. |
 | `scripts/renumber.mjs` | Recalcula `data-label` y `<span class="num">` de todas las slides en orden de documento — usar siempre después de insertar una slide en medio del deck. |
 

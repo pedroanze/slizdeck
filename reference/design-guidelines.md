@@ -32,6 +32,10 @@ Directamente prohibido, sin importar qué tan "de diseño" parezca:
 
 De esta lista, `check-style-pack.mjs` solo verifica automáticamente **las fuentes sobreusadas y las zonas de paleta atractoras** (más los contrastes WCAG). Todo lo demás de esta sección (barras decorativas, iconografía de stock, bullets, texto centrado, gradientes decorativos, cards anidadas) **queda a criterio del modelo**: no hay validador que lo atrape, así que hay que revisarlo a ojo antes de dar el deck por cerrado.
 
+## El acento no siempre sirve como color de texto
+
+Cada pack declara `--cs-accent-on`: el fondo sobre el que su acento está validado. Si dice `primary` (el lima de `committed` sobre cobalto), ese acento **no está comprobado contra el fondo claro de las slides intermedias** y usarlo ahí como color de texto puede quedar ilegible — el lima de committed sobre blanco da 1.31:1. En ese caso el acento va en elementos sobre el primario, o en cosas que no son texto: barras, badges, reglas, el relleno de un gráfico. `check-style-pack.mjs` lo avisa al validar el pack.
+
 ## Layout: variar, no repetir la misma composición
 
 - No usar el mismo patrón de `components.md` en slides consecutivas. Si dos slides seguidas son "card-grid", alternar con un layout de imagen a sangre, un mockup, o un diagrama.

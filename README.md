@@ -114,6 +114,7 @@ Para desinstalar basta con `rm -rf ~/.claude/skills/slizdeck`. Lo único que sli
 | `scripts/verify-hook.mjs` | Hook opcional de Claude Code que corre `audit.mjs` automáticamente después de editar un deck — ver `reference/hooks.md`. |
 | `scripts/export-pptx.mjs` | Exporta un deck a `.pptx` editable (texto y formas nativas, no imágenes). |
 | `scripts/make-offline.mjs` | Incrusta las fuentes como `data:` URI para presentar sin depender de red. |
+| `scripts/check-docs.mjs` | Verifica que la documentación siga alineada con el repo: scripts y referencias listados, links que resuelven, DESIGN.md ≡ design.json. |
 | `scripts/check-versions.mjs` | Verifica que la versión coincida en los cuatro sitios donde se declara (`package.json`, `SKILL.md`, `template.html`, `CHANGELOG.md`). |
 | `scripts/renumber.mjs` | Recalcula `data-label` y `<span class="num">` de todas las slides en orden de documento — usar después de insertar una slide en medio del deck. |
 | `tests/validators.test.js` | Suite `node:test` (cero deps): comprueba que los validadores distingan un deck bueno de uno roto. `npm test`. |
