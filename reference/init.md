@@ -14,7 +14,7 @@ Si en algún momento posterior (`build`, o un ajuste sobre un deck ya generado) 
 
 Con el pack elegido, mostrar también sus **2 alternativas tipográficas** (nombre + la línea de "cuándo preferirla" que trae el propio pack) y dejar elegir entre esas y el default. No es personalización libre — son 2-3 opciones curadas por pack, ya validadas contra clichés de IA — pero sí le da al usuario una decisión real sobre cómo se ve su tipografía. Si no elige, se usa el default del pack.
 
-**c) El usuario no tiene nada y quiere algo hecho a medida.** `impeccable` es una skill externa **opcional**, no bundleada con slizdeck — comprobar antes si está instalada:
+**c) El usuario no tiene nada y quiere algo hecho a medida.** Hay una herramienta externa **opcional**, no bundleada con slizdeck, que puede generar una semilla de paleta si está instalada — comprobar antes si existe:
 
 ```bash
 test -f ~/.claude/skills/impeccable/scripts/palette.mjs && echo disponible || echo "no instalada"
@@ -26,7 +26,7 @@ test -f ~/.claude/skills/impeccable/scripts/palette.mjs && echo disponible || ec
   ```
   Devuelve un color ancla en OKLCH y el mood que evoca. Componer los cinco roles (fondo, superficie, ink, acento, atenuado) siguiendo las reglas que el propio script imprime, tomando como base el pack cuya estructura mejor calce.
 
-- **Si no está instalada**, no bloquear el flujo ni pedirle al usuario que la instale: componer los cinco roles a mano, aplicando directamente las "reglas que no se negocian" de abajo (son las mismas que el script de impeccable termina imprimiendo) y usando como ancla el color de marca o el mood que el usuario haya descrito. Decir en una frase que se está armando la paleta sin el generador externo, por si el usuario prefiere instalar `impeccable` (`https://github.com/pbakaus/impeccable`) para ese paso en particular.
+- **Si no está instalada**, no bloquear el flujo ni pedirle al usuario que la instale: componer los cinco roles a mano, aplicando directamente las "reglas que no se negocian" de abajo, y usando como ancla el color de marca o el mood que el usuario haya descrito. Decir en una frase que se está armando la paleta sin el generador externo.
 
 En ambos casos, presentar el resultado como propuesta, no como hecho consumado; se valida con `check-style-pack.mjs` en `build`, contra el archivo real.
 

@@ -8,7 +8,7 @@
 
 **Estrategia de color:** Restrained — negro sobre blanco, con un verde de prensa en eyebrows y un claret oscuro para el énfasis.
 
-> Este pack reemplaza al default original de slizdeck, que combinaba fondo crema + display serif + acento terracota: exactamente el cluster que impeccable nombra como el más reconocible de las interfaces generadas por IA. El mundo editorial se conserva; la ejecución se rehízo.
+> Este pack reemplaza al default original de slizdeck, que combinaba fondo crema + display serif + acento terracota: exactamente el cluster de paleta y tipografía que más rápido delata una interfaz generada por IA. El mundo editorial se conserva; la ejecución se rehízo.
 
 ```css
 :root {

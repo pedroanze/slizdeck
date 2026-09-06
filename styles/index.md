@@ -14,7 +14,7 @@ Cada pack es un mundo visual completo: paleta, tipografía y reglas de composici
 
 ## Tipografía: default o alternativa
 
-Cada pack trae **2 alternativas tipográficas curadas** además de su default (sección "Alternativas tipográficas" dentro del archivo del pack) — mismo mundo visual, distinta ejecución de fuente. No es customización libre: son opciones ya validadas contra la lista de *training-data defaults* de impeccable y contra el mood del pack.
+Cada pack trae **2 alternativas tipográficas curadas** además de su default (sección "Alternativas tipográficas" dentro del archivo del pack) — mismo mundo visual, distinta ejecución de fuente. No es customización libre: son opciones ya validadas contra la lista de fuentes sobreusadas en interfaces generadas por IA y contra el mood del pack.
 
 Después de que el usuario elija pack, mostrarle su default más las 2 alternativas (nombre + una línea de cuándo preferirla, ya escritas en cada pack) y dejarlo elegir. Si no elige, se usa el default.
 

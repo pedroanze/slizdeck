@@ -1,4 +1,6 @@
-<img src="SlizDeck.png" alt="SlizDeck" width="360">
+<div align="center">
+  <img src="SlizDeck.png" alt="SlizDeck" width="280">
+</div>
 
 # Slizdeck
 
@@ -87,7 +89,7 @@ npm install
 | `reference/media-and-data.md` | Patrones de imagen, métricas, barras y pantalla de inicio (y qué de esto sobrevive al export a PPTX). |
 | `reference/animations.md` | Recetas de animación CSS y sus gotchas — solo para nivel HEAVY. |
 | `reference/icons.md` | Librería de íconos SVG. |
-| `DESIGN.md` · `.impeccable/design.json` | El contrato del sistema visual (roles de color, escala tipográfica, movimiento), en formato [DESIGN.md](https://github.com/google-labs-code/design.md). |
+| `DESIGN.md` · `design.json` | El contrato del sistema visual (roles de color, escala tipográfica, movimiento) en prosa y su espejo estructurado, en formato [DESIGN.md](https://github.com/google-labs-code/design.md). |
 | `styles/` | Cinco style packs (terminal, paper-white, committed, instrument, editorial) + su índice. |
 | `scripts/apply-style-pack.mjs` | Aplica un pack a un deck fusionando tokens (y su alternativa tipográfica, con `--font=<id>`). |
 | `scripts/check-style-pack.mjs` | Valida contrastes y avisa de clichés visuales de IA. |
@@ -123,11 +125,7 @@ node scripts/check-style-pack.mjs styles/terminal.md
 
 Comprueba los contrastes WCAG, que primario y acento sean distinguibles entre sí, y avisa si la paleta cae en una zona atractora conocida o si la tipografía está en la lista de *training-data defaults*. Sirve igual para un pack propio armado con los colores de tu marca, o para un deck ya generado (`node scripts/audit.mjs deck.html` lo incluye automáticamente).
 
-Las reglas de composición están en `reference/design-guidelines.md`. Son verificables mecánicamente con `scripts/check-style-pack.mjs` de arriba; si además tenés instalada la skill externa **opcional** [impeccable](https://github.com/pbakaus/impeccable), su detector da una segunda opinión más granular:
-
-```bash
-node ~/.claude/skills/impeccable/scripts/detect.mjs --json tu-deck.html
-```
+Las reglas de composición están en `reference/design-guidelines.md`, verificables mecánicamente con `scripts/check-style-pack.mjs` de arriba. Si además tenés instalada alguna herramienta externa de detección de patrones de diseño, puede dar una segunda opinión más granular sobre los mismos criterios — pero no es necesaria, `check-style-pack.mjs` solo ya alcanza.
 
 No es necesaria para usar slizdeck — es un complemento si ya la tenés instalada.
 

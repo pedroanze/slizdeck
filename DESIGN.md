@@ -226,7 +226,7 @@ Indicador de paso ("1/2") en la esquina superior derecha de slides multi-paso, e
 
 ## Print / PDF
 
-El export a PDF es impresión nativa del navegador (`Cmd/Ctrl+P`), y el estado que se imprime **no** es el estado inicial de la slide sino el final: todos los `.reveal` visibles, todos los contadores en su cifra real, el marcador de paso en su último paso. Cuatro defectos del motor heredado se corrigieron para que esto se cumpla (ver `.impeccable/design.json` → `printPipeline`); si alguna vez un deck exporta slides en blanco, contadores en cero, o el chrome del reproductor encima del contenido, la causa está ahí.
+El export a PDF es impresión nativa del navegador (`Cmd/Ctrl+P`), y el estado que se imprime **no** es el estado inicial de la slide sino el final: todos los `.reveal` visibles, todos los contadores en su cifra real, el marcador de paso en su último paso. Cuatro defectos del motor heredado se corrigieron para que esto se cumpla (ver `design.json` → `printPipeline`); si alguna vez un deck exporta slides en blanco, contadores en cero, o el chrome del reproductor encima del contenido, la causa está ahí.
 
 **The Final-State Rule.** Lo que se imprime es la slide terminada, nunca un fotograma intermedio de su animación. Cualquier patrón de animación nuevo que se agregue a `animations.md` debe tener su estado final garantizado bajo `@media print`.
 
