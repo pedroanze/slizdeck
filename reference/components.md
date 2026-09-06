@@ -1,21 +1,21 @@
 # Layout Components
 
-Catalogo dei layout pattern compatibili con `template.html` (deck-stage 1920×1080). Per ogni pattern: quando usarlo, wireframe ASCII, HTML+CSS pronti da copiare.
+Catálogo de layout patterns compatibles con `template.html` (deck-stage 1920×1080). Para cada patrón: cuándo usarlo, wireframe ASCII, HTML+CSS listos para copiar.
 
-**Convenzioni di tutti i pattern:**
-- Ogni slide è una `<section>` dentro `<deck-stage>` con `data-label="NN Title"` e step model (`data-steps`/`data-current-step`)
-- Frame standard: `<div class="pad">` (padding 96/120, contenuto top-aligned) o `<div class="pad center">` (centered, per cover/transition)
-- Footer sempre in fondo: `<div class="footer">...<span class="num">NN</span></div>`
-- CSS base (typography, footer, .reveal, .act-marker, viewer chrome) **già in template.html** — non serve riportarli
-- Per le animazioni (popup, SVG path drawing, magic-move, packets) vedi **`animations.md`**
+**Convenciones de todos los patrones:**
+- Cada slide es un `<section>` dentro de `<deck-stage>` con `data-label="NN Title"` y step model (`data-steps`/`data-current-step`)
+- Frame estándar: `<div class="pad">` (padding 96/120, contenido alineado arriba) o `<div class="pad center">` (centrado, para cover/transition)
+- Footer siempre al fondo: `<div class="footer">...<span class="num">NN</span></div>`
+- CSS base (tipografía, footer, `.reveal`, `.act-marker`, viewer chrome) **ya está en template.html** — no hace falta repetirlo
+- Para las animaciones (popup, SVG path drawing, magic-move, packets) ver **`animations.md`**
 
 ---
 
-## Famiglia 1 — Cover & Transition
+## Familia 1 — Cover & Transition
 
 ### `cover-gradient`
 
-**Quando:** prima slide (titolo + autore + data) o ultima slide (call-to-action / "Ora vediamolo dal vivo"). Statica.
+**Cuándo:** primera slide (título + autor + fecha) o última slide (call-to-action / "Ahora lo vemos en vivo"). Estática.
 
 **Wireframe:**
 ```
@@ -23,10 +23,10 @@ Catalogo dei layout pattern compatibili con `template.html` (deck-stage 1920×10
 │                                          │
 │   EYEBROW                                │
 │                                          │
-│   Titolo grande                          │
-│   bianco                                 │
+│   Título grande                          │
+│   blanco                                 │
 │                                          │
-│   Sottotitolo opzionale                  │
+│   Subtítulo opcional                     │
 │                                          │
 └──────────────────────────────────────────┘
    bg gradient primary→secondary
@@ -47,13 +47,13 @@ Catalogo dei layout pattern compatibili con `template.html` (deck-stage 1920×10
 </section>
 ```
 
-**Variante più piccola** (es. demo cover finale): usa `<h1 class="cover-md">` (132px invece di 168px) e niente subtitle.
+**Variante más chica** (ej. demo cover final): usa `<h1 class="cover-md">` (132px en vez de 168px) y sin subtitle.
 
 ---
 
 ### `transition-cream`
 
-**Quando:** stacco narrativo a metà deck (es. "The shift", "The big picture", "Now what"). Cream bg, titolo grande centrato con ultima parola in gradient. Statica.
+**Cuándo:** quiebre narrativo a mitad del deck (ej. "The shift", "The big picture", "Now what"). Fondo cream, título grande centrado con la última palabra en gradient. Estática.
 
 **Wireframe:**
 ```
@@ -64,7 +64,7 @@ Catalogo dei layout pattern compatibili con `template.html` (deck-stage 1920×10
 │              ^^^^^^^ in gradient         │
 │                                          │
 │         Pulling it together              │
-│            ^ tagline opzionale, sotto    │
+│            ^ tagline opcional, abajo     │
 │                                          │
 └──────────────────────────────────────────┘
    bg cream
@@ -75,7 +75,7 @@ Catalogo dei layout pattern compatibili con `template.html` (deck-stage 1920×10
 <section data-label="07 Transition" data-steps="1" data-current-step="1">
   <div class="pad center">
     <h1 class="ts-title">The <span class="grad-word">shift</span></h1>
-    <div class="ts-tagline">Optional subtitle (toglie se preferisci solo titolo)</div>
+    <div class="ts-tagline">Optional subtitle (remove if you prefer only the title)</div>
   </div>
   <div class="footer">
     <div class="left"></div>
@@ -86,13 +86,13 @@ Catalogo dei layout pattern compatibili con `template.html` (deck-stage 1920×10
 
 ---
 
-## Famiglia 2 — Comparison cards (`.pq-card`)
+## Familia 2 — Comparison cards (`.pq-card`)
 
-Pattern signature. Card bianca con eyebrow piccolo + h3 huge + riga "→ CONSEQUENCE" accent mono + body p. Forte impatto, perfetto per Productivity/Quality, Before/Now, Problema/Soluzione, Risk/Help/Protect.
+Patrón signature. Card blanca con eyebrow chico + h3 enorme + línea "→ CONSEQUENCE" accent mono + body p. Impacto fuerte, perfecto para Productivity/Quality, Before/Now, Problema/Solución, Risk/Help/Protect.
 
 ### `pq-card-2col`
 
-**Quando:** comparazione tra 2 concetti (Productivity vs Quality, Before vs Now). 2 cards full-size.
+**Cuándo:** comparación entre 2 conceptos (Productivity vs Quality, Before vs Now). 2 cards full-size.
 
 **Wireframe:**
 ```
@@ -127,7 +127,7 @@ Slide title
 </div>
 ```
 
-**CSS** (aggiungere allo `<style>` della slide o a un blocco condiviso):
+**CSS** (agregar al `<style>` de la slide o a un bloque compartido):
 ```css
 .pq-grid {
   display: grid;
@@ -170,13 +170,13 @@ Slide title
 }
 ```
 
-**Note:** se preferisci payoff positivo (e.g. una "soluzione"), niente "→" — sostituisci con simbolo neutro o emoji-free phrase.
+**Nota:** si preferís un payoff positivo (ej. una "solución"), sin "→" — sustituilo por un símbolo neutro o una frase sin emoji.
 
 ---
 
-### `pq-card-3col` — variant compact 3-col
+### `pq-card-3col` — variante compacta 3-col
 
-**Quando:** 3 facets di uno stesso concetto (Help / Risk / Protect, oppure Past / Present / Future). Stesso pattern ma cards più piccole per stare in 3 colonne.
+**Cuándo:** 3 facetas de un mismo concepto (Help / Risk / Protect, o Past / Present / Future). Mismo patrón pero cards más chicas para entrar en 3 columnas.
 
 **HTML:**
 ```html
@@ -192,7 +192,7 @@ Slide title
 </div>
 ```
 
-**CSS aggiuntivo** (oltre a `.pq-card` base):
+**CSS adicional** (además de `.pq-card` base):
 ```css
 .pq-grid-3 {
   display: grid;
@@ -211,11 +211,11 @@ Slide title
 
 ---
 
-## Famiglia 3 — Card grids generiche
+## Familia 3 — Card grids genéricas
 
 ### `card-grid-3col-numbered`
 
-**Quando:** 3 modes/options/fasi numerate (es. tre modi di usare l'AI). Card bianca con numero accent + titolo + body + badge stato opzionale.
+**Cuándo:** 3 modos/opciones/fases numeradas (ej. tres formas de usar la IA). Card blanca con número accent + título + body + badge de estado opcional.
 
 **HTML:**
 ```html
@@ -267,7 +267,7 @@ Slide title
 
 ### `card-grid-4col`
 
-**Quando:** 4 punti correlati (warnings, principles, rules). Cards più piccole, 2×2 grid o riga unica.
+**Cuándo:** 4 puntos relacionados (warnings, principles, rules). Cards más chicas, grid 2×2 o una sola fila.
 
 **HTML:**
 ```html
@@ -331,17 +331,17 @@ Slide title
 }
 ```
 
-**Variante 1×4 (riga unica)**: cambia `grid-template-columns: repeat(4, 1fr)` e droppa `grid-template-rows`. Cards più strette.
+**Variante 1×4 (fila única)**: cambia a `grid-template-columns: repeat(4, 1fr)` y quita `grid-template-rows`. Cards más angostas.
 
 ---
 
-## Famiglia 4 — Mockups
+## Familia 4 — Mockups
 
-Per fare meta-references (mostrare il deck stesso, l'app del cliente, un documento di esempio). Tutti basati su contenitore + chrome stilizzato + contenuto astratto/reale.
+Para hacer meta-referencias (mostrar el propio deck, la app del cliente, un documento de ejemplo). Todos basados en contenedor + chrome estilizado + contenido abstracto/real.
 
-### `file-mockup` — PDF / DOC / PPT cards
+### `file-mockup` — cards PDF / DOC / PPT
 
-**Quando:** mostrare visivamente file "umani" (PDF formattato, DOC, presentazione 16:9). Card bianca con tab colorato in alto + righe astratte come placeholder testo.
+**Cuándo:** mostrar visualmente archivos "humanos" (PDF formateado, DOC, presentación 16:9). Card blanca con tab de color arriba + líneas abstractas como placeholder de texto.
 
 **HTML:**
 ```html
@@ -407,9 +407,9 @@ Per fare meta-references (mostrare il deck stesso, l'app del cliente, un documen
 
 ---
 
-### `terminal-dark` — markdown terminal mockup (variante scura)
+### `terminal-dark` — mockup de terminal markdown (variante oscura)
 
-**Quando:** mostrare un file `.md` come terminal scuro con traffic light dots + filename + body syntax-highlighted. Forte segnale "questo è un file per agent".
+**Cuándo:** mostrar un archivo `.md` como terminal oscura con traffic light dots + filename + body syntax-highlighted. Señal fuerte de "esto es un archivo para un agent".
 
 **HTML:**
 ```html
@@ -465,9 +465,9 @@ Per fare meta-references (mostrare il deck stesso, l'app del cliente, un documen
 
 ---
 
-### `terminal-light` — variant chiara dentro card bianca
+### `terminal-light` — variante clara dentro de una card blanca
 
-**Quando:** miniatura `.md` dentro una card (es. preview di file types in una row di 3 cards). Più sobrio di terminal-dark, integrato visivamente con cream/white.
+**Cuándo:** miniatura `.md` dentro de una card (ej. preview de tipos de archivo en una fila de 3 cards). Más sobrio que terminal-dark, integrado visualmente con cream/white.
 
 **HTML:**
 ```html
@@ -503,11 +503,11 @@ Per fare meta-references (mostrare il deck stesso, l'app del cliente, un documen
 
 ---
 
-### `mobile-mockup` — phone shell (es. app screenshot)
+### `mobile-mockup` — carcasa de teléfono (ej. screenshot de app)
 
-**Quando:** mostrare un'app mobile come parte di una composizione (es. "il prompt produce questa app").
+**Cuándo:** mostrar una app móvil como parte de una composición (ej. "el prompt produce esta app").
 
-**HTML (struttura base):**
+**HTML (estructura base):**
 ```html
 <div class="phone-shell">
   <div class="phone-content">
@@ -528,7 +528,7 @@ Per fare meta-references (mostrare il deck stesso, l'app del cliente, un documen
 </div>
 ```
 
-**CSS minima** (adatta dimensioni e contenuti al tuo caso):
+**CSS mínima** (ajustar tamaños y contenidos a tu caso):
 ```css
 .phone-shell {
   width: 200px; height: 380px;
@@ -568,13 +568,13 @@ Per fare meta-references (mostrare il deck stesso, l'app del cliente, un documen
 }
 ```
 
-**Note:** il phone è ~200×380. Per slide più piccole/grandi proporziona di conseguenza (mantieni aspect ~1:2).
+**Nota:** el phone mide ~200×380. Para slides más chicas/grandes, ajustá proporcionalmente (mantené aspect ~1:2).
 
 ---
 
 ### `deck-cover-replica` — mini deck 16:9
 
-**Quando:** mostrare il deck come un thumbnail (meta-reference, es. "this slide deck is the result of this flow").
+**Cuándo:** mostrar el deck como thumbnail (meta-referencia, ej. "este deck es el resultado de este flujo").
 
 **HTML:**
 ```html
@@ -623,11 +623,11 @@ Per fare meta-references (mostrare il deck stesso, l'app del cliente, un documen
 
 ---
 
-## Famiglia 5 — Diagrammi e flussi
+## Familia 5 — Diagramas y flujos
 
-### `bubble-cloud` — bubbles attorno a sources centrali
+### `bubble-cloud` — burbujas alrededor de sources centrales
 
-**Quando:** mostrare frammenti di contesto distribuiti attorno a sorgenti centrali (es. "il contesto è già vostro: emails, drive, web"). Alcune bubbles possono essere "stale" (greyed + line-through).
+**Cuándo:** mostrar fragmentos de contexto distribuidos alrededor de fuentes centrales (ej. "el contexto ya es tuyo: emails, drive, web"). Algunas burbujas pueden estar "stale" (grises + tachadas).
 
 **Wireframe:**
 ```
@@ -704,17 +704,17 @@ Per fare meta-references (mostrare il deck stesso, l'app del cliente, un documen
 }
 ```
 
-**Note:** se metti `.sources` reveal centrato, override `transform: translate(-50%, -50%)` su `.is-on` (vedi specificity wars in `animations.md`).
+**Nota:** si ponés `.sources` con reveal centrado, hacé override de `transform: translate(-50%, -50%)` sobre `.is-on` (ver specificity wars en `animations.md`).
 
 ---
 
-### `mini-diagram-in-card` — visual al fondo della card
+### `mini-diagram-in-card` — visual al fondo de la card
 
-**Quando:** card con titolo + body + diagrammino visivo che mostra il "limite" o il "concetto" della card.
+**Cuándo:** card con título + body + un mini-diagrama visual que muestra el "límite" o el "concepto" de la card.
 
-**Idea:** ogni card ha un'area diag in basso con SVG/HTML stilizzato (3 chat box separate, freccette converging, snowflake icon, ecc).
+**Idea:** cada card tiene un área diag abajo con SVG/HTML estilizado (3 chat boxes separadas, flechas convergiendo, ícono de copo de nieve, etc).
 
-**HTML (esempio: chat isolate):**
+**HTML (ejemplo: chats aisladas):**
 ```html
 <div class="way-card">
   <div class="way-num">01</div>
@@ -728,7 +728,7 @@ Per fare meta-references (mostrare il deck stesso, l'app del cliente, un documen
 </div>
 ```
 
-**CSS pattern (variante 1):**
+**Patrón CSS (variante 1):**
 ```css
 .way-card { display: flex; flex-direction: column; ... }
 .way-card .diag { margin-top: auto; padding-top: 24px; }
@@ -744,13 +744,13 @@ Per fare meta-references (mostrare il deck stesso, l'app del cliente, un documen
 .chat-mini.active { background: rgba(37,99,235,0.10); color: var(--cs-primary); }
 ```
 
-**Gotcha:** `.way-card .diag` NON deve settare `display` direttamente — i variant (`.diag-isolated` flex / `.diag-merge` grid) si gestiscono il display. Vedi `animations.md` gotchas.
+**Cuidado:** `.way-card .diag` NO debe setear `display` directamente — las variantes (`.diag-isolated` flex / `.diag-merge` grid) manejan su propio display. Ver gotchas en `animations.md`.
 
 ---
 
-### `tools-split` — left tools list + right problem card
+### `tools-split` — lista de tools a la izquierda + card de problema a la derecha
 
-**Quando:** elencare strumenti/elementi a sinistra (mini-cards icon + name) e i loro limiti/conseguenze a destra in una card più grande.
+**Cuándo:** listar herramientas/elementos a la izquierda (mini-cards ícono + nombre) y sus límites/consecuencias a la derecha en una card más grande.
 
 **HTML:**
 ```html
@@ -819,27 +819,27 @@ Per fare meta-references (mostrare il deck stesso, l'app del cliente, un documen
 
 ---
 
-### `counter-bars` — bars + counter ticking
+### `counter-bars` — barras + counter que sube
 
-**Quando:** mostrare degradazione progressiva (es. token compression: 100% → 75% → 25%). Bar che si riempie + counter che sale. Pattern animato — vedi `animations.md` per il counter.
+**Cuándo:** mostrar degradación progresiva (ej. compresión de tokens: 100% → 75% → 25%). Barra que se llena + counter que sube. Patrón animado — ver `animations.md` para el counter.
 
 **HTML:**
 ```html
 <div class="tk-rows">
   <div class="tk-row reveal" data-step="2">
-    <div class="tk-label">Inizio chat</div>
+    <div class="tk-label">Chat start</div>
     <div class="tk-bar"><div class="tk-fill" style="--w:100%"></div></div>
-    <div class="tk-state badge badge-green">Piena precisione</div>
+    <div class="tk-state badge badge-green">Full precision</div>
   </div>
   <div class="tk-row reveal" data-step="3">
-    <div class="tk-label">Chat lunga</div>
+    <div class="tk-label">Long chat</div>
     <div class="tk-bar"><div class="tk-fill" style="--w:60%"></div></div>
-    <div class="tk-state badge badge-orange">Compressione</div>
+    <div class="tk-state badge badge-orange">Compression</div>
   </div>
   <div class="tk-row reveal" data-step="4">
-    <div class="tk-label">Chat piena</div>
+    <div class="tk-label">Full chat</div>
     <div class="tk-bar"><div class="tk-fill" style="--w:25%"></div></div>
-    <div class="tk-state badge badge-red">Dettagli persi</div>
+    <div class="tk-state badge badge-red">Details lost</div>
   </div>
 </div>
 <!-- Counter counterpart on its own (optional) -->
@@ -882,15 +882,15 @@ section[data-active="true"] .tk-fill.is-on { width: var(--w, 0%); }
 }
 ```
 
-**Note:** il counter usa il `runCounter` del template (vedi `animations.md`).
+**Nota:** el counter usa el `runCounter` del template (ver `animations.md`).
 
 ---
 
 ### `flow-pipeline` — input → process → output
 
-**Quando:** flusso lineare orizzontale di N step con frecce (es. agent flow: Prompt → CLAUDE.md → context.md → skill.md → Result). Versione statica del wrap arrow.
+**Cuándo:** flujo lineal horizontal de N pasos con flechas (ej. agent flow: Prompt → CLAUDE.md → context.md → skill.md → Result). Versión estática de la flecha con wrap.
 
-**HTML (statico):**
+**HTML (estático):**
 ```html
 <div class="pipeline">
   <div class="pipe-card">
@@ -942,24 +942,24 @@ section[data-active="true"] .tk-fill.is-on { width: var(--w, 0%); }
 }
 ```
 
-**Variante animata:** sostituisci le frecce testuali con SVG path drawn-on (vedi `animations.md` "Wrap arrow").
+**Variante animada:** sustituí las flechas de texto por un SVG path que se dibuja (ver `animations.md` "Wrap arrow").
 
 ---
 
-## Famiglia 6 — Special
+## Familia 6 — Special
 
-### `kb-tree` — folder tree mono
+### `kb-tree` — árbol de carpetas mono
 
-**Quando:** mostrare struttura cartella/KB stilizzata.
+**Cuándo:** mostrar estructura de carpeta/KB estilizada.
 
 **HTML:**
 ```html
 <div class="kb-tree mono">
 my-kb/<br>
-├── <span class="kb-vert">contenuti/</span><br>
-│&nbsp;&nbsp;&nbsp;└── <span class="kb-meta">9 esempi · 1 skill</span><br>
-└── <span class="kb-vert">normativa-legale/</span><br>
-&nbsp;&nbsp;&nbsp;&nbsp;└── <span class="kb-meta">istruzioni · 2 skill</span>
+├── <span class="kb-vert">content/</span><br>
+│&nbsp;&nbsp;&nbsp;└── <span class="kb-meta">9 examples · 1 skill</span><br>
+└── <span class="kb-vert">legal-compliance/</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;└── <span class="kb-meta">guidelines · 2 skills</span>
 </div>
 ```
 
@@ -978,11 +978,11 @@ my-kb/<br>
 
 ---
 
-### `skill-list-with-workflow` — skill list + workflow box
+### `skill-list-with-workflow` — lista de skills + caja de workflow
 
-**Quando:** elencare skill disponibili a sinistra + aprire un workflow dettagliato a destra (1 input → N output coerenti).
+**Cuándo:** listar skills disponibles a la izquierda + abrir un workflow detallado a la derecha (1 input → N outputs coherentes).
 
-**HTML schematica:**
+**HTML esquemático:**
 ```html
 <div class="sk-grid">
   <div class="skill-list">
@@ -1005,7 +1005,7 @@ my-kb/<br>
 </div>
 ```
 
-**CSS** (parziale, completa in base al contenuto):
+**CSS** (parcial, completá según el contenido):
 ```css
 .sk-grid { display: grid; grid-template-columns: 0.85fr 1.15fr; gap: 36px; margin-top: 8px; }
 .skill-list { display: flex; flex-direction: column; gap: 14px; }
@@ -1043,24 +1043,24 @@ my-kb/<br>
 /* + wf-eyebrow, wf-input, wf-outputs, output-card */
 ```
 
-**Animation companion:** la freccia bifurcating dall'input ai 3 output usa il pattern "Connector trunk + N branches" — vedi `animations.md`.
+**Complemento animado:** la flecha que se bifurca desde el input hacia los 3 outputs usa el patrón "Connector trunk + N branches" — ver `animations.md`.
 
 ---
 
-## Famiglia 7 — Intro / About (speakers + organization)
+## Familia 7 — Intro / About (speakers + organización)
 
-### `speaker-card` — speaker con foto + ruolo + LinkedIn QR
+### `speaker-card` — speaker con foto + rol + QR de LinkedIn
 
-**Quando:** slide intro che presenta i speaker/team del workshop. Vertical-stack con foto round in cerchio gradient + nome + ruolo + LinkedIn icon "in" affiancato al QR.
+**Cuándo:** slide de intro que presenta a los speakers/team del workshop. Vertical-stack con foto redonda en un círculo con gradient + nombre + rol + ícono "in" de LinkedIn al lado del QR.
 
-**Layout consigliato:** grid 2-col (2 speakers) o 3-col (3 speakers). Per 4+, valutare horizontal compact.
+**Layout recomendado:** grid 2-col (2 speakers) o 3-col (3 speakers). Para 4+, evaluar un layout horizontal compacto.
 
-**Pre-step QR:** generare i QR LinkedIn con `qrencode` (`brew install qrencode` se non installato):
+**Pre-paso QR:** generar los QR de LinkedIn con `qrencode` (`brew install qrencode` si no está instalado):
 ```bash
 qrencode -o assets/qr/alex.png -s 20 -m 2 -l H "https://www.linkedin.com/in/your-handle/"
 ```
 
-**HTML schematica:**
+**HTML esquemático:**
 ```html
 <div class="speakers-grid">
   <div class="speaker-card reveal" data-step="2">
@@ -1117,7 +1117,7 @@ qrencode -o assets/qr/alex.png -s 20 -m 2 -l H "https://www.linkedin.com/in/your
   font-size: 24px; color: var(--cs-muted);
   font-weight: 500; line-height: 1.4;
   margin: 0;
-  white-space: nowrap;       /* role su 1 riga; per ruoli lunghi rimuovere e usare max-width */
+  white-space: nowrap;       /* role en 1 línea; para roles largos quitar y usar max-width */
 }
 .speaker-qr-row {
   display: flex; align-items: center;
@@ -1139,22 +1139,22 @@ qrencode -o assets/qr/alex.png -s 20 -m 2 -l H "https://www.linkedin.com/in/your
 .speaker-qr img { width: 100%; height: auto; display: block; }
 ```
 
-**Note critiche:**
-- Il logo "in" LinkedIn è SVG inline (path nel codice), NON `<i data-lucide="linkedin">`. Lucide non rilancia createIcons() automaticamente su elementi aggiunti dopo render iniziale — vedi gotcha in `animations.md`.
-- Il logo "in" è ~52% del QR (68px su 130px). Mantenere questa proporzione per leggibilità.
-- Eyebrow + h2 sopra il grid (es. "WORKSHOP HOSTS" + "Your team for today") con `.reveal data-step="1"`. Speakers a step 2, 3, …
+**Notas críticas:**
+- El logo "in" de LinkedIn es SVG inline (path en el código), NO `<i data-lucide="linkedin">`. Lucide no relanza `createIcons()` automáticamente sobre elementos agregados después del render inicial — ver gotcha en `animations.md`.
+- El logo "in" mide ~52% del QR (68px sobre 130px). Mantener esa proporción para legibilidad.
+- Eyebrow + h2 arriba del grid (ej. "WORKSHOP HOSTS" + "Your team for today") con `.reveal data-step="1"`. Speakers en step 2, 3, …
 
-**Animation:** 1 step per ogni card (titoli step 1, ogni speaker 1 step). Per N speakers → `data-steps="N+1"`.
+**Animación:** 1 step por cada card (títulos step 1, cada speaker 1 step). Para N speakers → `data-steps="N+1"`.
 
 ---
 
-### `org-hero` — organization intro con logo + tagline + payoff + stats
+### `org-hero` — intro de organización con logo + tagline + payoff + stats
 
-**Quando:** slide intro per presentare un'organizzazione/venue. Pattern org-as-cover (no eyebrow/h2): logo grande centrato, tagline, sub, payoff italic, riga stats con dividers verticali.
+**Cuándo:** slide de intro para presentar una organización/venue. Patrón org-as-cover (sin eyebrow/h2): logo grande centrado, tagline, sub, payoff en itálica, fila de stats con dividers verticales.
 
-**Adatto a:** "About us", "Where you are today", venue pitch, sponsor showcase. Funziona come 3° "moment cover" del trittico Cover → Speakers → About.
+**Apto para:** "About us", "Where you are today", venue pitch, sponsor showcase. Funciona como el 3er "moment cover" del tríptico Cover → Speakers → About.
 
-**HTML schematica:**
+**HTML esquemático:**
 ```html
 <section data-label="03 About" data-steps="2" data-current-step="0">
   <div class="sweep"></div>
@@ -1235,40 +1235,40 @@ qrencode -o assets/qr/alex.png -s 20 -m 2 -l H "https://www.linkedin.com/in/your
 }
 ```
 
-**Variazioni:**
-- 3 stats invece di 4: `grid-template-columns: repeat(3, 1fr)`
-- Senza payoff (più minimal): rimuovi `.org-payoff` e accorpa numeri al data-step="1"
-- Per altre organizzazioni: sostituisci logo + tagline + numeri (resto invariato)
+**Variaciones:**
+- 3 stats en vez de 4: `grid-template-columns: repeat(3, 1fr)`
+- Sin payoff (más minimal): quitar `.org-payoff` y agrupar los números en `data-step="1"`
+- Para otras organizaciones: sustituir logo + tagline + números (el resto queda igual)
 
-**Animation:** 2-step ottimale. Step 1 logo+tagline+sub (identità). Step 2 payoff + numeri insieme con `--d` delay sui numeri per evitare reveal piatto simultaneo.
+**Animación:** 2 steps es lo óptimo. Step 1 logo+tagline+sub (identidad). Step 2 payoff + números juntos, con delay `--d` en los números para evitar un reveal plano simultáneo.
 
 ---
 
-## Riepilogo — pattern per messaggio
+## Resumen — patrón por mensaje
 
-| Messaggio | Pattern |
+| Mensaje | Patrón |
 |---|---|
-| Apertura/chiusura | `cover-gradient` |
-| Stacco narrativo | `transition-cream` |
-| 2 concetti contrapposti | `pq-card-2col` |
-| 3 facets di uno stesso concetto | `pq-card-3col` |
-| 3 modes/options numerate | `card-grid-3col-numbered` |
-| 4 warnings/principles | `card-grid-4col` |
-| File "umani" PDF/DOC/PPT | `file-mockup` |
-| Mostra un .md file (impatto forte) | `terminal-dark` |
-| Mostra un .md file (in card row) | `terminal-light` |
-| App mobile screenshot | `mobile-mockup` |
-| Mini deck preview (meta) | `deck-cover-replica` |
-| Frammenti contesto + sources | `bubble-cloud` |
+| Apertura/cierre | `cover-gradient` |
+| Quiebre narrativo | `transition-cream` |
+| 2 conceptos contrapuestos | `pq-card-2col` |
+| 3 facetas de un mismo concepto | `pq-card-3col` |
+| 3 modos/opciones numeradas | `card-grid-3col-numbered` |
+| 4 warnings/principios | `card-grid-4col` |
+| Archivos "humanos" PDF/DOC/PPT | `file-mockup` |
+| Mostrar un archivo .md (impacto fuerte) | `terminal-dark` |
+| Mostrar un archivo .md (en fila de cards) | `terminal-light` |
+| Screenshot de app móvil | `mobile-mockup` |
+| Preview de mini deck (meta) | `deck-cover-replica` |
+| Fragmentos de contexto + sources | `bubble-cloud` |
 | Card con visual al fondo | `mini-diagram-in-card` |
-| Tools + loro problemi | `tools-split` |
-| Degradazione progressiva | `counter-bars` |
-| Pipeline lineare | `flow-pipeline` (statico) o wrap arrow animato |
-| Struttura cartella | `kb-tree` |
-| Skill list + workflow esempio | `skill-list-with-workflow` |
+| Tools + sus problemas | `tools-split` |
+| Degradación progresiva | `counter-bars` |
+| Pipeline lineal | `flow-pipeline` (estático) o flecha animada con wrap |
+| Estructura de carpetas | `kb-tree` |
+| Lista de skills + workflow de ejemplo | `skill-list-with-workflow` |
 | Speakers / team intro (foto + QR LinkedIn) | `speaker-card` |
 | Org / venue intro (logo + stats) | `org-hero` |
 
-Per le animazioni associate (popup overlay, SVG path drawing, packets, magic-move): **`animations.md`**.
+Para las animaciones asociadas (popup overlay, SVG path drawing, packets, magic-move): **`animations.md`**.
 
-Per un esempio end-to-end vedi `examples/demo-deck.html` (demo di 6 slide, animation level LIGHT).
+Para un ejemplo end-to-end ver `examples/demo-deck.html` (demo de 6 slides, animation level LIGHT).

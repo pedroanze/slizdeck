@@ -1,23 +1,23 @@
 # Claude Slides — Animations
 
-Catalog di tecniche di animazione per deck con `template.html`. Ogni tecnica include solo quello che serve per farla funzionare: snippet copia-incolla + i bug da evitare.
+Catálogo de técnicas de animación para decks con `template.html`. Cada técnica incluye solo lo necesario para hacerla funcionar: snippet listo para copiar + los bugs a evitar.
 
-**La decision logic "static vs animated" sta nella fase `build`, vedi `reference/build.md`.** Qui ci sono solo le tecniche.
+**La lógica de decisión "estática vs animada" está en la fase `build`, ver `reference/build.md`.** Acá solo están las técnicas.
 
 ---
 
-## Foundation — il modello a step
+## Foundation — el modelo de steps
 
-Tutta l'infrastruttura sta in `template.html`. Devi solo capire 4 cose:
+Toda la infraestructura está en `template.html`. Solo hay que entender 4 cosas:
 
-1. **Sulla `<section>`** metti `data-steps="N"` (totale step) + `data-current-step="0"` (init).
-2. **Sugli elementi** che vuoi rivelare metti `class="reveal" data-step="K"` (K = step in cui appaiono).
-3. **Il step controller** (già nel template) intercetta `→`/`←`/`Spazio` PRIMA di deck-stage. Avanza lo step interno se possibile, altrimenti lascia passare e deck-stage cambia slide.
-4. **Quando arrivi sulla slide**, `resetAndEnter` rimuove tutti gli `.is-on`, poi rimette `.is-on` su data-step <= 1 → la prima reveal animate sull'entrata.
+1. **En la `<section>`** poné `data-steps="N"` (total de steps) + `data-current-step="0"` (init).
+2. **En los elementos** que querés revelar poné `class="reveal" data-step="K"` (K = step en el que aparecen).
+3. **El step controller** (ya está en el template) intercepta `→`/`←`/`Espacio` ANTES que deck-stage. Avanza el step interno si puede, si no lo deja pasar y deck-stage cambia de slide.
+4. **Al entrar a la slide**, `resetAndEnter` saca todos los `.is-on`, y vuelve a poner `.is-on` en `data-step <= 1` → el primer reveal se anima al entrar.
 
-**Slide statica**: NON metti `.reveal`, setti `data-steps="1" data-current-step="1"`.
+**Slide estática**: NO pongas `.reveal`, seteá `data-steps="1" data-current-step="1"`.
 
-**Slide minima animata:**
+**Slide mínima animada:**
 
 ```html
 <section data-label="03 Example" data-steps="2" data-current-step="0">
@@ -33,9 +33,9 @@ Tutta l'infrastruttura sta in `template.html`. Devi solo capire 4 cose:
 
 ---
 
-## Reveal stagger — più elementi, stesso step, ritardo crescente
+## Reveal stagger — varios elementos, mismo step, delay creciente
 
-Per fare apparire più cards una dopo l'altra al medesimo step, usa `style="--d:Nms"`:
+Para hacer aparecer varias cards una después de otra en el mismo step, usá `style="--d:Nms"`:
 
 ```html
 <div class="card reveal" data-step="2">First, no delay</div>
@@ -43,13 +43,13 @@ Per fare apparire più cards una dopo l'altra al medesimo step, usa `style="--d:
 <div class="card reveal" data-step="2" style="--d:240ms">Third</div>
 ```
 
-`--d` è già letto da `.reveal { transition-delay: var(--d, 0ms); }` nel template.
+`--d` ya lo lee `.reveal { transition-delay: var(--d, 0ms); }` en el template.
 
 ---
 
-## Counter ticking — numero che sale a target
+## Counter ticking — número que sube hasta un target
 
-Built-in nel template (`runCounter`). Marca un elemento con:
+Built-in en el template (`runCounter`). Marcá un elemento con:
 
 ```html
 <span class="big-number"
@@ -57,15 +57,15 @@ Built-in nel template (`runCounter`). Marca un elemento con:
       data-target-step="3">0<span class="unit">k</span></span>
 ```
 
-`data-counter` = target finale. `data-target-step` = step in cui parte. Easing ease-out-quint, durata 1400ms. Il `.unit` opzionale (es. "k", "%", "€") viene preservato durante il tick.
+`data-counter` = target final. `data-target-step` = step en el que arranca. Easing ease-out-quint, duración 1400ms. El `.unit` opcional (ej. "k", "%", "€") se preserva durante el tick.
 
-Sotto i 1000 il numero è int (`123`), tra 1k e 100k formatta come `2.4k`, sopra 100k come `240k`.
+Por debajo de 1000 el número es entero (`123`), entre 1k y 100k formatea como `2.4k`, por encima de 100k como `240k`.
 
 ---
 
-## SVG path drawing — la freccia che si disegna
+## SVG path drawing — la flecha que se dibuja
 
-Pattern base di tutte le frecce animate. Il path viene "disegnato" trascinando `stroke-dashoffset` da `1` a `0`. Usa `pathLength="1"` per normalizzare a prescindere dalla lunghezza geometrica reale.
+Patrón base de todas las flechas animadas. El path se "dibuja" arrastrando `stroke-dashoffset` de `1` a `0`. Usá `pathLength="1"` para normalizar sin importar la longitud geométrica real.
 
 ```html
 <svg class="my-svg" viewBox="0 0 1680 600" preserveAspectRatio="none">
@@ -100,31 +100,31 @@ Pattern base di tutte le frecce animate. Il path viene "disegnato" trascinando `
 }
 ```
 
-**Gotcha #1 — transform sull'SVG.** `.reveal` di default applica `transform: translateY(16px)` per il fade-in. Su un SVG path questo SHIFTA tutto il path 16px in basso → coordinate sballate. Forza `transform: none !important;`.
+**Gotcha #1 — transform en el SVG.** `.reveal` por default aplica `transform: translateY(16px)` para el fade-in. En un SVG path esto DESPLAZA todo el path 16px hacia abajo → coordenadas desalineadas. Forzá `transform: none !important;`.
 
-**Gotcha #2 — opacity necessaria anche col dashoffset.** Senza opacity, l'eventuale `marker-end` (la freccia) resta visibile al punto geometrico finale del path PRIMA che il tratto disegnato lo raggiunga. Tieni sempre opacity 0 → 1 in transizione.
+**Gotcha #2 — la opacity sigue haciendo falta aunque haya dashoffset.** Sin opacity, un eventual `marker-end` (la punta de flecha) queda visible en el punto geométrico final del path ANTES de que el trazo dibujado llegue ahí. Mantené siempre opacity 0 → 1 en transición.
 
-### Tangenti smooth ai corner
+### Tangentes suaves en los corners
 
-Per evitare angoli secchi tra segmenti (linea verticale → curva orizzontale), il control point della curva deve avere la stessa direzione del segmento adiacente.
+Para evitar ángulos secos entre segmentos (línea vertical → curva horizontal), el control point de la curva tiene que tener la misma dirección que el segmento adyacente.
 
-Esempio: linea verticale che termina a `(840, 460)` poi curva verso destra. Per restare "smooth":
+Ejemplo: línea vertical que termina en `(840, 460)` y después curva hacia la derecha. Para que quede "smooth":
 
 ```
 L 840 460 C 840 510 950 490 1010 490
        ^      ^
-       |      control1 a (840, 510) → tangente verticale-giù dalla linea
+       |      control1 en (840, 510) → tangente vertical-hacia-abajo desde la línea
        |
-       end of vertical segment
+       fin del segmento vertical
 ```
 
-Se invece metti `C 880 460 950 490 1010 490`, il control1 NON è verticale rispetto al segmento precedente → corner secco.
+Si en cambio ponés `C 880 460 950 490 1010 490`, el control1 NO es vertical respecto al segmento anterior → corner seco.
 
 ---
 
-## SVG marker arrow tip
+## SVG marker — punta de flecha
 
-Definisci un `<marker>` nel `<defs>` e applicalo via `marker-end`:
+Definí un `<marker>` en el `<defs>` y aplicalo vía `marker-end`:
 
 ```html
 <svg ...>
@@ -138,13 +138,13 @@ Definisci un `<marker>` nel `<defs>` e applicalo via `marker-end`:
 </svg>
 ```
 
-`refX="9"` → la punta del marker è 1 unità oltre il punto finale del path. Se vuoi che la punta cada esattamente sul target, end the path slightly before.
+`refX="9"` → la punta del marker queda 1 unidad más allá del punto final del path. Si querés que la punta caiga exactamente sobre el target, terminá el path un poco antes.
 
 ---
 
-## Pulse triggered by current step
+## Pulso disparado por el step actual
 
-Per far pulsare un elemento solo quando la slide è a step X, usa il selettore `data-current-step`:
+Para que un elemento pulse solo cuando la slide está en el step X, usá el selector `data-current-step`:
 
 ```css
 @keyframes myPulse {
@@ -157,19 +157,19 @@ section[data-current-step="4"] .my-featured.reveal.is-on {
 }
 ```
 
-Quando `applyStep` setta `data-current-step="4"` sulla section, l'animazione parte. 2 iterazioni × 1500ms = 3s totale, poi torna allo stato base.
+Cuando `applyStep` setea `data-current-step="4"` en la section, arranca la animación. 2 iteraciones × 1500ms = 3s en total, después vuelve al estado base.
 
-`.reveal.is-on` nel selettore garantisce che parta solo dopo che l'elemento è stato rivelato.
+`.reveal.is-on` en el selector garantiza que arranque solo después de que el elemento ya fue revelado.
 
-**Gotcha:** il transform della keyframe (scale) prevale sul `transform: none` di `.reveal.is-on` SOLO durante l'animazione. Quando finisce, l'elemento torna allo stato `transform: none`. ✓ Voluto.
+**Cuidado:** el transform del keyframe (scale) prevalece sobre el `transform: none` de `.reveal.is-on` SOLO durante la animación. Cuando termina, el elemento vuelve al estado `transform: none`. ✓ Es lo esperado.
 
 ---
 
-## Wrap arrow con biforcation
+## Wrap arrow con bifurcación
 
-Path SVG continuo che entra dal sx, percorre la slide, esce e si biforca in 2 (o N) destinazioni.
+Path SVG continuo que entra por la izquierda, recorre la slide, sale y se bifurca en 2 (o N) destinos.
 
-Architettura: 1 trunk + N branches, ognuno è un `<path>` separato:
+Arquitectura: 1 trunk + N branches, cada uno un `<path>` separado:
 
 ```html
 <svg class="flow-svg" viewBox="0 0 1680 600" preserveAspectRatio="none">
@@ -203,13 +203,13 @@ Architettura: 1 trunk + N branches, ognuno è un `<path>` separato:
 .flow-branch.reveal { transition: stroke-dashoffset 800ms cubic-bezier(0.65, 0.05, 0.36, 1), opacity 200ms ease; }
 ```
 
-**Trick z-index:** se il trunk passa "dietro" elementi (es. attraverso pills bianche centrali), metti SVG `z-index: 1` e gli elementi `z-index: 2`. Il path è disegnato ma nascosto dai background bianchi delle pill — appare visivamente solo nei tratti tra una pill e l'altra.
+**Truco de z-index:** si el trunk pasa "por detrás" de elementos (ej. a través de pills blancas centrales), poné el SVG en `z-index: 1` y los elementos en `z-index: 2`. El path se dibuja pero queda oculto por los fondos blancos de las pills — aparece visualmente solo en los tramos entre una pill y otra.
 
 ---
 
-## Connector trunk + N branches biforking
+## Connector trunk + N branches que se bifurcan
 
-Versione compatta del wrap arrow per "1 input → N outputs". Pensato per "1 input → N output" (workflow box → 3 output cards).
+Versión compacta del wrap arrow para "1 input → N outputs". Pensado para "1 input → N outputs" (workflow box → 3 output cards).
 
 ```html
 <svg class="conn" viewBox="0 0 600 70" preserveAspectRatio="none">
@@ -230,15 +230,15 @@ Versione compatta del wrap arrow per "1 input → N outputs". Pensato per "1 inp
 </svg>
 ```
 
-CSS analoga al wrap arrow. Il trunk parte allo step (delay 0), le 3 branches partono con delay 300ms (così trunk completa prima e poi le 3 sparano insieme verso i target).
+CSS análoga al wrap arrow. El trunk arranca en el step (delay 0), las 3 branches arrancan con delay 300ms (así el trunk termina primero y después las 3 disparan juntas hacia los targets).
 
-ViewBox `0 0 600 70` è arbitrario — l'SVG si stretcha al container con `preserveAspectRatio="none"`. Le coordinate sono in viewBox-units (centro=300, target=100/300/500).
+El viewBox `0 0 600 70` es arbitrario — el SVG se estira al container con `preserveAspectRatio="none"`. Las coordenadas están en unidades del viewBox (centro=300, targets=100/300/500).
 
 ---
 
 ## Popup overlay con backdrop-blur
 
-Card centrata che appare sopra la slide con backdrop blur. Usato per momenti di payoff finale.
+Card centrada que aparece sobre la slide con backdrop blur. Se usa para momentos de payoff final.
 
 ```html
 <div class="popup-wrap reveal" data-step="5">
@@ -254,7 +254,7 @@ Card centrata che appare sopra la slide con backdrop blur. Usato per momenti di 
   position: absolute; inset: 0; z-index: 50;
   pointer-events: none;
 }
-/* CRITICAL: il wrap NON usa il fade default di .reveal — animiamo solo i figli */
+/* CRITICAL: el wrap NO usa el fade default de .reveal — animamos solo a los hijos */
 .popup-wrap.reveal { opacity: 1; transform: none; }
 
 .popup-backdrop {
@@ -298,27 +298,27 @@ Card centrata che appare sopra la slide con backdrop blur. Usato per momenti di 
 }
 ```
 
-**Gotcha:** il wrap deve override-are `.reveal { opacity: 0; transform: translateY(16px); }` perché altrimenti l'intero overlay (backdrop + card) farebbe il fade-in di gruppo invece dei due ingressi indipendenti (backdrop fade + card scale-in con delay). L'override `opacity: 1; transform: none` sul wrap delega l'animazione ai figli.
+**Cuidado:** el wrap tiene que hacer override de `.reveal { opacity: 0; transform: translateY(16px); }` porque si no todo el overlay (backdrop + card) haría el fade-in en grupo en vez de las dos entradas independientes (backdrop fade + card scale-in con delay). El override `opacity: 1; transform: none` en el wrap delega la animación a los hijos.
 
 ---
 
-## Animated SVG packets along path (continuous loop)
+## SVG packets animados a lo largo de un path (loop continuo)
 
-Pacchetti che viaggiano lungo un path infinitamente, no JS. Pensato per diagrammi ecosystem (feeds + enriches).
+Paquetes que viajan a lo largo de un path infinitamente, sin JS. Pensado para diagramas de ecosistema (feeds + enriches).
 
 ```html
 <svg class="eco-svg" viewBox="0 0 800 600" preserveAspectRatio="none">
   <defs>
-    <!-- Path invisibile riferito da animateMotion -->
+    <!-- Path invisible referenciado por animateMotion -->
     <path id="feeds-path" d="M 460 540 C 660 540, 660 180, 460 180" />
   </defs>
 
-  <!-- Path visibile (renderizzato con stroke) -->
+  <!-- Path visible (renderizado con stroke) -->
   <path class="eco-path reveal" data-step="3" pathLength="1"
         d="M 460 540 C 660 540, 660 180, 460 180"
         marker-end="url(#tip)"/>
 
-  <!-- Packet 1: parte a 0s, durata 5s, looped -->
+  <!-- Packet 1: arranca a los 0s, dura 5s, en loop -->
   <g class="eco-packet">
     <rect x="-30" y="-12" width="60" height="24" rx="4" fill="#2563EB"/>
     <text x="0" y="4" text-anchor="middle" fill="#fff" font-size="11">Q3 margin</text>
@@ -327,7 +327,7 @@ Pacchetti che viaggiano lungo un path infinitamente, no JS. Pensato per diagramm
     </animateMotion>
   </g>
 
-  <!-- Packet 2: stesso path, parte a 1.25s (stagger 25%) -->
+  <!-- Packet 2: mismo path, arranca a 1.25s (stagger 25%) -->
   <g class="eco-packet">
     <rect ...>
     <animateMotion dur="5s" begin="1.25s" repeatCount="indefinite">
@@ -337,19 +337,19 @@ Pacchetti che viaggiano lungo un path infinitamente, no JS. Pensato per diagramm
 </svg>
 ```
 
-Per `<animateMotion>`:
-- `dur` = durata di un giro completo del packet sul path
-- `begin="Xs"` = ritardo iniziale (prima volta che parte)
+Para `<animateMotion>`:
+- `dur` = duración de una vuelta completa del packet sobre el path
+- `begin="Xs"` = delay inicial (la primera vez que arranca)
 - `repeatCount="indefinite"` = infinito
-- `<mpath href="#id">` riferisce il path da seguire (deve avere `id`)
+- `<mpath href="#id">` referencia el path a seguir (tiene que tener `id`)
 
-Stagger di 4 packets su path da 5s: `begin="0s"`, `1.25s`, `2.5s`, `3.75s` → uno passa ogni 1.25s.
+Stagger de 4 packets sobre un path de 5s: `begin="0s"`, `1.25s`, `2.5s`, `3.75s` → uno pasa cada 1.25s.
 
 ---
 
-## Pulsing rings (concentric ping)
+## Anillos pulsantes (ping concéntrico)
 
-Cerchi che pulsano emettendo onde all'infinito (think Apple AirDrop). Pensato per nodi attivi (chat/context).
+Círculos que pulsan emitiendo ondas al infinito (piensa en Apple AirDrop). Pensado para nodos activos (chat/contexto).
 
 ```html
 <div class="eco-node">
@@ -378,20 +378,20 @@ section[data-active="true"] .eco-ring.is-on {
 }
 ```
 
-**Gotcha CRITICO — `animation-fill-mode: backwards`.** Senza `backwards`, durante il delay (`var(--ringDelay)`) l'elemento è VISIBILE-statico (perché `.is-on` setta opacity: 1) ma la keyframe non è ancora partita. Risultato: ring pieno e immobile per N secondi prima di iniziare a pulsare. `backwards` applica il keyframe `0%` (che ha `opacity: 0.6` → diventa transparent al 100% durante il delay) → invisibile fino al primo ping.
+**Cuidado CRÍTICO — `animation-fill-mode: backwards`.** Sin `backwards`, durante el delay (`var(--ringDelay)`) el elemento queda VISIBLE-estático (porque `.is-on` setea `opacity: 1`) pero el keyframe todavía no arrancó. Resultado: anillo lleno e inmóvil durante N segundos antes de empezar a pulsar. `backwards` aplica el keyframe `0%` (que tiene `opacity: 0.6` → se vuelve transparente al 100% durante el delay) → invisible hasta el primer ping.
 
 ---
 
-## Magic-move file fly-away
+## Magic-move: archivos que vuelan
 
-Files sparpagliati che vengono "assorbiti" da un agent (translate + scale + fade su step trigger).
+Archivos dispersos que son "absorbidos" por un agent (translate + scale + fade al disparar un step).
 
 ```html
 <div class="files-cluster">
   <div class="file-tile reveal" data-step="2" style="--x:-120px; --y:-80px; --rot:rotate(-12deg); --fly-d:0ms">PDF</div>
   <div class="file-tile reveal" data-step="2" style="--x:80px; --y:-100px; --rot:rotate(8deg); --fly-d:80ms">DOC</div>
   <div class="file-tile reveal" data-step="2" style="--x:-60px; --y:60px; --rot:rotate(-5deg); --fly-d:160ms">SHEET</div>
-  <!-- ...più file con varie --x, --y, --rot, --fly-d -->
+  <!-- ...más archivos con distintos --x, --y, --rot, --fly-d -->
 </div>
 ```
 
@@ -403,11 +403,11 @@ Files sparpagliati che vengono "assorbiti" da un agent (translate + scale + fade
   width: 80px; height: 100px;
   background: #fff;
   border-radius: 8px;
-  /* CRITICAL: 4-function transform list, identico in TUTTI gli stati */
+  /* CRITICAL: 4-function transform list, idéntica en TODOS los estados */
   transform: translate(-50%, -50%) translate(var(--x, 0px), var(--y, 0px)) var(--rot, none) scale(1);
   transition: opacity 520ms, transform 520ms;
 }
-/* .reveal default override — preserva il 4-function transform anche da spento */
+/* override del default de .reveal — preserva el 4-function transform aún apagado */
 .file-tile.reveal {
   opacity: 0;
   transform: translate(-50%, -50%) translate(var(--x, 0px), var(--y, 0px)) var(--rot, none) scale(1);
@@ -417,7 +417,7 @@ Files sparpagliati che vengono "assorbiti" da un agent (translate + scale + fade
   /* same transform list */
   transform: translate(-50%, -50%) translate(var(--x, 0px), var(--y, 0px)) var(--rot, none) scale(1);
 }
-/* Step 4: i file volano via verso destra + shrinkano */
+/* Step 4: los archivos vuelan hacia la derecha + se achican */
 section[data-active="true"][data-current-step="4"] .file-tile.reveal.is-on {
   opacity: 0;
   transform:
@@ -430,29 +430,29 @@ section[data-active="true"][data-current-step="4"] .file-tile.reveal.is-on {
 }
 ```
 
-**Gotcha CRITICO — normalizzare la transform function list.** Tutti i 4 stati (`.file-tile`, `.reveal`, `.reveal.is-on`, step-4) DEVONO avere la stessa lista di funzioni `translate(...) translate(...) <rotate> scale(...)` in stesso ordine. Se uno solo ha 3 funzioni e gli altri 4, il browser fa matrix decomposition al primo paint, fallisce, e i file non si vedono o sfarfallano.
+**Cuidado CRÍTICO — normalizar la lista de funciones del transform.** Los 4 estados (`.file-tile`, `.reveal`, `.reveal.is-on`, step-4) TIENEN que tener la misma lista de funciones `translate(...) translate(...) <rotate> scale(...)` en el mismo orden. Si uno solo tiene 3 funciones y los demás 4, el navegador hace matrix decomposition en el primer paint, falla, y los archivos no se ven o parpadean.
 
 ---
 
-## Critical gotchas (cross-cutting)
+## Cuidados críticos (transversales)
 
-**SVG `marker-end` visibile a path nascosto.**
-Stroke-dashoffset nasconde il tratto ma il marker-end resta visibile al punto geometrico finale. Sempre opacity 0 → 1 in transizione sull'elemento path.
+**`marker-end` de SVG visible aunque el path esté oculto.**
+`stroke-dashoffset` oculta el trazo pero el `marker-end` queda visible en el punto geométrico final. Siempre poner opacity 0 → 1 en transición sobre el elemento path.
 
-**Animation delays su loop infinite — usa `backwards`.**
-Senza `animation-fill-mode: backwards`, l'elemento è visible-static durante il delay perché la keyframe non è ancora partita. `backwards` applica il keyframe `0%` (tipicamente opacity 0) durante il delay.
+**Delays de animación en loops infinitos — usar `backwards`.**
+Sin `animation-fill-mode: backwards`, el elemento queda visible-estático durante el delay porque el keyframe todavía no arrancó. `backwards` aplica el keyframe `0%` (típicamente opacity 0) durante el delay.
 
 **Specificity wars con `.reveal.is-on { transform: none }`.**
-Questa regola del template OVERRIDA i transform di centramento (`translate(-50%, -50%)`, `translateX(-50%)`). Per preservarli usa specificity alzata:
+Esta regla del template PISA los transforms de centrado (`translate(-50%, -50%)`, `translateX(-50%)`). Para preservarlos usá especificidad más alta:
 ```css
 .my-centered.reveal.is-on { transform: translate(-50%, -50%); }
 ```
 
-**Transform function list mismatch su matrix decomposition.**
-Se gli stati di transizione hanno numero diverso di transform functions, il browser tenta matrix decomposition e spesso fallisce. Normalizza la lista: stesse funzioni stesso ordine in tutti gli stati.
+**Transform function list distinta entre estados → falla la matrix decomposition.**
+Si los estados de la transición tienen distinta cantidad de transform functions, el navegador intenta hacer matrix decomposition y suele fallar. Normalizá la lista: mismas funciones, mismo orden, en todos los estados.
 
-**Sed cascade in renumerazione slide.**
-NON usare `sed -e 's/19/18/' -e 's/18/17/' ...` per renumerare slide N → N-1. Ogni pass demota anche il numero appena rimpiazzato. Usa Python con counter sequenziale:
+**Cascada de sed en la renumeración de slides.**
+NO uses `sed -e 's/19/18/' -e 's/18/17/' ...` para renumerar slides N → N-1. Cada pasada también degrada el número recién reemplazado. Usá Python con un counter secuencial:
 ```python
 import re
 counter = [0]
@@ -461,23 +461,24 @@ def replace(_):
     return f'<span class="num">{counter[0]:02d}</span>'
 re.sub(r'<span class="num">\d+</span>', replace, content)
 ```
+(En la práctica, esto ya lo resuelve `scripts/renumber.mjs` — ver `reference/add.md`.)
 
-**Transform sull'SVG da `.reveal`.**
-Il default `.reveal { transform: translateY(16px); }` shifta tutto l'SVG path 16px in basso. Su qualsiasi elemento SVG con `.reveal`, override: `transform: none !important;`.
+**Transform en el SVG por culpa de `.reveal`.**
+El default `.reveal { transform: translateY(16px); }` desplaza todo el SVG path 16px hacia abajo. En cualquier elemento SVG con `.reveal`, hacé override: `transform: none !important;`.
 
-**Lucide `createIcons()` non rilancia su elementi nuovi.**
-`lucide.createIcons()` è chiamato una volta a load. Se aggiungi un `<i data-lucide="X">` mid-document (es. dopo render iniziale, o copiando un componente da `components.md`), lucide non lo sostituisce automaticamente con SVG — l'icona resta invisibile.
+**`createIcons()` de Lucide no se relanza sobre elementos nuevos.**
+`lucide.createIcons()` se llama una sola vez al cargar. Si agregás un `<i data-lucide="X">` a mitad de documento (ej. después del render inicial, o copiando un componente de `components.md`), Lucide no lo reemplaza automáticamente por SVG — el ícono queda invisible.
 
-Workaround consigliato: usa **SVG inline** invece di lucide per icone "fissate" nel deck (logo brand, social icons, decorazioni). Lucide va bene per icon-set decisi al momento dell'authoring iniziale; per qualunque cosa aggiunta dopo, inline.
+Workaround recomendado: usá **SVG inline** en vez de Lucide para íconos "fijos" en el deck (logo de marca, íconos sociales, decoraciones). Lucide está bien para un icon-set decidido en el momento del authoring inicial; para cualquier cosa agregada después, inline.
 
 ```html
-<!-- ❌ rischio non-render se aggiunto dopo load -->
+<!-- ❌ riesgo de no renderizarse si se agrega después del load -->
 <i data-lucide="linkedin"></i>
 
-<!-- ✅ inline, sempre visibile -->
+<!-- ✅ inline, siempre visible -->
 <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
   <path d="..."/>
 </svg>
 ```
 
-Oppure, se serve davvero lucide post-load, rilancia manualmente: `lucide.createIcons();` dopo l'inserimento.
+O, si de verdad hace falta Lucide después del load, relanzalo a mano: `lucide.createIcons();` después de insertar el elemento.

@@ -49,7 +49,7 @@ Este archivo es la fuente de verdad de la identidad visual de un deck. Vive en e
 }
 ```
 
-Todos los campos son opcionales — si falta alguno, se usa el default de `template.html` (la paleta neutra azul/violeta original). No hace falta rellenar el esquema completo si el usuario solo da un color de marca.
+Todos los campos son opcionales — si falta alguno, se usa el default del **style pack elegido en `init`** (ver `styles/index.md`), no un default propio de `template.html`. `design-tokens.json` existe para los colores/tipografía de marca del usuario; todo lo que no cubre (composición, radios, spacing salvo que se pise explícitamente) lo aporta el pack. No hace falta rellenar el esquema completo si el usuario solo da un color de marca.
 
 ## Mapeo a CSS custom properties
 
@@ -69,10 +69,14 @@ Todos los campos son opcionales — si falta alguno, se usa el default de `templ
 
 ## Aplicar el design system a un deck nuevo
 
+El orden importa: primero el pack, después los tokens de marca por encima.
+
 1. Copiar `template.html` al proyecto.
-2. Sustituir los valores en `:root` por los del `design-tokens.json` del proyecto (solo los campos presentes; el resto queda en su default).
-3. **Si `typography.headingFont` o `typography.bodyFont` cambian respecto al default** (Newsreader/IBM Plex Sans): actualizar también el `<link href="https://fonts.googleapis.com/...">` en `<head>` con `typography.googleFontsUrl` (o el link correspondiente a la fuente elegida) — si no, la fuente no carga y cae al fallback del sistema. Evitar por default fuentes sobreusadas en UI generada por IA (Inter, Roboto, Fraunces, Geist, Plus Jakarta Sans, Space Grotesk) salvo que el usuario las pida explícitamente.
-4. Todo lo demás del CSS (componentes de `components.md`, animaciones de `animations.md`) es paramétrico sobre estas variables — no necesita tocarse.
+2. Aplicar el style pack elegido en `init` con `node scripts/apply-style-pack.mjs styles/<pack>.md deck.html` (con `--font=<id>` si se eligió una alternativa tipográfica). Esto fusiona los tokens del pack sin tocar los estructurales (`--cs-pad-*`, `--cs-radius-*`, sombras, easing) — ver la nota de `styles/index.md`.
+3. Si el proyecto tiene `design-tokens.json` propio (marca del usuario), sustituir en `:root` solo los campos presentes ahí por encima de lo que dejó el pack — normalmente `colors.*` y `gradient.*`; rara vez `radius`/`spacing`, que el pack ya calibró.
+4. **Si `typography.headingFont` o `typography.bodyFont` en `design-tokens.json` difieren de los del pack**: actualizar también el `<link href="https://fonts.googleapis.com/...">` en `<head>` con `typography.googleFontsUrl` (o el link correspondiente a la fuente elegida) — si no, la fuente no carga y cae al fallback del sistema. Evitar por default fuentes sobreusadas en UI generada por IA (Inter, Roboto, Fraunces, Newsreader, IBM Plex, Geist, Plus Jakarta Sans, Space Grotesk, DM Sans, Instrument Sans) salvo que el usuario las pida explícitamente.
+5. Correr `node scripts/check-style-pack.mjs deck.html` para validar el resultado final (pack + tokens de marca combinados) contra contraste WCAG y clichés de IA — no alcanza con haber validado el pack solo.
+6. Todo lo demás del CSS (componentes de `components.md`, animaciones de `animations.md`) es paramétrico sobre estas variables — no necesita tocarse.
 
 ## Colores derivados cuando el usuario da poco input
 
