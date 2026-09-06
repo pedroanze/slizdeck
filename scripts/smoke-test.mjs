@@ -17,16 +17,19 @@
  *   node scripts/smoke-test.mjs --pack=terminal
  *   node scripts/smoke-test.mjs --no-render  # salta Chrome, solo checks estaticos
  *
- * Requiere Google Chrome instalado (macOS: /Applications/Google Chrome.app).
+ * Requiere Google Chrome/Chromium instalado (salvo con --no-render). Se
+ * detecta automáticamente (macOS, Linux, Windows) vía
+ * scripts/lib/find-chrome.mjs; si no está en una ruta típica, setear
+ * CHROME_PATH con la ruta completa al ejecutable.
  */
 
 import { readFileSync, writeFileSync, mkdirSync, rmSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import path from 'node:path';
+import { findChrome } from './lib/find-chrome.mjs';
 
 const ROOT = path.resolve(new URL('.', import.meta.url).pathname, '..');
 const OUT_DIR = path.join(ROOT, '.smoke-test-out');
-const CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 
 const args = process.argv.slice(2);
 const onlyPack = args.find((a) => a.startsWith('--pack='))?.slice('--pack='.length);
@@ -58,10 +61,16 @@ function fontFamiliesInDeck(html) {
   return { sans, heading, mono };
 }
 
+let _chrome;
+function chromePath() {
+  if (!_chrome) _chrome = findChrome();
+  return _chrome;
+}
+
 async function renderAndCheck(file) {
   const png = file.replace(/\.html$/, '.png');
   try {
-    execFileSync(CHROME, [
+    execFileSync(chromePath(), [
       '--headless', '--disable-gpu', '--force-device-scale-factor=1',
       '--window-size=1920,1080', `--screenshot=${png}`,
       '--virtual-time-budget=4000', `file://${file}`,

@@ -29,7 +29,7 @@ Directamente prohibido, sin importar qué tan "de diseño" parezca:
 - Gradientes decorativos en elementos que no sean el fondo de cover/transition o `--cs-grad-text` en una palabra de énfasis.
 - **Fuentes y paletas sobreusadas en UI generada por IA**: ver la lista completa y las zonas atractoras en `reference/init.md` y `styles/index.md` (`check-style-pack.mjs` las detecta automáticamente). No hay un único default que evitarlas por sí solo — cada style pack ya está calibrado contra esta lista.
 
-Estas dos reglas están verificadas con la skill `impeccable` (`node ~/.claude/skills/impeccable/scripts/detect.mjs --json <archivo>`), que las marca automáticamente como `overused-font` y `ai-color-palette`. Correr el detector sobre un deck terminado es una buena forma de auditar esto sin depender solo del ojo.
+`check-style-pack.mjs` (bundleado con slizdeck, siempre disponible) ya detecta estas dos reglas automáticamente. Si además está instalada la skill externa **opcional** `impeccable` (`https://github.com/pbakaus/impeccable`), su detector da una segunda opinión más granular (`node ~/.claude/skills/impeccable/scripts/detect.mjs --json <archivo>`, marca los hallazgos como `overused-font` y `ai-color-palette`) — pero no es necesaria para que esta validación funcione; si no está instalada, `check-style-pack.mjs` solo ya alcanza.
 
 ## Layout: variar, no repetir la misma composición
 

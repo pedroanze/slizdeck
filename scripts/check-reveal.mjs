@@ -27,7 +27,10 @@
  *
  *   node scripts/check-reveal.mjs deck.html
  *
- * Requiere Google Chrome instalado (macOS: /Applications/Google Chrome.app).
+ * Requiere Google Chrome/Chromium instalado. Se detecta automáticamente
+ * (macOS, Linux, Windows) vía scripts/lib/find-chrome.mjs; si no está en una
+ * ruta típica, setear la variable de entorno CHROME_PATH con la ruta
+ * completa al ejecutable.
  *
  * El harness espera `DOMContentLoaded`, no `load`: si un deck carga un
  * <script src> externo bloqueante (ej. Lucide sin comentar, en vez del
@@ -35,14 +38,26 @@
  * no disparar nunca y el chequeo cuelga sin necesidad — la cascada CSS
  * que este script valida no depende de que ese script externo llegue a
  * ejecutarse.
+ *
+ * Reintenta hasta 2 veces si Chrome headless no llega a terminar (arranque
+ * en frio, contencion de recursos — confirmado no relacionado con el deck
+ * evaluado). NO reintenta si el harness si termino y encontro violaciones:
+ * eso es un resultado real y deterministico, nunca se oculta.
  */
 
 import { readFileSync, writeFileSync, rmSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import path from 'node:path';
 import os from 'node:os';
+import { findChrome } from './lib/find-chrome.mjs';
 
-const CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+let CHROME;
+try {
+  CHROME = findChrome();
+} catch (err) {
+  console.error(err.message);
+  process.exit(1);
+}
 
 const file = process.argv[2];
 if (!file) {
@@ -85,20 +100,26 @@ const withHarness = html.replace('</body>', harness + '</body>');
 const tmp = path.join(os.tmpdir(), `slizdeck-check-reveal-${Date.now()}.html`);
 writeFileSync(tmp, withHarness);
 
-let dom;
+const MAX_ATTEMPTS = 2;
+let m = null;
 try {
-  dom = execFileSync(
-    CHROME,
-    ['--headless', '--disable-gpu', '--dump-dom', '--virtual-time-budget=12000', `file://${tmp}`],
-    { stdio: 'pipe', timeout: 30000 },
-  ).toString();
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS && !m; attempt++) {
+    const dom = execFileSync(
+      CHROME,
+      ['--headless', '--disable-gpu', '--dump-dom', '--virtual-time-budget=12000', `file://${tmp}`],
+      { stdio: 'pipe', timeout: 30000 },
+    ).toString();
+    m = /<title>DONE::(.*?)<\/title>/s.exec(dom);
+    if (!m && attempt < MAX_ATTEMPTS) {
+      console.error(`(intento ${attempt}/${MAX_ATTEMPTS}: Chrome headless no termino a tiempo, reintentando...)`);
+    }
+  }
 } finally {
   rmSync(tmp, { force: true });
 }
 
-const m = /<title>DONE::(.*?)<\/title>/s.exec(dom);
 if (!m) {
-  console.error('No se pudo leer el resultado — el harness no llego a terminar. Chrome headless a veces falla en frio (arranque lento, contencion de recursos); volver a correr el comando suele resolverlo. Si persiste, revisar que Chrome headless funcione en esta maquina.');
+  console.error(`No se pudo leer el resultado tras ${MAX_ATTEMPTS} intentos — Chrome headless no termino. No es un problema del deck evaluado: revisar que Chrome headless funcione en esta maquina.`);
   process.exit(1);
 }
 

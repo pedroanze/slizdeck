@@ -11,10 +11,12 @@ Impresión nativa del navegador: `Cmd/Ctrl+P` → guardar como PDF. El template 
 Para generarlo sin abrir el navegador (útil para verificar un cambio):
 
 ```bash
-"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" \
+"$(node scripts/lib/find-chrome.mjs)" \
   --headless --disable-gpu --no-pdf-header-footer \
   --print-to-pdf="deck.pdf" --virtual-time-budget=5000 "file://$PWD/deck.html"
 ```
+
+`find-chrome.mjs` detecta Chrome/Chromium automáticamente en macOS, Linux y Windows; si no está en una ruta típica, setear `CHROME_PATH` con la ruta completa al ejecutable.
 
 ## PPTX editable
 
@@ -32,7 +34,7 @@ Advertir al usuario de las degradaciones inherentes al formato, que no son fallo
 - **Gradientes aplanados**: los fondos de cover/cierre se exportan en el color primario sólido.
 - **Imágenes como placeholder**: ninguna imagen real se incrusta (coherente con "cero imágenes, todo editable"); sale una forma con el alt como etiqueta.
 
-Y una limitación real, no una degradación aceptada: `export-pptx.mjs` solo reconoce un set cerrado de clases (ver el comentario de cabecera del script). Si el wireframe usa `.barras` o `.prop` de `reference/media-and-data.md`, ese contenido **no aparece en el `.pptx`**, sin aviso. Si el usuario va a necesitar el export a PPTX, evitar esos dos patrones o avisar explícitamente del hueco antes de generar.
+Una limitación real que sigue existiendo, no una degradación aceptada: `export-pptx.mjs` reconoce un set cerrado de clases (ver el comentario de cabecera del script y `reference/media-and-data.md` para lo que sí cubre). Si el wireframe usa un patrón de layout nuevo de `reference/components.md` sin extender antes el script, ese contenido **no aparece en el `.pptx`**, sin aviso. Si el usuario va a necesitar el export a PPTX, avisar antes de generar si el deck usa algo fuera de lo documentado como soportado.
 
 Si el usuario necesita fidelidad visual exacta, el PDF es el formato correcto; el PPTX es para cuando necesita **editar**.
 

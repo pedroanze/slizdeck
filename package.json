@@ -5,6 +5,22 @@
   "license": "MIT",
   "private": true,
   "type": "module",
+  "homepage": "https://github.com/<tu-usuario>/slizdeck#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/<tu-usuario>/slizdeck.git"
+  },
+  "bugs": {
+    "url": "https://github.com/<tu-usuario>/slizdeck/issues"
+  },
+  "keywords": [
+    "agent-skill",
+    "claude-code",
+    "slides",
+    "pitch-deck",
+    "html-presentation"
+  ],
+  "author": "@pedroanze",
   "scripts": {
     "export:pptx": "node scripts/export-pptx.mjs"
   },

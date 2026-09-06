@@ -1,5 +1,7 @@
 # Slizdeck
 
+[![CI](https://github.com/<tu-usuario>/slizdeck/actions/workflows/ci.yml/badge.svg)](https://github.com/<tu-usuario>/slizdeck/actions/workflows/ci.yml)
+
 Genera decks de slides **HTML animados** a partir de tu propio design system, con el contenido investigado en internet. Pensado para pitch decks de startup: minimalista, poco texto, mucha imagen y dato duro — también sirve para charlas, demos y recaps de evento.
 
 Es una [Agent Skill](https://agentskills.io) — funciona en Claude Code, Gemini CLI, Codex, OpenCode y cualquier cliente que soporte el estándar abierto.
@@ -74,6 +76,8 @@ npm install
 | `reference/fix.md` | Fase fix — corregir o mejorar una slide puntual sin romper el resto. |
 | `reference/hooks.md` | Hook opcional de Claude Code: audita un deck automáticamente después de cada edición. |
 | `CHANGELOG.md` | Historial de versiones del engine (`template.html`) — lo que lee `scripts/doctor.mjs`. |
+| `CONTRIBUTING.md` | Cómo agregar un style pack/patrón nuevo, correr los tests locales, convención de commits. |
+| `.github/workflows/ci.yml` | CI: corre `smoke-test.mjs`, `audit.mjs` y `check-reveal.mjs` en cada push/PR sobre un deck de humo generado en el momento. |
 | `reference/design-tokens-schema.md` | Esquema del design system y su mapeo a variables CSS. |
 | `reference/design-guidelines.md` | Principios visuales y lista de anti-clichés. |
 | `reference/deck-schema.md` | Formato del wireframe, arcos narrativos, niveles de animación. |
@@ -115,11 +119,13 @@ node scripts/check-style-pack.mjs styles/terminal.md
 
 Comprueba los contrastes WCAG, que primario y acento sean distinguibles entre sí, y avisa si la paleta cae en una zona atractora conocida o si la tipografía está en la lista de *training-data defaults*. Sirve igual para un pack propio armado con los colores de tu marca, o para un deck ya generado (`node scripts/audit.mjs deck.html` lo incluye automáticamente).
 
-Las reglas de composición están en `reference/design-guidelines.md` y son verificables mecánicamente con el detector de [impeccable](https://github.com/pbakaus/impeccable):
+Las reglas de composición están en `reference/design-guidelines.md`. Son verificables mecánicamente con `scripts/check-style-pack.mjs` de arriba; si además tenés instalada la skill externa **opcional** [impeccable](https://github.com/pbakaus/impeccable), su detector da una segunda opinión más granular:
 
 ```bash
 node ~/.claude/skills/impeccable/scripts/detect.mjs --json tu-deck.html
 ```
+
+No es necesaria para usar slizdeck — es un complemento si ya la tenés instalada.
 
 ## Verificar cambios visuales
 
@@ -127,7 +133,7 @@ Sin abrir el navegador a mano:
 
 ```bash
 # Exportar a PDF
-"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" \
+"$(node scripts/lib/find-chrome.mjs)" \
   --headless --disable-gpu --no-pdf-header-footer \
   --print-to-pdf="deck.pdf" --virtual-time-budget=5000 \
   "file://$PWD/tu-deck.html"
@@ -135,6 +141,15 @@ Sin abrir el navegador a mano:
 # Ver cada página como imagen
 pdftoppm -png -r 72 deck.pdf pagina
 ```
+
+## Limitaciones conocidas
+
+- **PPTX: set cerrado de patrones reconocidos.** `scripts/export-pptx.mjs` reconoce todos los patrones documentados en `reference/media-and-data.md` (imagen a sangre/split, fila de métricas, barras comparativas, progreso/proporción) y los de `reference/components.md` que ya tiene soporte explícito. Un patrón de layout nuevo que no se haya sumado al script **no aparece en el `.pptx` generado, sin aviso** — avisar antes de exportar si el deck usa algo fuera de lo ya soportado.
+- **PPTX: degradaciones inherentes al formato** (no son fallos del export, son el trade-off de "texto y formas nativas, cero imágenes incrustadas"): sin animaciones (se exporta el estado final), fuentes sustituidas por equivalentes seguros de Office, gradientes de cover/cierre aplanados a color sólido, imágenes reemplazadas por una forma con el `alt` como etiqueta.
+- **Speaker notes van a un `.md` aparte, no al campo nativo de notas de PowerPoint.** `[nombre-deck]-notes.md` con el discurso completo por slide — es una decisión de diseño (el PPTX ya no lleva ninguna otra lógica de contenido embebida), no algo pendiente de conectar.
+- **`check-reveal.mjs` puede fallar de forma intermitente** por arranques en frío de Chrome headless (contención de recursos, no relacionado con el deck evaluado) — reintenta automáticamente hasta 2 veces antes de reportarlo. Si sigue fallando, probablemente hay otro proceso pesado compitiendo por recursos en esa máquina (ej. un navegador real con muchas pestañas abiertas), no un bug del deck.
+- **`examples/demo-deck.html` no pasa `check-style-pack.mjs`.** Es el ejemplo heredado del fork original (ver `NOTICE.md`), preservado sin modificar — no usa el sistema de style packs de slizdeck, así que su paleta original no pasa la validación de contraste que sí aplica a un deck generado con esta skill.
+- **Documentación 100% en español**, por decisión de alcance (audiencia hispanohablante), no por traducción pendiente.
 
 ## Créditos y licencia
 

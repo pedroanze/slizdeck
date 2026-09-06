@@ -73,6 +73,7 @@ function readTokens(html) {
     secondary: hex('cs-secondary', '#1E3A5F'),
     accent: hex('cs-accent', '#AD5407'),
     cream: hex('cs-cream', '#F7F6F2'),
+    cream2: hex('cs-cream-2', '#EDECE6'),
     black: hex('cs-black', '#000000'),
     body: hex('cs-body', '#454545'),
     muted: hex('cs-muted', '#65696F'),
@@ -115,7 +116,7 @@ const hasAncestorClass = (el, cls) => {
 function extractSlide(section) {
   const isGrad = (section.getAttribute('class') || '').includes('grad');
   const centered = !!section.querySelector('.pad.center');
-  const out = { isGrad, centered, blocks: [], footer: '', cards: [], metrics: [] };
+  const out = { isGrad, centered, blocks: [], footer: '', cards: [], metrics: [], bars: [], props: [] };
 
   const push = (role, text, extra = {}) => {
     if (text) out.blocks.push({ role, text, ...extra });
@@ -186,6 +187,35 @@ function extractSlide(section) {
     const n = nEl ? (nEl.getAttribute('data-counter') ? counterText(nEl) : clean(nEl)) : '';
     const l = clean(m.querySelector('.l'));
     if (n || l) out.metrics.push({ n, l });
+  }
+
+  // Barras comparativas (patron .barra-fila dentro de .barras,
+  // media-and-data.md): una etiqueta de fila + N segmentos con su propio
+  // ancho porcentual (inline style="width:X%") y variante de color (a/b/c).
+  for (const fila of section.querySelectorAll('.barra-fila')) {
+    const etiqueta = clean(fila.querySelector('.etiqueta'));
+    const segs = [...fila.querySelectorAll('.barra .seg')].map((seg) => {
+      const style = seg.getAttribute('style') || '';
+      const widthMatch = /width:\s*([\d.]+)%/.exec(style);
+      const cls = (seg.getAttribute('class') || '').split(/\s+/);
+      const variant = ['a', 'b', 'c'].find((v) => cls.includes(v)) || 'a';
+      return { text: clean(seg), pct: widthMatch ? parseFloat(widthMatch[1]) : 0, variant };
+    }).filter((s) => s.pct > 0);
+    if (segs.length) out.bars.push({ etiqueta, segs });
+  }
+
+  // Progreso/proporcion (patron .prop, media-and-data.md): .lbl trae dos
+  // spans (etiqueta izquierda, valor derecha) y .fill guarda la proporcion
+  // en la custom property --v (0..1) que el CSS lee para el scaleX.
+  for (const prop of section.querySelectorAll('.prop')) {
+    const spans = [...prop.querySelectorAll('.lbl span')].map(clean);
+    const fill = prop.querySelector('.fill');
+    const style = fill ? (fill.getAttribute('style') || '') : '';
+    const vMatch = /--v:\s*([\d.]+)/.exec(style);
+    const ratio = vMatch ? Math.min(1, Math.max(0, parseFloat(vMatch[1]))) : 0;
+    if (spans.length || ratio) {
+      out.props.push({ label: spans[0] || '', value: spans[1] || '', ratio });
+    }
   }
 
   out.footer = clean(section.querySelector('.footer'));
@@ -338,6 +368,72 @@ function renderSlide(pptx, data, t) {
       }
     });
     y += cardH + 34;
+  }
+
+  // Barras comparativas: una fila por comparacion, segmentos apilados
+  // horizontalmente proporcionales a su ancho original en %.
+  if (data.bars.length) {
+    const BAR_VARIANT_FILL = { a: t.primary, b: t.cream2, c: 'FFFFFF' };
+    const BAR_VARIANT_TEXT = { a: t.white, b: t.body, c: t.muted };
+    const barH = 44;
+    for (const fila of data.bars) {
+      if (fila.etiqueta) {
+        slide.addText(fila.etiqueta.toUpperCase(), {
+          x: px(t.padX), y: px(y), w: px(contentW), h: px(24),
+          fontSize: pt(24), bold: true, color: t.muted, fontFace: t.fontBody, charSpacing: 3,
+        });
+        y += 30;
+      }
+      let segX = t.padX;
+      for (const seg of fila.segs) {
+        const segW = (contentW * seg.pct) / 100;
+        slide.addShape(pptx.ShapeType.rect, {
+          x: px(segX), y: px(y), w: px(segW), h: px(barH),
+          fill: { color: BAR_VARIANT_FILL[seg.variant] },
+          line: seg.variant === 'c' ? { color: 'E6E6E6', width: 1 } : { type: 'none' },
+        });
+        if (seg.text) {
+          slide.addText(seg.text, {
+            x: px(segX + 10), y: px(y), w: px(Math.max(segW - 20, 0)), h: px(barH),
+            fontSize: pt(22), bold: true, color: BAR_VARIANT_TEXT[seg.variant],
+            fontFace: t.fontBody, valign: 'middle', fit: 'shrink',
+          });
+        }
+        segX += segW;
+      }
+      y += barH + 30;
+    }
+    y += 10;
+  }
+
+  // Progreso/proporcion: etiqueta + valor arriba, track + fill escalado abajo.
+  if (data.props.length) {
+    const trackH = 10;
+    for (const prop of data.props) {
+      if (prop.label || prop.value) {
+        slide.addText(prop.label, {
+          x: px(t.padX), y: px(y), w: px(contentW / 2), h: px(30),
+          fontSize: pt(26), color: t.body, fontFace: t.fontBody,
+        });
+        slide.addText(prop.value, {
+          x: px(t.padX + contentW / 2), y: px(y), w: px(contentW / 2), h: px(30),
+          fontSize: pt(26), color: t.body, fontFace: t.fontBody, align: 'right',
+        });
+        y += 36;
+      }
+      slide.addShape(pptx.ShapeType.roundRect, {
+        x: px(t.padX), y: px(y), w: px(contentW), h: px(trackH),
+        fill: { color: t.cream2 }, line: { type: 'none' }, rectRadius: 0.5,
+      });
+      if (prop.ratio > 0) {
+        slide.addShape(pptx.ShapeType.roundRect, {
+          x: px(t.padX), y: px(y), w: px(contentW * prop.ratio), h: px(trackH),
+          fill: { color: t.primary }, line: { type: 'none' }, rectRadius: 0.5,
+        });
+      }
+      y += trackH + 26;
+    }
+    y += 10;
   }
 
   if (data.footer) {

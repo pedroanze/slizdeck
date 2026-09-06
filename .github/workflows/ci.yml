@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Instalar Chrome
+        id: setup-chrome
+        uses: browser-actions/setup-chrome@v2
+        with:
+          chrome-version: stable
+
+      - name: Regresión de style packs (smoke-test)
+        env:
+          CHROME_PATH: ${{ steps.setup-chrome.outputs.chrome-path }}
+        run: node scripts/smoke-test.mjs
+
+      - name: Generar deck de humo para audit/check-reveal
+        run: |
+          cp template.html /tmp/ci-deck-raw.html
+          node scripts/apply-style-pack.mjs styles/paper-white.md /tmp/ci-deck-raw.html /tmp/ci-deck.html
+          node -e "
+            const fs = require('node:fs');
+            const p = '/tmp/ci-deck.html';
+            const html = fs.readFileSync(p, 'utf8').replace('Claude Slides · [DECK NAME]', 'CI Smoke Deck');
+            fs.writeFileSync(p, html);
+          "
+
+      - name: audit.mjs sobre el deck de humo
+        run: node scripts/audit.mjs /tmp/ci-deck.html
+
+      - name: check-reveal.mjs sobre el deck de humo
+        env:
+          CHROME_PATH: ${{ steps.setup-chrome.outputs.chrome-path }}
+        run: node scripts/check-reveal.mjs /tmp/ci-deck.html
+
+      - name: audit.mjs sobre el ejemplo heredado (no bloqueante)
+        if: always()
+        run: |
+          node scripts/audit.mjs examples/demo-deck.html || \
+            echo "::warning::examples/demo-deck.html falla contraste por diseño — es el ejemplo heredado del fork original, ver NOTICE.md. No bloquea el CI."
