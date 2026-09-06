@@ -1,7 +1,3 @@
-# Artefactos de verificación visual (regenerables con Chrome headless)
-demo/pg-*.png
-demo/slide-*.png
-
 # Dependencias
 node_modules/
 
@@ -10,9 +6,3 @@ node_modules/
 
 # macOS
 .DS_Store
-demo/t-*.png
-charla/s-*.png
-charla/*-crop.png
-charla/*-zoom.png
-charla/chk.png
-charla/grain.html

@@ -90,7 +90,6 @@ npm install
 | `scripts/renumber.mjs` | Recalcula `data-label` y `<span class="num">` de todas las slides en orden de documento — usar después de insertar una slide en medio del deck. |
 | `scripts/smoke-test.mjs` | Test de regresión: ejercita cada pack con cada alternativa tipográfica. |
 | `examples/demo-deck.html` | Deck de ejemplo heredado del fork original, sin modificar (ver `NOTICE.md`). |
-| `demo/` | Deck de ejemplo propio (`pitch-demo.html`) con su PDF y PPTX exportados. |
 
 ## Diseño
 
