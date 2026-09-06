@@ -30,8 +30,9 @@ Decir en una frase qué está fallando antes de reescribir — igual que un code
 
 ```bash
 node scripts/audit.mjs deck.html
+node scripts/check-reveal.mjs deck.html
 ```
 
-Si el fix tocó varias slides seguidas, revisar también que no haya quedado el mismo patrón de layout repetido entre ellas.
+Si el fix tocó varias slides seguidas, revisar también que no haya quedado el mismo patrón de layout repetido entre ellas. Correr `check-reveal.mjs` es barato y vale la pena sobre todo si el fix agregó o copió un snippet animado nuevo (`reference/animations.md` trae varios con overrides de `.reveal` a mano, donde es fácil dejar la cascada mal).
 
-**Al terminar esta fase:** la slide señalada quedó corregida, el resto del deck no cambió, y `audit.mjs` sigue en verde.
+**Al terminar esta fase:** la slide señalada quedó corregida, el resto del deck no cambió, y `audit.mjs`/`check-reveal.mjs` siguen en verde.

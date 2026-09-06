@@ -32,8 +32,9 @@ Recalcula `data-label="NN ..."` y `<span class="num">NN</span>` de todas las sli
 
 ```bash
 node scripts/audit.mjs deck.html
+node scripts/check-reveal.mjs deck.html
 ```
 
 Debe quedar en verde. Si la slide nueva no tiene elemento visual, repite el patrón de una vecina, o el nivel de animación no calza con el resto, corregirlo antes de cerrar esta fase.
 
-**Al terminar esta fase:** la(s) slide(s) nueva(s) existen, todo el deck quedó renumerado sin huecos ni duplicados, y `audit.mjs` pasa. Sigue `export` si hace falta regenerar PDF/PPTX con el contenido nuevo.
+**Al terminar esta fase:** la(s) slide(s) nueva(s) existen, todo el deck quedó renumerado sin huecos ni duplicados, y `audit.mjs`/`check-reveal.mjs` pasan. Sigue `export` si hace falta regenerar PDF/PPTX con el contenido nuevo.

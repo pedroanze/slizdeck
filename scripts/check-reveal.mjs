@@ -28,6 +28,13 @@
  *   node scripts/check-reveal.mjs deck.html
  *
  * Requiere Google Chrome instalado (macOS: /Applications/Google Chrome.app).
+ *
+ * El harness espera `DOMContentLoaded`, no `load`: si un deck carga un
+ * <script src> externo bloqueante (ej. Lucide sin comentar, en vez del
+ * default de template.html) y la red esta caida o lenta, `load` puede
+ * no disparar nunca y el chequeo cuelga sin necesidad — la cascada CSS
+ * que este script valida no depende de que ese script externo llegue a
+ * ejecutarse.
  */
 
 import { readFileSync, writeFileSync, rmSync } from 'node:fs';
@@ -48,7 +55,7 @@ const html = readFileSync(file, 'utf8');
 const harness = `
 <style>*, *::before, *::after { transition: none !important; }</style>
 <script>
-window.addEventListener('load', () => {
+window.addEventListener('DOMContentLoaded', () => {
   requestAnimationFrame(() => requestAnimationFrame(() => {
     document.querySelectorAll('.reveal').forEach((el) => el.classList.add('is-on'));
     const violations = [];
@@ -82,7 +89,7 @@ let dom;
 try {
   dom = execFileSync(
     CHROME,
-    ['--headless', '--disable-gpu', '--dump-dom', '--virtual-time-budget=8000', `file://${tmp}`],
+    ['--headless', '--disable-gpu', '--dump-dom', '--virtual-time-budget=12000', `file://${tmp}`],
     { stdio: 'pipe', timeout: 30000 },
   ).toString();
 } finally {
@@ -91,7 +98,7 @@ try {
 
 const m = /<title>DONE::(.*?)<\/title>/s.exec(dom);
 if (!m) {
-  console.error('No se pudo leer el resultado — el harness no llego a terminar. ¿Chrome headless funciona en esta maquina?');
+  console.error('No se pudo leer el resultado — el harness no llego a terminar. Chrome headless a veces falla en frio (arranque lento, contencion de recursos); volver a correr el comando suele resolverlo. Si persiste, revisar que Chrome headless funcione en esta maquina.');
   process.exit(1);
 }
 

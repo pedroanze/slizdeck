@@ -464,8 +464,6 @@
     transition-delay: var(--d, 0ms);
     will-change: opacity, transform;
   }
-  .reveal.is-on { opacity: 1; transform: none; filter: none; }
-
   /* ── Variantes de entrada ──────────────────────────────────────────
      Se combinan con .reveal: class="reveal r-rise". Un deck que revela
      todo con el mismo fade-up se siente mecanico; variar la entrada
@@ -489,6 +487,13 @@
   .reveal.r-wipe.is-on { clip-path: inset(0 0 0 0); }
   .reveal.r-mask  { opacity: 1; clip-path: inset(0 0 110% 0); transform: none; }
   .reveal.r-mask.is-on { clip-path: inset(-20% 0 -20% 0); }
+
+  /* .reveal.is-on tiene que ir DESPUES de todas las variantes r-* de
+     arriba: misma especificidad, así que gana la ultima declarada. Antes
+     estaba primero y el transform/filter de la animacion (r-left, r-rise,
+     r-scale, r-blur) se quedaba aplicado para siempre en la vista en vivo
+     del navegador. */
+  .reveal.is-on { opacity: 1; transform: none; filter: none; }
 
   /* Escalonado automatico: en un contenedor con .stagger, cada hijo
      .reveal del mismo paso entra 90ms despues del anterior, sin tener
