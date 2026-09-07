@@ -4,6 +4,13 @@ Historial de cambios al engine (`template.html`) y a los scripts de la skill. Ca
 
 Una sola versión gobierna todo el proyecto y vive en cuatro sitios que deben coincidir siempre: `package.json`, el `metadata.version` de `SKILL.md`, el marcador `slizdeck-engine-version` de `template.html`, y la primera entrada de este archivo. `node scripts/check-versions.mjs` lo verifica y falla si alguno se desalinea.
 
+## 1.4.2
+
+CI se rompió al publicar 1.4.1 (push a `main`): https://github.com/pedroanze/slizdeck/actions/runs/34069861451. Dos causas, ambas reproducidas localmente antes de corregir.
+
+- **Fix: `npm test` nunca funcionó bajo Node 20 (el fijado en CI), solo bajo Node 22+.** El script era `node --test "tests/**/*.test.js"` — la cadena queda entre comillas, así que ninguna shell la expande, y Node tiene que resolver el glob `**` él mismo. Ese soporte no existe en Node 18/20 (reproducido localmente con Node 18: `Could not find '.../tests/**/*.test.js'`, el mismo error exacto de CI), solo llegó en una versión más nueva de Node — enmascarado en desarrollo porque este entorno corre Node 22. Cambiado a `node --test tests/*.test.js` (sin comillas): la propia shell expande el glob antes de que Node lo vea, portable a cualquier versión que soporte `node --test`.
+- **Fix: `export-pptx.mjs` habría roto el paso de CI que exporta `examples/pitch-showcase.html`.** El fix de 1.4.1 que hace salir con exit 1 ante contenido perdido (ver abajo) era correcto, pero `pitch-showcase.html` — el propio ejemplo de referencia del sistema de packs — tenía dos patrones sin soporte en el export: `.glosa` (la frase bajo la cifra grande de `.metrica`, nunca se extraía) y `.pipe-card`/`.pipe-eyebrow`/`.pipe-name` (patrón `flow-pipeline` de `components.md`, sin ningún soporte). Añadido soporte a los dos — `.pipe-card` entra en el mismo grid que `.pq-card`/`.warn-card` (se pierden las flechas entre pasos, que `findLostText` ya descarta por ser de 1-2 caracteres, no contenido real). `pitch-showcase.html` exporta ahora sin pérdidas, exit 0.
+
 ## 1.4.1
 
 Ronda de correcciones salida de tres pruebas end-to-end reales (ver `examples/test-01-astra-basico/`, `test-02-modelos-septiembre-2026/`, `test-03-tesis-frontera/`). Los tres decks se generaron sin tocar ni un archivo de la skill, precisamente para que estos hallazgos fueran del sistema y no del contenido.

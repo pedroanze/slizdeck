@@ -148,13 +148,17 @@ function extractSlide(section) {
   const counter = section.querySelector('[data-counter]');
   if (counter && !hasAncestorClass(counter, 'metricas')) push('stat', counterText(counter));
 
-  // Cita de fuente de una cifra (patron .metrica de media-and-data.md).
+  // Frase que interpreta la cifra grande (patron .metrica de
+  // media-and-data.md) y cita de fuente. Sin esto, .glosa se perdia del
+  // todo: el unico <p> suelto de mas abajo no la agarraba porque no es un
+  // <p>, es un <div>.
+  push('body', clean(section.querySelector('.metrica .glosa')));
   push('caption', clean(section.querySelector('.stat-source')));
 
   // Parrafos sueltos (ej. la mitad de texto de un patron .split) que no
   // esten ya cubiertos por el body de una .card/.pq-card/.warn-card.
   for (const p of section.querySelectorAll('p')) {
-    const enCard = ['card', 'pq-card', 'warn-card'].some((c) => hasAncestorClass(p, c));
+    const enCard = ['card', 'pq-card', 'warn-card', 'pipe-card'].some((c) => hasAncestorClass(p, c));
     if (!enCard) push('body', clean(p));
   }
 
@@ -176,13 +180,19 @@ function extractSlide(section) {
   // suelto (que si lo agarraba el fallback de "parrafos sueltos" de mas
   // abajo). `.pq-consequence` es el remate del patron ("→ De horas a
   // minutos"): perderlo es perder el punto de la card.
-  for (const card of section.querySelectorAll('.card, .pq-card, .warn-card')) {
+  // .pipe-card (flow-pipeline, Familia 5 de components.md) es una tercera
+  // variante: sin h3 ni <p>, solo eyebrow + nombre. Entra en el mismo grid
+  // de cards que pq-card/warn-card — se pierden las flechas entre pasos
+  // (".pipe-arrow", puro conector visual, no contenido: findLostText ya
+  // descarta texto de 1-2 caracteres), pero el contenido real de cada paso
+  // viaja completo.
+  for (const card of section.querySelectorAll('.card, .pq-card, .warn-card, .pipe-card')) {
     const consequence = clean(card.querySelector('.pq-consequence'));
     const body = clean(card.querySelector('p'));
     out.cards.push({
       num: clean(card.querySelector('.card-num, .warn-num')),
-      eyebrow: clean(card.querySelector('.card-eyebrow, .pq-eyebrow')),
-      title: clean(card.querySelector('h3')),
+      eyebrow: clean(card.querySelector('.card-eyebrow, .pq-eyebrow, .pipe-eyebrow')),
+      title: clean(card.querySelector('h3, .pipe-name')),
       body: [consequence, body].filter(Boolean).join('\n'),
     });
   }
