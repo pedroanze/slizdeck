@@ -49,7 +49,6 @@
 import { readFileSync, writeFileSync, rmSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import path from 'node:path';
-import os from 'node:os';
 import { findChrome } from './lib/find-chrome.mjs';
 
 let CHROME;
@@ -72,7 +71,12 @@ const harness = `
 <style>*, *::before, *::after { transition: none !important; }</style>
 <script>
 window.addEventListener('DOMContentLoaded', () => {
-  requestAnimationFrame(() => requestAnimationFrame(() => {
+  // Un solo rAF + setTimeout, no un rAF anidado en otro: en Chrome headless
+  // con --disable-gpu el segundo rAF de una cadena no llega a dispararse la
+  // mayoria de las veces (medido: 9 de 10 corridas se cuelgan esperandolo,
+  // sin ningun error). El harness nunca llegaba a marcar .is-on, y el
+  // resultado dependia de la suerte de esa corrida en particular.
+  requestAnimationFrame(() => { setTimeout(() => {
     document.querySelectorAll('.reveal').forEach((el) => el.classList.add('is-on'));
     const violations = [];
     document.querySelectorAll('.reveal.is-on').forEach((el) => {
@@ -92,13 +96,16 @@ window.addEventListener('DOMContentLoaded', () => {
       }
     });
     document.title = 'DONE::' + JSON.stringify(violations);
-  }));
+  }, 0); });
 });
 </script>
 `;
 
 const withHarness = html.replace('</body>', harness + '</body>');
-const tmp = path.join(os.tmpdir(), `slizdeck-check-reveal-${Date.now()}.html`);
+// Al lado del deck real, no en os.tmpdir(): ver el comentario equivalente
+// en check-overflow.mjs — rutas relativas a assets locales se rompen si el
+// harness se copia a otra carpeta.
+const tmp = path.join(path.dirname(path.resolve(file)), `.slizdeck-check-reveal-${Date.now()}.html`);
 writeFileSync(tmp, withHarness);
 
 const MAX_ATTEMPTS = 2;

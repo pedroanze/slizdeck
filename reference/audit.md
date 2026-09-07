@@ -46,7 +46,9 @@ Un fallo (✗) hay que corregirlo antes de entregar. Un aviso (⚠) se reporta a
 node scripts/check-overflow.mjs deck.html
 ```
 
-Otro chequeo aparte en Chrome headless, en el mismo espíritu que `check-reveal.mjs`: detecta (1) contenido más ancho o alto que el canvas 1920×1080 del `<deck-stage>`, y (2) cualquier elemento con `white-space: nowrap` cuyo texto real sea más ancho que su caja (se trunca sin verse a simple vista en el HTML). Los `[data-counter]` se miden con su valor final, no el "0" inicial. Un fallo acá es **bloqueante** — texto truncado o que se sale del canvas nunca se lee, tanto en vivo como en el PDF exportado. No detecta superposición entre elementos (`no_overlapping_text`) — ver la nota en `README.md` → Limitaciones conocidas.
+Otro chequeo aparte en Chrome headless, en el mismo espíritu que `check-reveal.mjs`: detecta (1) contenido más ancho o alto que el canvas 1920×1080 del `<deck-stage>`, (2) cualquier elemento con `white-space: nowrap` cuyo texto real sea más ancho que su caja (se trunca sin verse a simple vista en el HTML), y (3) dos bloques de texto que se solapan más de un 25% del área del más chico, midiendo la caja real del texto vía `Range` (no la del elemento contenedor, que suele ser más grande que el texto y da falsos positivos). Los `[data-counter]` se miden con su valor final, no el "0" inicial. Un solape intencional (ej. un badge sobre una esquina) se marca con `data-overlap-ok` en el contenedor para excluirlo del chequeo. Un fallo acá es **bloqueante** — texto truncado, que se sale del canvas, o que se pisa con otro texto, nunca se lee, tanto en vivo como en el PDF exportado.
+
+**Nota sobre fuentes serif de descenso grande:** una serif display a `line-height` ajustado (ej. Young Serif en el pack `editorial`) puede sobresalir varias decenas de px de su caja de `Range` por las propias métricas de la fuente — un falso positivo de solape con separación real de más de 30px medida a ojo. Si `shoot.mjs` no muestra ningún pisado real, tratar el hallazgo como sospechoso antes de reescribir la slide.
 
 ## `check-contrast.mjs` — contraste real, no el de los tokens
 

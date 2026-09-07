@@ -1,6 +1,6 @@
 {
   "name": "slizdeck",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "Agent Skill que genera decks de slides HTML animados desde tu design system",
   "license": "MIT",
   "private": true,

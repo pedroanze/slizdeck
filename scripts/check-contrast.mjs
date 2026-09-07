@@ -32,7 +32,6 @@
 import { readFileSync, writeFileSync, rmSync, existsSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import path from 'node:path';
-import os from 'node:os';
 import { findChrome } from './lib/find-chrome.mjs';
 
 const file = process.argv[2];
@@ -59,7 +58,14 @@ const harness = `
 <style>*, *::before, *::after { transition: none !important; animation: none !important; }</style>
 <script>
 window.addEventListener('DOMContentLoaded', () => {
-  requestAnimationFrame(() => requestAnimationFrame(() => {
+  // Un solo rAF + un macrotask (setTimeout), NO un rAF anidado dentro de
+  // otro: en Chrome headless con --disable-gpu (sin compositor real) un
+  // segundo rAF encadenado no llega a dispararse la inmensa mayoria de las
+  // veces (medido: 9 de 10 corridas se quedan colgadas esperandolo, contra
+  // 0 de 5 con este patron). Con --virtual-time-budget eso no truena con
+  // error: el harness simplemente nunca corre, .reveal se queda en
+  // opacidad 0, y ese texto se salta en silencio en vez de medirse.
+  requestAnimationFrame(() => { setTimeout(() => {
     // Todas las slides a su estado final: si no, el texto aun no revelado
     // mide opacidad 0 y se saltaria justo lo que hay que verificar.
     try { window.dispatchEvent(new Event('beforeprint')); } catch (e) {}
@@ -137,9 +143,22 @@ window.addEventListener('DOMContentLoaded', () => {
         // color computado no es el que se ve.
         if (cs.webkitBackgroundClip === 'text' || cs.backgroundClip === 'text') { skippedGradient++; return; }
 
-        const fg = parseColor(cs.color);
+        // SVG (ejes, series, etiquetas de grafica) pinta con la propiedad
+        // fill, no con color — leer siempre cs.color daba falsos verdes: un
+        // fill claro sobre fondo claro pasaba porque cs.color medía el
+        // negro heredado del documento, no el color realmente pintado.
+        const isSvgText = el.namespaceURI === 'http://www.w3.org/2000/svg';
+        const fillColor = isSvgText ? parseColor(cs.fill) : null;
+        const fg = fillColor || parseColor(cs.color);
         if (!fg) return;
-        const bg = effectiveBg(el.parentElement || el);
+
+        // El fondo detras del texto puede estar en el propio elemento (ej.
+        // el segmento .seg.a de una barra apilada, que lleva su color Y su
+        // texto en el mismo nodo) — arrancar en el padre lo saltaba siempre
+        // y medía el fondo de la slide en vez del real. effectiveBg ya
+        // camina hacia arriba si el propio nodo no tiene fondo opaco, asi
+        // que empezar en el elemento mismo cubre ambos casos.
+        const bg = effectiveBg(el);
         if (bg.unresolved) { skippedGradient++; return; }
 
         const composed = over({ ...fg, a: fg.a * op }, bg.color);
@@ -166,13 +185,16 @@ window.addEventListener('DOMContentLoaded', () => {
     });
 
     document.title = 'DONE::' + JSON.stringify({ findings, checked, skippedGradient });
-  }));
+  }, 0); });
 });
 </script>
 `;
 
 const withHarness = html.replace('</body>', harness + '</body>');
-const tmp = path.join(os.tmpdir(), `slizdeck-check-contrast-${process.pid}.html`);
+// Al lado del deck real, no en os.tmpdir(): ver el comentario equivalente
+// en check-overflow.mjs — rutas relativas a assets locales se rompen si el
+// harness se copia a otra carpeta.
+const tmp = path.join(path.dirname(path.resolve(file)), `.slizdeck-check-contrast-${process.pid}.html`);
 writeFileSync(tmp, withHarness);
 
 const MAX_ATTEMPTS = 2;

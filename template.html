@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- slizdeck-engine-version: 1.4.0 — no borrar este comentario. scripts/doctor.mjs
+<!-- slizdeck-engine-version: 1.4.1 — no borrar este comentario. scripts/doctor.mjs
      lo lee para saber contra qué versión del engine se generó este deck y
      detectar si hay fixes de template.html posteriores que no llegaron acá
      (ver CHANGELOG.md). Se copia tal cual al generar un deck nuevo en build. -->
@@ -49,6 +49,12 @@
     --cs-font-sans:   'IBM Plex Sans', ui-sans-serif, system-ui, -apple-system, sans-serif;
     --cs-font-heading: 'Newsreader', Georgia, 'Times New Roman', serif;
     --cs-font-mono:   ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+    /* Peso de los titulos grandes (cover, h2.title, transition). Un pack
+       cuya fuente de heading solo trae un peso (ej. Young Serif en
+       `editorial`, 400 unicamente) declara este token en 400: pedirle 600
+       a una fuente que no lo tiene fuerza negrita sintetica del navegador,
+       que en un display serif se ve visiblemente peor que el peso real. */
+    --cs-weight-heading: 600;
 
     /* --- Radios: escala corta, todo el sistema de componentes usa estos 3 --- */
     --cs-radius-sm:   12px;
@@ -151,20 +157,20 @@
     font-family: var(--cs-font-heading);
     font-size: 168px; line-height: 0.98;
     letter-spacing: -0.02em;
-    margin: 0; font-weight: 600; color: #fff;
+    margin: 0; font-weight: var(--cs-weight-heading); color: #fff;
   }
   h1.cover-md {
     font-family: var(--cs-font-heading);
     font-size: 132px; line-height: 1.0;
     letter-spacing: -0.02em;
-    margin: 0; font-weight: 600; color: #fff;
+    margin: 0; font-weight: var(--cs-weight-heading); color: #fff;
   }
   h2.title {
     font-family: var(--cs-font-heading);
     font-size: 76px; line-height: 1.05;
     letter-spacing: -0.015em;
     margin: 0 0 56px;
-    font-weight: 600; color: var(--cs-black);
+    font-weight: var(--cs-weight-heading); color: var(--cs-black);
   }
   h2.title.tight { margin-bottom: 40px; }
 
@@ -183,6 +189,17 @@
   }
   .payoff em { font-style: normal; }
 
+  /* Cita de fuente para una cifra o afirmación: "Fuente: X, fecha".
+     export-pptx.mjs ya la reconoce (rol "caption"); antes no existia
+     ningun patron que la produjera, asi que cada deck la reinventaba con
+     un nombre distinto que el export no reconocia. Lleva punto final
+     (regla de voz 2: los captions sí cierran con punto). */
+  .stat-source {
+    font-size: 22px; line-height: 1.4;
+    color: var(--cs-muted);
+    margin-top: 24px;
+  }
+
   /* Gradient word — wrap a span/em inside any heading */
   .grad-word {
     background: var(--cs-grad-text);
@@ -199,10 +216,10 @@
     font-family: var(--cs-font-heading);
     font-size: 168px; line-height: 0.98;
     letter-spacing: -0.02em;
-    margin: 0; font-weight: 600; color: var(--cs-black);
+    margin: 0; font-weight: var(--cs-weight-heading); color: var(--cs-black);
     text-align: center;
   }
-  .ts-title .grad-word { font-weight: 600; }
+  .ts-title .grad-word { font-weight: var(--cs-weight-heading); }
   .ts-tagline {
     margin-top: 36px;
     font-size: 36px; line-height: 1.4;
@@ -225,17 +242,17 @@
     font-family: var(--cs-font-heading);
     font-size: 96px; line-height: 1.08;
     letter-spacing: -0.015em;
-    margin: 0; font-weight: 600; color: var(--cs-black);
+    margin: 0; font-weight: var(--cs-weight-heading); color: var(--cs-black);
     text-align: center;
   }
   .ts-title-sm {
     font-family: var(--cs-font-heading);
     font-size: 64px; line-height: 1.15;
     letter-spacing: -0.01em;
-    margin: 0; font-weight: 600; color: var(--cs-black);
+    margin: 0; font-weight: var(--cs-weight-heading); color: var(--cs-black);
     text-align: center;
   }
-  .ts-title-md .grad-word, .ts-title-sm .grad-word { font-weight: 600; }
+  .ts-title-md .grad-word, .ts-title-sm .grad-word { font-weight: var(--cs-weight-heading); }
 
   /* Resaltar una palabra o frase suelta sin necesitar un fondo degradado:
      negrita + color primario. Como maximo un .hl por slide (mismo cupo
@@ -251,6 +268,17 @@
      a estos tamanos). .ts-title/.ts-tagline son negro por default; sobre
      .grad necesitan pasar a blanco, igual que ya hace .eyebrow arriba. */
   .grad .ts-title, .grad .ts-tagline { color: #fff; }
+  /* .grad-word clava su color en el mismo degradado de marca que .grad ya
+     usa de fondo (--cs-grad-text vs --cs-grad-linear/-radial son la misma
+     paleta) — la palabra "resaltada" queda casi invisible contra su propio
+     fondo. Sobre .grad degrada a blanco solido, igual que el resto del
+     titulo a su alrededor: aqui el highlight es el fondo mismo, no hace
+     falta un segundo degradado encima. */
+  .grad .grad-word {
+    background: none;
+    -webkit-background-clip: initial; background-clip: initial;
+    -webkit-text-fill-color: #fff; color: #fff;
+  }
 
   /* ============================================================
      FOOTER (always present on every slide)
@@ -307,7 +335,11 @@
     letter-spacing: 0.14em; text-transform: uppercase;
     padding: 7px 14px; border-radius: 999px;
   }
-  .badge-primary { background: rgba(14,124,102,0.10); color: var(--cs-primary); }
+  /* color-mix, no un rgba() fijo: un rgba hardcodeado congela el teal del
+     pack por default y sobrevive a apply-style-pack.mjs (que solo fusiona
+     :root, no reglas fuera de :root) — cambiar de pack dejaba este badge
+     con el color viejo mientras el resto del deck ya usaba el nuevo. */
+  .badge-primary { background: color-mix(in srgb, var(--cs-primary) 10%, transparent); color: var(--cs-primary); }
   .badge-green  { background: rgba(22, 163, 74, 0.12); color: #15803d; }
   .badge-red    { background: rgba(220, 38, 38, 0.10); color: #b91c1c; }
   .badge-orange { background: rgba(217, 119, 6, 0.12); color: #b45309; }
@@ -425,6 +457,14 @@
       background: none !important;
       -webkit-text-fill-color: var(--cs-primary) !important;
       color: var(--cs-primary) !important;
+    }
+    /* Sobre .grad el fondo sigue siendo el degradado (no se aplana en
+       print): degradar a --cs-primary ahi repite casi el mismo color del
+       fondo. Mayor especificidad que la regla de arriba, gana sin
+       depender del orden. */
+    .grad .grad-word {
+      -webkit-text-fill-color: #fff !important;
+      color: #fff !important;
     }
   }
 
@@ -962,7 +1002,14 @@
     slide.querySelectorAll('.reveal').forEach((el) => el.classList.remove('is-on'));
     resetCounters(slide);
     slide.dataset.currentStep = '0';
-    requestAnimationFrame(() => requestAnimationFrame(() => applyStep(slide, 1)));
+    // Un rAF + un macrotask, no un rAF anidado en otro: en Chrome headless
+    // sin GPU (shoot.mjs, check-*.mjs) un segundo rAF encadenado no llega a
+    // dispararse la mayoria de las veces (medido: ~90% de las corridas se
+    // quedan colgadas esperandolo). Eso dejaba los .reveal removidos por la
+    // linea de arriba sin nadie que los reponga: la slide se capturaba en
+    // blanco. setTimeout(0) no depende del compositor y no cambia nada
+    // visible para quien presenta en un navegador real.
+    requestAnimationFrame(() => setTimeout(() => applyStep(slide, 1), 0));
   }
 
   /* Capture-phase keydown — runs BEFORE deck-stage's own handler. Advances

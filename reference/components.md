@@ -891,7 +891,11 @@ Para hacer meta-referencias (mostrar el propio deck, la app del cliente, un docu
   border-radius: 9px;
   transition: width 1400ms cubic-bezier(0.22, 1, 0.36, 1) var(--bd, 0ms);
 }
-section[data-active="true"] .tk-fill.is-on { width: var(--w, 0%); }
+/* .is-on lo pone el step controller sobre .tk-row (el .reveal), no sobre
+   .tk-fill — mismo patron ascendente que .prop en media-and-data.md.
+   `section[data-active="true"] .tk-fill.is-on` nunca coincidia: exigia
+   .is-on en el propio .tk-fill, que jamas la recibe. */
+.reveal.is-on .tk-fill { width: var(--w, 0%); }
 .tk-counter {
   font-size: 64px; font-weight: 800;
   color: var(--cs-black);

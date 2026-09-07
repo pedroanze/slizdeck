@@ -51,7 +51,6 @@
 import { readFileSync, writeFileSync, rmSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import path from 'node:path';
-import os from 'node:os';
 import { findChrome } from './lib/find-chrome.mjs';
 
 let CHROME;
@@ -73,7 +72,12 @@ const html = readFileSync(file, 'utf8');
 const harness = `
 <script>
 window.addEventListener('DOMContentLoaded', () => {
-  requestAnimationFrame(() => requestAnimationFrame(() => {
+  // Un solo rAF + setTimeout, no un rAF anidado en otro: en Chrome headless
+  // con --disable-gpu el segundo rAF de una cadena no llega a dispararse la
+  // mayoria de las veces (medido: 9 de 10 corridas se cuelgan esperandolo,
+  // sin ningun error). El harness nunca llegaba a correr, asi que nunca se
+  // media nada — no un falso verde, un chequeo que no llegaba a existir.
+  requestAnimationFrame(() => { setTimeout(() => {
     // Forzar cada data-counter a su valor final (texto mas largo posible)
     // antes de medir, en vez del "0" con el que arranca antes de runCounter.
     document.querySelectorAll('[data-counter]').forEach((el) => {
@@ -189,13 +193,17 @@ window.addEventListener('DOMContentLoaded', () => {
     });
 
     document.title = 'DONE::' + JSON.stringify(violations);
-  }));
+  }, 0); });
 });
 </script>
 `;
 
 const withHarness = html.replace('</body>', harness + '</body>');
-const tmp = path.join(os.tmpdir(), `slizdeck-check-overflow-${Date.now()}.html`);
+// Al lado del deck real, no en os.tmpdir(): un <img> con ruta relativa
+// (assets/logos/x.svg) se resuelve contra la carpeta del archivo — copiarlo
+// a /tmp rompe esa ruta en silencio (Chrome no tira error, la imagen
+// simplemente no carga).
+const tmp = path.join(path.dirname(path.resolve(file)), `.slizdeck-check-overflow-${Date.now()}.html`);
 writeFileSync(tmp, withHarness);
 
 const MAX_ATTEMPTS = 2;

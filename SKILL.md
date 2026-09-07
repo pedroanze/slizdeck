@@ -7,7 +7,7 @@ description: |
 license: MIT
 compatibility: Requiere un agente con capacidad de ejecutar comandos de shell (crear/copiar archivos, abrir el navegador) y búsqueda web. Probado en Claude Code; compatible con cualquier cliente del estándar Agent Skills (agentskills.io).
 metadata:
-  version: "1.4.0"
+  version: "1.4.1"
 allowed-tools: Bash, Read, Write, Edit, WebSearch, WebFetch
 # user-invocable / argument-hint son extensiones de Claude Code, no del
 # estandar portable de agentskills.io (que solo define name/description/
@@ -109,7 +109,7 @@ node scripts/audit.mjs ~/proyectos/mi-startup/deck.html
 ## Reglas de voz — aplicar siempre
 
 1. **Sintético en pantalla, el presentador habla.** Nada de párrafos largos en la slide — el discurso completo va en las speaker notes.
-2. **Sin punto final** en `h1`/`h2`/`h3`, `.subtitle`, `.ts-tagline`, `.eyebrow` y `.payoff` — son rótulos, no oraciones. **Sí llevan punto** los párrafos de cuerpo (`<p>`), las quotes y los captions (`.stat-caption`, `.stat-source`). `audit.mjs` solo verifica los cuatro primeros; el resto es criterio del modelo.
+2. **Sin punto final** en `h1`/`h2`/`h3`, `.subtitle`, `.ts-tagline`, `.eyebrow` y `.payoff` — son rótulos, no oraciones. **Sí llevan punto** los párrafos de cuerpo (`<p>`), las quotes y los captions (`.glosa`, `.stat-source`). `audit.mjs` solo verifica los cuatro primeros; el resto es criterio del modelo.
 3. **Títulos en una sola línea** cuando sea posible.
 4. **Numeración 01/02/03**, no A/B/C.
 5. **Sin em-dash** (— o --). Usar comas, dos puntos, punto y aparte, o paréntesis.

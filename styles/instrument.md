@@ -17,7 +17,7 @@
   --cs-cream-2:     #E6EBEF;
   --cs-black:       #0D1B26;
   --cs-body:        #38505F;
-  --cs-muted:       #5F7383;
+  --cs-muted:       #546878;
   --cs-white:       #FFFFFF;
   --cs-surface:     #FFFFFF;
   --cs-void:        #0D1B26;

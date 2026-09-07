@@ -1,0 +1,1678 @@
+<!doctype html>
+<!-- slizdeck-engine-version: 1.4.0 — no borrar este comentario. scripts/doctor.mjs
+     lo lee para saber contra qué versión del engine se generó este deck y
+     detectar si hay fixes de template.html posteriores que no llegaron acá
+     (ver CHANGELOG.md). Se copia tal cual al generar un deck nuevo en build. -->
+<!-- lang: ajustar al idioma del deck (es, en, pt...). Afecta la
+     hifenizacion, el corrector y como lo lee un lector de pantalla. -->
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cinco días de frontera · Modelos de IA, primera semana de septiembre 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700;800&family=Martian+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<!-- Iconos lucide: opt-in. La mayoria de los decks no usa ninguno, y
+     cargarlo siempre es una peticion de red que no hace falta. Descomentar
+     solo si el deck usa <i data-lucide="nombre"> (ver reference/icons.md).
+     Version fijada a proposito: @latest ejecuta en el deck lo que haya
+     publicado el CDN ese dia. -->
+<!-- <script src="https://unpkg.com/lucide@0.469.0"></script> -->
+<style>
+  /* ============================================================
+     SLIZDECK DESIGN TOKENS
+     ============================================================ */
+  :root {
+    /* --- Colores: primario/secundario dominan, acento se usa con cuentagotas --- */
+    --cs-primary:     #0F5FD6;
+    --cs-secondary:   #35506B;
+    --cs-accent:      #7A1F12;
+    --cs-cream:       #F2F5F7;
+    --cs-cream-2:     #E6EBEF;
+    --cs-black:       #0D1B26;
+    --cs-body:        #38505F;
+    --cs-muted:       #546878;
+    --cs-white:       #FFFFFF;
+    /* Superficie de cards/paneles y fondo del letterbox. Separados de
+       --cs-white/--cs-black para que un style pack oscuro pueda invertirlos
+       sin tocar el resto del sistema. */
+    --cs-surface:     #FFFFFF;
+    --cs-void:        #0D1B26;
+    --cs-border:      rgba(13,27,38,0.12);
+    --cs-border-strong: rgba(13,27,38,0.24);
+    --cs-scrim:       rgba(13,27,38,0.06);
+    --cs-grain:       .09;
+    --cs-grad-radial: radial-gradient(112% 150% at 0% 100% in oklch, #0F5FD6 0%, #0D1B26 100%);
+    --cs-grad-linear: linear-gradient(135deg in oklch, #0F5FD6 0%, #0D1B26 100%);
+    --cs-grad-text:   linear-gradient(135deg in oklch, #0F5FD6 0%, #17435E 50%, #0D1B26 100%);
+
+    /* --- Tipografía: heading serif con carácter editorial, body sans funcional --- */
+    --cs-font-sans:   'Public Sans', ui-sans-serif, system-ui, sans-serif;
+    --cs-font-heading: 'Public Sans', ui-sans-serif, system-ui, sans-serif;
+    --cs-font-mono:   'Martian Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+
+    /* --- Radios: escala corta, todo el sistema de componentes usa estos 3 --- */
+    --cs-radius-sm:   4px;
+    --cs-radius-md:   6px;
+    --cs-radius-lg:   8px;
+
+    /* --- Padding del frame estándar de cada slide (.pad) --- */
+    --cs-pad-x:       120px;
+    --cs-pad-top:     96px;
+    --cs-pad-bottom:  120px;
+
+    --cs-shadow-1:    0 1px 2px rgba(0,0,0,0.04), 0 1px 1px rgba(0,0,0,0.03);
+    --cs-shadow-2:    0 4px 12px rgba(0,0,0,0.06), 0 2px 4px rgba(0,0,0,0.04);
+    --cs-shadow-3:    0 12px 32px rgba(0,0,0,0.08), 0 4px 10px rgba(0,0,0,0.05);
+    --cs-fg-1:        var(--cs-black);
+    --cs-fg-2:        var(--cs-body);
+    --cs-fg-3:        var(--cs-muted);
+    --cs-ease-std:    cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  /* ============================================================
+     BASE
+     ============================================================ */
+  * { box-sizing: border-box; }
+  html, body { background: var(--cs-void); margin: 0; padding: 0; }
+  body {
+    font-family: var(--cs-font-sans);
+    color: var(--cs-fg-2);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* ============================================================
+     SECTION = single slide canvas (1920×1080 default)
+     deck-stage scales the canvas to fit viewport, letterboxed.
+     ============================================================ */
+  deck-stage > section {
+    background: var(--cs-cream);
+    color: var(--cs-fg-2);
+    overflow: hidden;
+    position: relative;
+    transition: opacity 120ms ease;
+  }
+
+  /* Surface helpers */
+  .grad   { background: var(--cs-grad-radial) !important; color: #fff !important; }
+  .cream  { background: var(--cs-cream); color: var(--cs-body); }
+
+  /* Grano sobre el degradado.
+     Un degradado puro se lee digital y plano, sobre todo proyectado: el
+     banding se nota en las transiciones suaves. Una capa de ruido finisimo
+     lo rompe y le da textura de impresion. El ruido es un SVG inline
+     (feTurbulence), asi que no hay archivo externo ni peticion de red y el
+     deck sigue siendo autonomo.
+     Sin mix-blend-mode a proposito: `overlay` es practicamente invisible
+     sobre fondos oscuros, porque el ruido gris medio apenas desplaza el
+     color. Comprobado renderizando las dos variantes.
+     Intensidad: --cs-grain (0 lo apaga, .09 default, .16 es marcado). */
+  .grad::before {
+    content: "";
+    position: absolute; inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    opacity: var(--cs-grain, .09);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 140px 140px;
+  }
+  /* El contenido va por encima del grano */
+  .grad > * { position: relative; z-index: 1; }
+
+  /* Standard frame inside a slide */
+  .pad {
+    padding: var(--cs-pad-top) var(--cs-pad-x) var(--cs-pad-bottom);
+    height: 100%;
+    box-sizing: border-box;
+    display: flex; flex-direction: column;
+    justify-content: flex-start;
+    position: relative;
+  }
+  .pad.center { justify-content: center; align-items: center; text-align: center; }
+  /* Centrado vertical conservando la alineacion a la izquierda. Para slides
+     de contenido con poco material, donde alinear arriba deja el tercio
+     inferior vacio y el conjunto se lee sin terminar. */
+  .pad.mid { justify-content: center; }
+
+  /* ============================================================
+     TYPOGRAPHY
+     ============================================================ */
+  .eyebrow {
+    font-size: 24px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--cs-primary);
+    margin: 0 0 36px;
+  }
+  .grad .eyebrow { color: rgba(255,255,255,.9); }
+
+  h1.cover {
+    font-family: var(--cs-font-heading);
+    font-size: 168px; line-height: 0.98;
+    letter-spacing: -0.02em;
+    margin: 0; font-weight: 600; color: #fff;
+  }
+  h1.cover-md {
+    font-family: var(--cs-font-heading);
+    font-size: 132px; line-height: 1.0;
+    letter-spacing: -0.02em;
+    margin: 0; font-weight: 600; color: #fff;
+  }
+  h2.title {
+    font-family: var(--cs-font-heading);
+    font-size: 76px; line-height: 1.05;
+    letter-spacing: -0.015em;
+    margin: 0 0 56px;
+    font-weight: 600; color: var(--cs-black);
+  }
+  h2.title.tight { margin-bottom: 40px; }
+
+  .subtitle {
+    font-size: 36px; line-height: 1.4;
+    font-weight: 300;
+    color: rgba(255,255,255,.86);
+    max-width: 1300px;
+    margin-top: 48px;
+  }
+
+  .payoff {
+    font-size: 30px; line-height: 1.4;
+    color: var(--cs-black); font-weight: 600;
+    margin-top: 56px; max-width: 1500px;
+  }
+  .payoff em { font-style: normal; }
+
+  /* Gradient word — wrap a span/em inside any heading */
+  .grad-word {
+    background: var(--cs-grad-text);
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent; color: transparent;
+    font-style: normal;
+  }
+
+  /* Mono helper */
+  .mono { font-family: var(--cs-font-mono); }
+
+  /* Transition slide title (cream + huge centered title) */
+  .ts-title {
+    font-family: var(--cs-font-heading);
+    font-size: 168px; line-height: 0.98;
+    letter-spacing: -0.02em;
+    margin: 0; font-weight: 600; color: var(--cs-black);
+    text-align: center;
+  }
+  .ts-title .grad-word { font-weight: 600; }
+  .ts-tagline {
+    margin-top: 36px;
+    font-size: 36px; line-height: 1.4;
+    font-weight: 300;
+    color: var(--cs-body);
+    text-align: center;
+    max-width: 1300px;
+  }
+
+  /* .ts-title a 168px asume una frase corta (menos de ~45 caracteres): a
+     ese tamano, una oracion mas larga se parte en 3-4 lineas y deja de
+     leerse como un remate. Elegir el tamano por longitud del texto, no
+     usar siempre el default:
+       < 45 caracteres  -> .ts-title    (168px, 1 linea)
+       45-80 caracteres -> .ts-title-md (96px,  1-2 lineas)
+       80-120 caracteres -> .ts-title-sm (64px, 2-3 lineas)
+       > 120 caracteres  -> no usar este patron: acortar la frase o pasarla
+                            a una slide de contenido con cuerpo de texto. */
+  .ts-title-md {
+    font-family: var(--cs-font-heading);
+    font-size: 96px; line-height: 1.08;
+    letter-spacing: -0.015em;
+    margin: 0; font-weight: 600; color: var(--cs-black);
+    text-align: center;
+  }
+  .ts-title-sm {
+    font-family: var(--cs-font-heading);
+    font-size: 64px; line-height: 1.15;
+    letter-spacing: -0.01em;
+    margin: 0; font-weight: 600; color: var(--cs-black);
+    text-align: center;
+  }
+  .ts-title-md .grad-word, .ts-title-sm .grad-word { font-weight: 600; }
+
+  /* Resaltar una palabra o frase suelta sin necesitar un fondo degradado:
+     negrita + color primario. Como maximo un .hl por slide (mismo cupo
+     visual que el acento) — no es una alternativa al gradiente, es para
+     las slides en --cs-cream que quieren un remate sin cambiar de fondo. */
+  .hl { font-weight: 700; color: var(--cs-primary); }
+  .hl-accent { font-weight: 700; color: var(--cs-accent); }
+
+  /* Separador de seccion: mismo .ts-title/.ts-tagline centrado, pero sobre
+     class="grad" (el mismo fondo invertido que cover/cierre) en vez de
+     --cs-cream. La diferenciacion es el fondo, no un numero de fondo
+     (probado: un "01" gigante detras del titulo choca contra las letras
+     a estos tamanos). .ts-title/.ts-tagline son negro por default; sobre
+     .grad necesitan pasar a blanco, igual que ya hace .eyebrow arriba. */
+  .grad .ts-title, .grad .ts-tagline { color: #fff; }
+
+  /* ============================================================
+     FOOTER (always present on every slide)
+     ============================================================ */
+  .footer {
+    position: absolute;
+    left: 120px; right: 120px; bottom: 48px;
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 24px; letter-spacing: 0.06em;
+    color: var(--cs-muted); font-weight: 500;
+  }
+  .footer img { height: 22px; display: block; }
+  .footer .left { display: flex; align-items: center; gap: 18px; }
+  .footer .num {
+    font-variant-numeric: tabular-nums; font-weight: 600;
+    color: var(--cs-fg-1); opacity: .55;
+  }
+  .grad .footer { color: rgba(255,255,255,.6); }
+  .grad .footer .num { color: #fff; opacity: .8; }
+
+  /* ============================================================
+     COMMON COMPONENTS — baseline only
+     For richer patterns (.pq-card, terminals, mockups, mini-diagrams)
+     copy from components.md. For animation snippets (popup, SVG path
+     drawing, packets) copy from animations.md.
+     ============================================================ */
+
+  .card {
+    background: var(--cs-surface);
+    border: 1px solid var(--cs-border);
+    border-radius: var(--cs-radius-lg);
+    padding: 40px 44px;
+    box-shadow: var(--cs-shadow-2);
+  }
+  .card .card-eyebrow {
+    font-size: 24px; letter-spacing: 0.22em;
+    text-transform: uppercase; font-weight: 700;
+    color: var(--cs-muted); margin-bottom: 18px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .card h3 {
+    font-size: 32px; line-height: 1.15;
+    letter-spacing: -0.01em;
+    color: var(--cs-black); font-weight: 700;
+    margin: 0 0 14px;
+  }
+  .card p {
+    font-size: 24px; line-height: 1.5;
+    color: var(--cs-body); margin: 0;
+  }
+
+  .badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 20px; font-weight: 700;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    padding: 7px 14px; border-radius: 999px;
+  }
+  .badge-primary { background: rgba(14,124,102,0.10); color: var(--cs-primary); }
+  .badge-green  { background: rgba(22, 163, 74, 0.12); color: #15803d; }
+  .badge-red    { background: rgba(220, 38, 38, 0.10); color: #b91c1c; }
+  .badge-orange { background: rgba(217, 119, 6, 0.12); color: #b45309; }
+  .badge-muted  { background: var(--cs-scrim); color: var(--cs-muted); }
+
+  /* ============================================================
+     ANIMATION SYSTEM — opt-in
+     Add `class="reveal" data-step="N"` to elements you want to
+     reveal at step N. Add `data-steps="N" data-current-step="0"`
+     to the section. The step controller (in <script> below)
+     intercepts ←/→/space and toggles `.is-on` per step.
+
+     For STATIC slides: don't add `.reveal` anywhere. Set
+     `data-steps="1" data-current-step="1"` on the section.
+     ============================================================ */
+
+  .reveal {
+    opacity: 0;
+    transform: translateY(16px);
+    transition:
+      opacity 520ms var(--cs-ease-std),
+      transform 520ms var(--cs-ease-std),
+      filter 520ms var(--cs-ease-std),
+      clip-path 720ms var(--cs-ease-std);
+    transition-delay: var(--d, 0ms);
+    will-change: opacity, transform;
+  }
+  /* ── Variantes de entrada ──────────────────────────────────────────
+     Se combinan con .reveal: class="reveal r-rise". Un deck que revela
+     todo con el mismo fade-up se siente mecanico; variar la entrada
+     segun el tipo de elemento es lo que le da intencion.
+
+       r-rise    sube mas y con mas recorrido — titulos
+       r-fade    solo opacidad, sin desplazamiento — texto largo
+       r-scale   entra creciendo desde 96% — cifras, datos
+       r-blur    desenfoque que se resuelve — imagenes, citas
+       r-left    entra desde la izquierda — listas, pasos
+       r-wipe    se descubre de izquierda a derecha — barras, reglas
+       r-mask    el texto emerge desde abajo de su propia linea — remates
+  */
+  .reveal.r-rise  { transform: translateY(44px); }
+  .reveal.r-fade  { transform: none; }
+  .reveal.r-scale { transform: scale(.96); transform-origin: left center; }
+  .pad.center .reveal.r-scale { transform-origin: center; }
+  .reveal.r-blur  { filter: blur(14px); transform: scale(1.02); }
+  .reveal.r-left  { transform: translateX(-36px); }
+  .reveal.r-wipe  { opacity: 1; clip-path: inset(0 100% 0 0); transform: none; }
+  .reveal.r-wipe.is-on { clip-path: inset(0 0 0 0); }
+  .reveal.r-mask  { opacity: 1; clip-path: inset(0 0 110% 0); transform: none; }
+  .reveal.r-mask.is-on { clip-path: inset(-20% 0 -20% 0); }
+
+  /* .reveal.is-on tiene que ganar la cascada sobre CUALQUIER variante
+     r-rise/r-scale/r-blur/r-left de arriba: misma especificidad (dos
+     clases), asi que el orden de aparicion decide, y por eso esta regla
+     va deliberadamente DESPUES de todas ellas. Declarada antes (como
+     estaba originalmente), el elemento revelado se quedaba con el
+     transform de su animacion aplicado para siempre en la vista en vivo
+     — se notaba como texto corrido a la izquierda en cualquier .r-left
+     ya revelado. El @media print de mas abajo lo tapaba con !important,
+     por eso el PDF salia bien pero la vista en vivo no. */
+  .reveal.is-on { opacity: 1; transform: none; filter: none; }
+
+  /* Escalonado automatico: en un contenedor con .stagger, cada hijo
+     .reveal del mismo paso entra 90ms despues del anterior, sin tener
+     que escribir --d a mano en cada uno. */
+  .stagger > .reveal:nth-child(1) { --d: 0ms; }
+  .stagger > .reveal:nth-child(2) { --d: 90ms; }
+  .stagger > .reveal:nth-child(3) { --d: 180ms; }
+  .stagger > .reveal:nth-child(4) { --d: 270ms; }
+  .stagger > .reveal:nth-child(5) { --d: 360ms; }
+  .stagger > .reveal:nth-child(6) { --d: 450ms; }
+
+  /* Sweep no-op (legacy markup compatibility — keep div as harmless empty) */
+  .sweep { display: none; }
+
+  /* Act marker — top-right step indicator on multi-step slides */
+  .act-marker {
+    position: absolute;
+    top: 96px; right: 120px;
+    display: flex; align-items: center; gap: 10px;
+    font-family: var(--cs-font-mono);
+    font-size: 24px;
+    color: var(--cs-muted);
+    letter-spacing: 0.08em;
+    z-index: 2;
+  }
+  .grad .act-marker { color: rgba(255,255,255,0.5); }
+  .act-marker .step-num { color: var(--cs-fg-1); font-weight: 700; }
+  .grad .act-marker .step-num { color: #fff; }
+  /* El total ("/3") va atenuado respecto al paso actual, pero sigue siendo
+     informacion legible, no decoracion. El inline `opacity:.4` que se usaba
+     antes dejaba --cs-muted en 1.7:1 sobre blanco: por debajo de cualquier
+     umbral. .8 lo deja en ~3.3:1, que es el minimo AA para 24px. */
+  .act-marker .step-total { opacity: .8; }
+
+  /* Reduced motion — show everything immediately */
+  @media (prefers-reduced-motion: reduce) {
+    .reveal { opacity: 1 !important; transform: none !important; filter: none !important; clip-path: none !important; transition: none !important; }
+    *, *::before, *::after { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+  }
+
+  /* Print / PDF — el estado final de cada slide, no el estado inicial.
+     Sin esto, exportar a PDF un deck animado produce slides en blanco:
+     los elementos .reveal nacen con opacity 0 y solo el step controller
+     (que no corre al imprimir) les pone .is-on.
+     El viewer chrome (barra de progreso, boton de fullscreen) es UI del
+     reproductor, no contenido de la slide: no debe aparecer en el PDF. */
+  @media print {
+    .reveal { opacity: 1 !important; transform: none !important; filter: none !important; clip-path: none !important; transition: none !important; }
+    #progress-bar, #fs-btn { display: none !important; }
+    /* background-clip:text degrada mal al imprimir: Chrome dibuja la caja del
+       gradiente como un recuadro visible alrededor de la palabra. En PDF la
+       palabra de enfasis va en color solido. */
+    .grad-word {
+      background: none !important;
+      -webkit-text-fill-color: var(--cs-primary) !important;
+      color: var(--cs-primary) !important;
+    }
+  }
+
+  /* ============================================================
+     VIEWER CHROME — fullscreen button + progress bar
+     Outside deck-stage, fixed to viewport.
+     ============================================================ */
+
+  #fs-btn {
+    position: fixed;
+    top: 18px; right: 18px;
+    z-index: 2147483647;
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.2);
+    background: rgba(0,0,0,0.5);
+    color: rgba(255,255,255,0.85);
+    cursor: pointer;
+    display: grid; place-items: center;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    transition: opacity 200ms ease, background 200ms ease, color 200ms ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+  #fs-btn:hover { background: rgba(0,0,0,0.7); color: #fff; }
+  #fs-btn:focus { outline: none; }
+  #fs-btn:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(255,255,255,0.9); }
+  #fs-btn svg { width: 18px; height: 18px; display: block; }
+  #fs-btn[data-fs="1"] { opacity: 0; pointer-events: none; }
+
+  #progress-bar {
+    position: fixed;
+    top: 0; left: 0;
+    height: 3px;
+    width: 100%;
+    background: var(--cs-grad-linear);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 240ms cubic-bezier(0.22, 1, 0.36, 1);
+    z-index: 2147483646;
+    pointer-events: none;
+  }
+
+  /* ============================================================
+     INSERT SLIDE-SPECIFIC CSS BELOW
+     Copy snippets from components.md (layouts: .pq-card, terminal,
+     mockups, etc.) or animations.md (popup, SVG paths, packets) here.
+     ============================================================ */
+
+  /* ---------- Standby (media-and-data.md) ---------- */
+  .standby { position: relative; height: 100%; }
+  .standby .marca {
+    font-size: 26px; letter-spacing: .2em; text-transform: uppercase;
+    font-weight: 700; color: rgba(255,255,255,.75);
+  }
+  .standby .cuando { margin-top: auto; font-size: 30px; color: rgba(255,255,255,.7); }
+  @keyframes respira { 0%,100% { opacity: .55 } 50% { opacity: 1 } }
+  .standby .senal { animation: respira 3.4s ease-in-out infinite; }
+  @media (prefers-reduced-motion: reduce) { .standby .senal { animation: none } }
+
+  /* ---------- Timeline horizontal (patron nuevo, no esta en components.md) ---------- */
+  .tl {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    border-top: 2px solid var(--cs-border-strong);
+    margin-top: 4px;
+  }
+  .tl .nodo {
+    padding: 44px 40px 40px;
+    border-right: 1px solid var(--cs-border);
+    position: relative;
+  }
+  .tl .nodo:last-child { border-right: 0; }
+  .tl .nodo::before {
+    content: ""; position: absolute; top: -10px; left: 40px;
+    width: 18px; height: 18px; border-radius: 50%;
+    background: var(--cs-primary);
+  }
+  .tl .nodo.exc::before { background: var(--cs-accent); }
+  .tl .fecha {
+    font-family: var(--cs-font-mono); font-variant-numeric: tabular-nums;
+    font-size: 30px; font-weight: 700; letter-spacing: .04em;
+    color: var(--cs-primary);
+  }
+  .tl .nodo.exc .fecha { color: var(--cs-accent); }
+  .tl .lab {
+    font-size: 19px; letter-spacing: .18em; text-transform: uppercase;
+    font-weight: 700; color: var(--cs-muted); margin: 16px 0 16px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  /* Logo de marca junto al nombre de la empresa, en .lab (timeline) y
+     .card-eyebrow (cards). Monocromo (currentColor hereda --cs-muted): un
+     logo a todo color al lado de un rotulo gris compite con el sistema de
+     un-color-dominante del pack; el shape solo ya identifica la marca. */
+  .brand-logo { height: 19px; width: auto; flex-shrink: 0; }
+  .card .card-eyebrow .brand-logo { height: 22px; }
+  .tl .modelo {
+    font-size: 40px; font-weight: 700; line-height: 1.12;
+    color: var(--cs-black); letter-spacing: -.015em;
+  }
+  .tl .nota { font-size: 22px; line-height: 1.45; color: var(--cs-body); margin-top: 20px; }
+
+  /* ---------- Tabla de datos (patron nuevo: grid, no <table>) ----------
+     Se construye con grid en vez de <table> porque un `.reveal` sobre un
+     <tr> (display: table-row) no acepta transform de forma fiable. */
+  .dtable { margin-top: 4px; }
+  .dtable .trow {
+    display: grid; align-items: center;
+    border-bottom: 1px solid var(--cs-border);
+  }
+  .dtable .trow > * { padding: 19px 22px; }
+  .dtable .trow > *:first-child { padding-left: 0; }
+  .dtable .thead {
+    border-bottom: 2px solid var(--cs-border-strong);
+  }
+  .dtable .thead > * {
+    font-family: var(--cs-font-mono); font-size: 18px;
+    letter-spacing: .10em; text-transform: uppercase; font-weight: 700;
+    color: var(--cs-body); padding-bottom: 14px; padding-top: 0;
+  }
+  .dtable .k {
+    font-family: var(--cs-font-sans); font-size: 28px; font-weight: 700;
+    color: var(--cs-black); letter-spacing: -.01em; line-height: 1.15;
+  }
+  .dtable .v {
+    font-family: var(--cs-font-mono); font-variant-numeric: tabular-nums;
+    font-size: 29px; font-weight: 500; color: var(--cs-black);
+  }
+  .dtable .v.top { color: var(--cs-primary); font-weight: 700; }
+  .dtable .v.exc { color: var(--cs-accent); font-weight: 700; }
+  .dtable .t {
+    font-family: var(--cs-font-sans); font-size: 24px; font-weight: 500;
+    color: var(--cs-body);
+  }
+  .dtable .pend {
+    font-family: var(--cs-font-sans); font-size: 19px; font-weight: 600;
+    letter-spacing: .04em; color: var(--cs-body);
+  }
+  .dtable .trow:last-child { border-bottom: 0; }
+  .t-precio .trow { grid-template-columns: 430px 1fr 1fr 1fr 1fr; }
+  .t-bench  .trow { grid-template-columns: 660px 1fr 1fr 1fr; }
+  .stat-source { font-size: 20px; line-height: 1.4; color: var(--cs-body); margin-top: 24px; }
+
+  /* ---------- Metrica grande (media-and-data.md) ---------- */
+  .metrica { display: flex; flex-direction: column; gap: 12px; }
+  .metrica .cifra {
+    font-family: var(--cs-font-mono);
+    font-size: 190px; line-height: .9; letter-spacing: -.04em;
+    color: var(--cs-primary); font-variant-numeric: tabular-nums; font-weight: 700;
+  }
+  .metrica .cifra .unit { font-size: .46em; }
+  .metrica .glosa { font-size: 28px; line-height: 1.45; color: var(--cs-body); max-width: 640px; }
+
+  /* ---------- Barras comparativas (media-and-data.md, altura reducida) ---------- */
+  .barras { display: flex; flex-direction: column; gap: 26px; }
+  .barra-fila .etiqueta {
+    font-size: 21px; letter-spacing: .14em; text-transform: uppercase;
+    font-weight: 700; color: var(--cs-muted); margin-bottom: 10px;
+  }
+  .barra { display: flex; height: 62px; width: 100%; }
+  .seg { display: flex; align-items: center; padding: 0 20px;
+    font-family: var(--cs-font-mono); font-variant-numeric: tabular-nums;
+    font-size: 24px; font-weight: 700; white-space: nowrap; }
+  .seg.a { background: var(--cs-primary); color: #fff; }
+  .seg.b { background: var(--cs-cream-2); color: var(--cs-body); }
+  .seg.c { background: var(--cs-surface); color: var(--cs-muted); border: 1px solid var(--cs-border); }
+
+  /* ---------- Proporcion (media-and-data.md) ---------- */
+  .prop { display: flex; flex-direction: column; gap: 18px; }
+  .prop .track { height: 22px; background: var(--cs-cream-2); border-radius: 999px; overflow: hidden; }
+  .prop .fill {
+    height: 100%; background: var(--cs-primary); border-radius: 999px;
+    transform-origin: left; transform: scaleX(0);
+    transition: transform 900ms var(--cs-ease-std); transition-delay: var(--d, 0ms);
+  }
+  .reveal.is-on .prop .fill, .prop.is-on .fill { transform: scaleX(var(--v, 1)); }
+  .prop .lbl {
+    display: flex; justify-content: space-between; font-size: 25px; color: var(--cs-body);
+    font-family: var(--cs-font-mono); font-variant-numeric: tabular-nums;
+  }
+
+  /* ---------- Grafica de barras nativa (SVG inline, sin libreria) ---------- */
+  .chart { width: 100%; display: block; }
+  .chart .bar  { fill: var(--cs-primary); }
+  .chart .bar.exc { fill: var(--cs-accent); }
+  .chart .gline { stroke: var(--cs-border); stroke-width: 1; }
+  .chart .base { stroke: var(--cs-border-strong); stroke-width: 2; }
+  .chart .val {
+    font-family: var(--cs-font-mono); font-size: 30px; font-weight: 700;
+    fill: var(--cs-black); font-variant-numeric: tabular-nums;
+  }
+  .chart .name { font-family: var(--cs-font-sans); font-size: 23px; font-weight: 600; fill: var(--cs-body); }
+  .chart .sub  { font-family: var(--cs-font-sans); font-size: 19px; font-weight: 500; fill: var(--cs-muted); }
+  .chart .ax   { font-family: var(--cs-font-mono); font-size: 19px; fill: var(--cs-muted); }
+
+  /* ---------- Comparison cards (components.md · pq-card-2col) ---------- */
+  .pq-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 36px; margin-top: 8px; }
+  .pq-card {
+    background: var(--cs-surface);
+    border: 1px solid var(--cs-border);
+    border-radius: var(--cs-radius-lg);
+    padding: 52px 50px;
+    box-shadow: var(--cs-shadow-2);
+    min-height: 420px;
+    display: flex; flex-direction: column; justify-content: center;
+  }
+  .pq-card .pq-eyebrow {
+    font-size: 18px; letter-spacing: .18em; text-transform: uppercase;
+    font-weight: 700; color: var(--cs-primary); margin-bottom: 20px;
+  }
+  .pq-card.exc .pq-eyebrow { color: var(--cs-accent); }
+  .pq-card h3 {
+    font-size: 58px; font-weight: 800; color: var(--cs-black);
+    margin: 0 0 22px; line-height: 1.0; letter-spacing: -.025em;
+  }
+  .pq-card .pq-consequence {
+    font-family: var(--cs-font-mono); font-size: 21px; font-weight: 700;
+    color: var(--cs-primary); letter-spacing: .05em; text-transform: uppercase;
+    margin: 0 0 28px;
+  }
+  .pq-card.exc .pq-consequence { color: var(--cs-accent); }
+  .pq-card p { font-size: 24px; line-height: 1.5; color: var(--cs-body); margin: 0; }
+
+  /* ---------- Card grid 3col (template .card, pegadas como celdas) ---------- */
+  .ow-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; margin-top: 4px; }
+  .ow-grid .card { padding: 40px 38px; display: flex; flex-direction: column; }
+  .ow-grid .card h3 { font-size: 36px; margin: 0 0 6px; }
+  .ow-grid .card p { font-size: 22px; line-height: 1.45; margin-top: 22px; }
+  .kv { margin-top: 20px; border-top: 1px solid var(--cs-border); }
+  .kv .kv-row {
+    display: flex; justify-content: space-between; align-items: baseline;
+    padding: 11px 0; border-bottom: 1px solid var(--cs-border);
+  }
+  .kv .kv-k { font-size: 19px; letter-spacing: .12em; text-transform: uppercase; font-weight: 700; color: var(--cs-muted); }
+  .kv .kv-v {
+    font-family: var(--cs-font-mono); font-variant-numeric: tabular-nums;
+    font-size: 24px; font-weight: 700; color: var(--cs-black);
+  }
+  .kv .kv-v.exc { color: var(--cs-accent); }
+
+  /* ---------- Card grid 4col (components.md · card-grid-4col) ---------- */
+  .warn-grid { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 26px; margin-top: 4px; }
+  .warn-card {
+    background: var(--cs-surface); border: 1px solid var(--cs-border);
+    border-radius: var(--cs-radius-lg); padding: 34px 40px;
+    box-shadow: var(--cs-shadow-2);
+    display: flex; flex-direction: column; justify-content: center;
+  }
+  .warn-num-row { display: flex; align-items: center; gap: 18px; margin-bottom: 16px; }
+  .warn-num {
+    font-family: var(--cs-font-mono); font-variant-numeric: tabular-nums;
+    font-size: 30px; font-weight: 800; color: var(--cs-primary); line-height: 1;
+  }
+  .warn-icon {
+    width: 48px; height: 48px; border-radius: var(--cs-radius-sm);
+    background: color-mix(in srgb, var(--cs-primary) 10%, transparent);
+    color: var(--cs-primary); display: grid; place-items: center;
+  }
+  .warn-icon svg { width: 26px; height: 26px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .warn-card h3 {
+    font-size: 32px; font-weight: 700; color: var(--cs-black);
+    margin: 0 0 12px; line-height: 1.12; letter-spacing: -.015em;
+  }
+  .warn-card p { font-size: 21px; line-height: 1.45; color: var(--cs-body); margin: 0; }
+
+  /* ---------- Layout de dos columnas para metrica + visual ---------- */
+  .split2 { display: grid; grid-template-columns: 620px 1fr; gap: 72px; align-items: center; margin-top: 8px; }
+
+</style>
+</head>
+<body>
+
+<deck-stage width="1920" height="1080">
+
+  <!-- ============================================================
+       INSERT SLIDES HERE
+       Each slide is a <section> with these conventions:
+       - data-label="NN Title"            (used for nav labels)
+       - data-steps="N" data-current-step="0"   (animated)
+         OR data-steps="1" data-current-step="1" (static)
+       - class="grad"                     (gradient bg, for cover)
+       - <div class="pad">                (standard padding frame)
+       - <div class="pad center">         (vertically centered, for transitions)
+       - <div class="footer">             (logo + speaker + slide num)
+
+       Catalog references:
+       - components.md  → layout patterns
+       - animations.md  → animation techniques
+       - icons.md       → SVG icons library
+       ============================================================ -->
+
+  <!-- SLIZDECK-ASSET-PENDING: slide 00 — imagen de fondo a sangre para la pantalla de espera, sigue sin ella -->
+  <!-- ────────── 00 · Standby (sin numero de footer) ────────── -->
+  <section class="grad" data-label="00 Standby" data-steps="1" data-current-step="1">
+    <div class="pad standby">
+      <div class="marca">Sesión técnica · Septiembre 2026</div>
+      <div style="margin:auto 0">
+        <h1 class="cover-md">Cinco días de frontera</h1>
+        <div class="subtitle">Pedro Anze</div>
+      </div>
+      <div class="cuando senal">Empezamos en unos minutos</div>
+    </div>
+    <div class="footer"><div class="left"></div><div></div></div>
+  </section>
+
+  <!-- SLIZDECK-ASSET-PENDING: slide 01 — logo del presentador para el footer de todo el deck, sigue sin el -->
+  <!-- ────────── 01 · Cover ────────── -->
+  <section class="grad" data-label="01 Cover" data-steps="1" data-current-step="1">
+    <div class="pad center">
+      <div class="eyebrow">Charla técnica · 06 septiembre 2026</div>
+      <h1 class="cover">Cinco días de frontera</h1>
+      <div class="subtitle">Lo que se lanzó la primera semana de septiembre de 2026, qué cambió de verdad y cuánto cuesta</div>
+    </div>
+    <div class="footer">
+      <div class="left"></div>
+      <div>Pedro Anze · Sesión técnica · <span class="num">01</span></div>
+    </div>
+  </section>
+
+  <!-- ────────── 02 · Timeline de la semana ────────── -->
+  <section data-label="02 La semana" data-steps="3" data-current-step="0">
+    <div class="pad mid">
+      <div class="act-marker"><span class="step-num">1</span><span class="step-total">/3</span></div>
+      <div class="eyebrow reveal r-rise" data-step="1">La semana</div>
+      <h2 class="title reveal r-rise" data-step="1" style="--d:80ms">Tres lanzamientos en cuatro días</h2>
+
+      <div class="tl stagger">
+        <div class="nodo reveal r-left" data-step="2">
+          <div class="fecha">01 SEP</div>
+          <div class="lab"><img class="brand-logo" src="assets/logos/anthropic.svg" alt="">Anthropic</div>
+          <div class="modelo">Claude Fable 5.1<br>y Mythos 5.1</div>
+          <div class="nota">Mismo modelo base, dos niveles de salvaguardas. Lectura de caché un 75 % más barata.</div>
+        </div>
+        <div class="nodo reveal r-left" data-step="2">
+          <div class="fecha">02 SEP</div>
+          <div class="lab"><img class="brand-logo" src="assets/logos/alibabacloud.svg" alt="">Alibaba</div>
+          <div class="modelo">Qwen3.8-Max-0902</div>
+          <div class="nota">Snapshot enfocado en código y agentes. Primero en Code Arena WebDev con 1691 puntos.</div>
+        </div>
+        <div class="nodo exc reveal r-left" data-step="2">
+          <div class="fecha">03 SEP</div>
+          <div class="lab"><img class="brand-logo" src="assets/logos/openai.svg" alt="">OpenAI</div>
+          <div class="modelo">GPT-6 Astra</div>
+          <div class="nota">Anunciado el 3 y desplegado desde el 4 a los planes de pago, la API y AWS.</div>
+        </div>
+      </div>
+
+      <div class="payoff reveal r-mask" data-step="3">El terreno ya se había movido en julio y agosto: Kimi K3 (2,8 T de parámetros, pesos abiertos), Qwen3.8-Max y DeepSeek V4-Pro</div>
+    </div>
+    <div class="footer">
+      <div class="left"></div>
+      <div>Pedro Anze · Sesión técnica · <span class="num">02</span></div>
+    </div>
+  </section>
+
+  <!-- ────────── 03 · Tabla de precios ────────── -->
+  <section data-label="03 Precio de lista" data-steps="3" data-current-step="0">
+    <div class="pad">
+      <div class="act-marker"><span class="step-num">1</span><span class="step-total">/3</span></div>
+      <div class="eyebrow reveal r-rise" data-step="1">Precio de lista</div>
+      <h2 class="title reveal r-rise" data-step="1" style="--d:80ms">Cinco modelos, dos órdenes de magnitud</h2>
+
+      <div class="dtable t-precio">
+        <div class="trow thead reveal r-wipe" data-step="2">
+          <div>Modelo</div><div>Input $/MTok</div><div>Output $/MTok</div><div>Contexto</div><div>Pesos abiertos</div>
+        </div>
+        <div class="trow reveal r-wipe" data-step="2" style="--d:60ms">
+          <div><div class="k">GPT-6 Astra</div><div class="t" style="font-size:20px;margin-top:2px">OpenAI</div></div>
+          <div class="v">10.00</div><div class="v">50.00</div><div class="v">1M</div><div class="t">No</div>
+        </div>
+        <div class="trow reveal r-wipe" data-step="2" style="--d:120ms">
+          <div><div class="k">Claude Fable 5.1</div><div class="t" style="font-size:20px;margin-top:2px">Anthropic</div></div>
+          <div class="v">10.00</div><div class="v">50.00</div><div class="v">1M</div><div class="t">No</div>
+        </div>
+        <div class="trow reveal r-wipe" data-step="2" style="--d:180ms">
+          <div><div class="k">Kimi K3</div><div class="t" style="font-size:20px;margin-top:2px">Moonshot AI</div></div>
+          <div class="v">3.00</div><div class="v">15.00</div><div class="v">1M</div><div class="t">Sí</div>
+        </div>
+        <div class="trow reveal r-wipe" data-step="2" style="--d:240ms">
+          <div><div class="k">Qwen3.8-Max</div><div class="t" style="font-size:20px;margin-top:2px">Alibaba</div></div>
+          <div class="v">2.00</div><div class="v">6.00</div><div class="v">1M</div><div class="pend">[DATO PENDIENTE]</div>
+        </div>
+        <div class="trow reveal r-wipe" data-step="2" style="--d:300ms">
+          <div><div class="k">DeepSeek V4-Pro</div><div class="t" style="font-size:20px;margin-top:2px">DeepSeek</div></div>
+          <div class="v">0.435</div><div class="v exc">0.87</div><div class="v">1M</div><div class="t">Sí</div>
+        </div>
+      </div>
+
+      <div class="stat-source reveal r-fade" data-step="3">Tarifas estándar publicadas al 06 de septiembre de 2026. Qwen anunció que abriría un modelo de la familia Max, pero los pesos todavía no están publicados.</div>
+    </div>
+    <div class="footer">
+      <div class="left"></div>
+      <div>Pedro Anze · Sesión técnica · <span class="num">03</span></div>
+    </div>
+  </section>
+
+  <!-- ────────── 04 · Caché ────────── -->
+  <section data-label="04 Cache" data-steps="3" data-current-step="0">
+    <div class="pad mid">
+      <div class="act-marker"><span class="step-num">1</span><span class="step-total">/3</span></div>
+      <div class="eyebrow reveal r-rise" data-step="1">Coste efectivo</div>
+      <h2 class="title reveal r-rise" data-step="1" style="--d:80ms">El descuento no está en la tarifa</h2>
+
+      <div class="split2">
+        <div class="metrica reveal r-scale" data-step="2">
+          <div class="cifra" data-counter="75" data-target-step="2">0<span class="unit">%</span></div>
+          <div class="glosa">Lo que baja la lectura de caché en Fable 5.1 frente a Fable 5. La entrada y la salida no se movieron ni un centavo.</div>
+        </div>
+
+        <div class="barras">
+          <div class="barra-fila reveal r-wipe" data-step="3">
+            <div class="etiqueta">GPT-6 Astra · caché por MTok</div>
+            <div class="barra"><div class="seg b" style="width:100%"><span>$1.00</span></div></div>
+          </div>
+          <div class="barra-fila reveal r-wipe" data-step="3" style="--d:80ms">
+            <div class="etiqueta">Claude Fable 5 · caché por MTok</div>
+            <div class="barra"><div class="seg b" style="width:100%"><span>$1.00</span></div></div>
+          </div>
+          <div class="barra-fila reveal r-wipe" data-step="3" style="--d:160ms">
+            <div class="etiqueta">Kimi K3 · caché por MTok</div>
+            <div class="barra"><div class="seg b" style="width:30%"><span>$0.30</span></div></div>
+          </div>
+          <div class="barra-fila reveal r-wipe" data-step="3" style="--d:240ms">
+            <div class="etiqueta">Claude Fable 5.1 · caché por MTok</div>
+            <div class="barra"><div class="seg a" style="width:25%"><span>$0.25</span></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="footer">
+      <div class="left"></div>
+      <div>Pedro Anze · Sesión técnica · <span class="num">04</span></div>
+    </div>
+  </section>
+
+  <!-- ────────── 05 · Transition ────────── -->
+  <section class="grad" data-label="05 Transition" data-steps="1" data-current-step="1">
+    <div class="pad center">
+      <h1 class="ts-title">Ahora, los números</h1>
+      <div class="ts-tagline">Seis modelos sobre el mismo banco de pruebas</div>
+    </div>
+    <div class="footer">
+      <div class="left"></div>
+      <div>Pedro Anze · Sesión técnica · <span class="num">05</span></div>
+    </div>
+  </section>
+
+  <!-- ────────── 06 · Grafica de barras nativa ────────── -->
+  <section data-label="06 Terminal-Bench" data-steps="3" data-current-step="0">
+    <div class="pad mid">
+      <div class="act-marker"><span class="step-num">1</span><span class="step-total">/3</span></div>
+      <div class="eyebrow reveal r-rise" data-step="1">Terminal-Bench 4.0</div>
+      <h2 class="title tight reveal r-rise" data-step="1" style="--d:80ms">El modelo que gana no se puede comprar</h2>
+
+      <div class="reveal r-wipe" data-step="2">
+        <svg class="chart" viewBox="0 0 1680 470" role="img" aria-label="Terminal-Bench 4.0: Mythos 5.1 60,9; GPT-6 Astra 57,7; Fable 5.1 55,8; Opus 5 52,3; Fable 5 42,0; GPT-5.6 Sol 37,3">
+          <line class="gline" x1="110" y1="71.4"  x2="1670" y2="71.4"/>
+          <line class="gline" x1="110" y1="174.3" x2="1670" y2="174.3"/>
+          <line class="gline" x1="110" y1="277.1" x2="1670" y2="277.1"/>
+          <text class="ax" x="88" y="78"  text-anchor="end">60</text>
+          <text class="ax" x="88" y="181" text-anchor="end">40</text>
+          <text class="ax" x="88" y="284" text-anchor="end">20</text>
+          <text class="ax" x="88" y="387" text-anchor="end">0</text>
+
+          <rect class="bar exc" x="110"  y="66.8"  width="180" height="313.2"/>
+          <rect class="bar"     x="386"  y="83.3"  width="180" height="296.7"/>
+          <rect class="bar"     x="662"  y="93.0"  width="180" height="287.0"/>
+          <rect class="bar"     x="938"  y="111.0" width="180" height="269.0"/>
+          <rect class="bar"     x="1214" y="164.0" width="180" height="216.0"/>
+          <rect class="bar"     x="1490" y="188.2" width="180" height="191.8"/>
+
+          <text class="val" x="200"  y="50"  text-anchor="middle">60,9</text>
+          <text class="val" x="476"  y="67"  text-anchor="middle">57,7</text>
+          <text class="val" x="752"  y="77"  text-anchor="middle">55,8</text>
+          <text class="val" x="1028" y="95"  text-anchor="middle">52,3</text>
+          <text class="val" x="1304" y="148" text-anchor="middle">42,0</text>
+          <text class="val" x="1580" y="172" text-anchor="middle">37,3</text>
+
+          <line class="base" x1="110" y1="380" x2="1670" y2="380"/>
+
+          <text class="name" x="200"  y="414" text-anchor="middle">Mythos 5.1</text>
+          <text class="name" x="476"  y="414" text-anchor="middle">GPT-6 Astra</text>
+          <text class="name" x="752"  y="414" text-anchor="middle">Fable 5.1</text>
+          <text class="name" x="1028" y="414" text-anchor="middle">Opus 5</text>
+          <text class="name" x="1304" y="414" text-anchor="middle">Fable 5</text>
+          <text class="name" x="1580" y="414" text-anchor="middle">GPT-5.6 Sol</text>
+
+          <text class="sub" x="200"  y="443" text-anchor="middle">Acceso restringido</text>
+          <text class="sub" x="476"  y="443" text-anchor="middle">OpenAI</text>
+          <text class="sub" x="752"  y="443" text-anchor="middle">Anthropic</text>
+          <text class="sub" x="1028" y="443" text-anchor="middle">Anthropic</text>
+          <text class="sub" x="1304" y="443" text-anchor="middle">Anthropic</text>
+          <text class="sub" x="1580" y="443" text-anchor="middle">OpenAI</text>
+        </svg>
+      </div>
+
+      <div class="stat-source reveal r-fade" data-step="3">Porcentaje de tareas resueltas en Terminal-Bench 4.0. Mythos 5.1 solo se sirve a organizaciones verificadas de ciberseguridad y ciencias de la vida.</div>
+    </div>
+    <div class="footer">
+      <div class="left"></div>
+      <div>Pedro Anze · Sesión técnica · <span class="num">06</span></div>
+    </div>
+  </section>
+
+  <!-- ────────── 07 · Tabla de benchmarks ────────── -->
+  <section data-label="07 Donde gana cada uno" data-steps="3" data-current-step="0">
+    <div class="pad mid">
+      <div class="act-marker"><span class="step-num">1</span><span class="step-total">/3</span></div>
+      <div class="eyebrow reveal r-rise" data-step="1">Capacidad</div>
+      <h2 class="title reveal r-rise" data-step="1" style="--d:80ms">Dónde gana cada uno</h2>
+
+      <div class="dtable t-bench">
+        <div class="trow thead reveal r-wipe" data-step="2">
+          <div>Benchmark</div><div>GPT-6 Astra</div><div>Claude Fable 5.1</div><div>Claude Opus 5</div>
+        </div>
+        <div class="trow reveal r-wipe" data-step="2" style="--d:60ms">
+          <div class="k">Terminal-Bench 4.0</div>
+          <div class="v top">57,7</div><div class="v">55,8</div><div class="v">52,3</div>
+        </div>
+        <div class="trow reveal r-wipe" data-step="2" style="--d:120ms">
+          <div class="k">Terminal-Bench-Science 0.1</div>
+          <div class="v top">64,6</div><div class="v">52,6</div><div class="v">29,0</div>
+        </div>
+        <div class="trow reveal r-wipe" data-step="2" style="--d:180ms">
+          <div class="k">AutomationBench</div>
+          <div class="v top">41,4</div><div class="v">31,4</div><div class="v">26,9</div>
+        </div>
+        <div class="trow reveal r-wipe" data-step="2" style="--d:240ms">
+          <div class="k">FrontierMath Tier 4</div>
+          <div class="v top">97,6</div><div class="v">87,8</div><div class="v">73,2</div>
+        </div>
+        <div class="trow reveal r-wipe" data-step="2" style="--d:300ms">
+          <div class="k">Humanity's Last Exam, con herramientas</div>
+          <div class="v">57,2</div><div class="v exc">65,0</div><div class="v">63,6</div>
+        </div>
+      </div>
+
+      <div class="payoff reveal r-mask" data-step="3">Astra barre en matemática, ciencia y agentes de terminal, y pierde la única prueba de conocimiento abierto de la tabla</div>
+    </div>
+    <div class="footer">
+      <div class="left"></div>
+      <div>Pedro Anze · Sesión técnica · <span class="num">07</span></div>
+    </div>
+  </section>
+
+  <!-- ────────── 08 · Fable vs Mythos ────────── -->
+  <section data-label="08 Fable y Mythos" data-steps="3" data-current-step="0">
+    <div class="pad mid">
+      <div class="act-marker"><span class="step-num">1</span><span class="step-total">/3</span></div>
+      <div class="eyebrow reveal r-rise" data-step="1">Salvaguardas</div>
+      <h2 class="title tight reveal r-rise" data-step="1" style="--d:80ms">Un modelo, dos puertas</h2>
+
+      <div class="pq-grid">
+        <div class="pq-card reveal r-left" data-step="2">
+          <div class="pq-eyebrow">Disponible en general</div>
+          <h3>Fable 5.1</h3>
+          <div class="pq-consequence">claude-fable-5-1</div>
+          <p>Salvaguardas de producción activas. Se llama desde la API de Anthropic, Amazon Bedrock, Google Cloud y Microsoft Foundry.</p>
+        </div>
+        <div class="pq-card exc reveal r-left" data-step="3">
+          <div class="pq-eyebrow">Acceso restringido</div>
+          <h3>Mythos 5.1</h3>
+          <div class="pq-consequence">Solo organizaciones verificadas</div>
+          <p>El mismo modelo base, sin los límites que las salvaguardas de producción imponen. Reservado a ciberseguridad y ciencias de la vida.</p>
+        </div>
+      </div>
+
+      <div class="payoff reveal r-mask" data-step="3" style="--d:120ms">La diferencia se mide: 55,8 contra 60,9 en Terminal-Bench 4.0</div>
+    </div>
+    <div class="footer">
+      <div class="left"></div>
+      <div>Pedro Anze · Sesión técnica · <span class="num">08</span></div>
+    </div>
+  </section>
+
+  <!-- ────────── 09 · Transition ────────── -->
+  <section class="grad" data-label="09 Transition" data-steps="1" data-current-step="1">
+    <div class="pad center">
+      <h1 class="ts-title">El frente abierto</h1>
+      <div class="ts-tagline">Los pesos que se pueden descargar</div>
+    </div>
+    <div class="footer">
+      <div class="left"></div>
+      <div>Pedro Anze · Sesión técnica · <span class="num">09</span></div>
+    </div>
+  </section>
+
+  <!-- ────────── 10 · Pesos abiertos ────────── -->
+  <section data-label="10 Pesos abiertos" data-steps="4" data-current-step="0">
+    <div class="pad mid">
+      <div class="act-marker"><span class="step-num">1</span><span class="step-total">/4</span></div>
+      <div class="eyebrow reveal r-rise" data-step="1">China</div>
+      <h2 class="title tight reveal r-rise" data-step="1" style="--d:80ms">Tres modelos que se descargan</h2>
+
+      <div class="ow-grid">
+        <div class="card reveal r-scale" data-step="2">
+          <div class="card-eyebrow"><img class="brand-logo" src="assets/logos/moonshotai.svg" alt="">Moonshot AI</div>
+          <h3>Kimi K3</h3>
+          <div class="kv">
+            <div class="kv-row"><span class="kv-k">Parámetros</span><span class="kv-v">2,8 T</span></div>
+            <div class="kv-row"><span class="kv-k">Activos</span><span class="kv-v">104 B</span></div>
+            <div class="kv-row"><span class="kv-k">Pesos</span><span class="kv-v">26 jul 2026</span></div>
+            <div class="kv-row"><span class="kv-k">Precio</span><span class="kv-v">3 / 15</span></div>
+          </div>
+          <p>El mayor modelo de pesos abiertos publicado hasta hoy. Su licencia condiciona el uso comercial de inferencia por encima de 20 millones de dólares anuales de ingresos.</p>
+        </div>
+        <div class="card reveal r-scale" data-step="3">
+          <div class="card-eyebrow"><img class="brand-logo" src="assets/logos/alibabacloud.svg" alt="">Alibaba</div>
+          <h3>Qwen3.8-Max</h3>
+          <div class="kv">
+            <div class="kv-row"><span class="kv-k">Parámetros</span><span class="kv-v">2,4 T</span></div>
+            <div class="kv-row"><span class="kv-k">Activos</span><span class="kv-v">95 B</span></div>
+            <div class="kv-row"><span class="kv-k">Pesos</span><span class="kv-v exc">Pendiente</span></div>
+            <div class="kv-row"><span class="kv-k">Precio</span><span class="kv-v">2 / 6</span></div>
+          </div>
+          <p>Anunciado como el primer Max que Alibaba planea abrir, pero la publicación de los pesos todavía no ocurrió. Hoy solo se accede por API.</p>
+        </div>
+        <div class="card reveal r-scale" data-step="4">
+          <div class="card-eyebrow"><img class="brand-logo" src="assets/logos/deepseek.svg" alt="">DeepSeek</div>
+          <h3>DeepSeek V4-Pro</h3>
+          <div class="kv">
+            <div class="kv-row"><span class="kv-k">Parámetros</span><span class="kv-v">1,6 T</span></div>
+            <div class="kv-row"><span class="kv-k">Activos</span><span class="kv-v">49 B</span></div>
+            <div class="kv-row"><span class="kv-k">Pesos</span><span class="kv-v">13 ago 2026</span></div>
+            <div class="kv-row"><span class="kv-k">Precio</span><span class="kv-v">0,435 / 0,87</span></div>
+          </div>
+          <p>Empatado con Claude Opus 4.7 en SWE-bench Verified, 80,6 contra 80,8, y por delante en LiveCodeBench con 93,5.</p>
+        </div>
+      </div>
+    </div>
+    <div class="footer">
+      <div class="left"></div>
+      <div>Pedro Anze · Sesión técnica · <span class="num">10</span></div>
+    </div>
+  </section>
+
+  <!-- ────────── 11 · Diferencial de precio ────────── -->
+  <section data-label="11 Diferencial de precio" data-steps="3" data-current-step="0">
+    <div class="pad mid">
+      <div class="act-marker"><span class="step-num">1</span><span class="step-total">/3</span></div>
+      <div class="eyebrow reveal r-rise" data-step="1">Economía</div>
+      <h2 class="title reveal r-rise" data-step="1" style="--d:80ms">Lo que separa a los dos extremos</h2>
+
+      <div class="split2">
+        <div class="metrica reveal r-scale" data-step="2">
+          <div class="cifra" data-counter="57" data-target-step="2">0<span class="unit">x</span></div>
+          <div class="glosa">Lo que cuesta un millón de tokens de salida en GPT-6 Astra frente a DeepSeek V4-Pro.</div>
+        </div>
+
+        <div>
+          <div class="prop reveal r-wipe" data-step="3" style="margin-bottom:34px">
+            <div class="lbl"><span>GPT-6 Astra</span><span>$50.00</span></div>
+            <div class="track"><div class="fill" style="--v:1"></div></div>
+          </div>
+          <div class="prop reveal r-wipe" data-step="3" style="--d:80ms;margin-bottom:34px">
+            <div class="lbl"><span>Kimi K3</span><span>$15.00</span></div>
+            <div class="track"><div class="fill" style="--v:.30"></div></div>
+          </div>
+          <div class="prop reveal r-wipe" data-step="3" style="--d:160ms;margin-bottom:34px">
+            <div class="lbl"><span>Qwen3.8-Max</span><span>$6.00</span></div>
+            <div class="track"><div class="fill" style="--v:.12"></div></div>
+          </div>
+          <div class="prop reveal r-wipe" data-step="3" style="--d:240ms">
+            <div class="lbl"><span>DeepSeek V4-Pro</span><span>$0.87</span></div>
+            <div class="track"><div class="fill" style="--v:.017"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="footer">
+      <div class="left"></div>
+      <div>Pedro Anze · Sesión técnica · <span class="num">11</span></div>
+    </div>
+  </section>
+
+  <!-- ────────── 12 · Qué hacer con esto ────────── -->
+  <section data-label="12 Que hacer" data-steps="3" data-current-step="0">
+    <div class="pad mid">
+      <div class="act-marker"><span class="step-num">1</span><span class="step-total">/3</span></div>
+      <div class="eyebrow reveal r-rise" data-step="1">El lunes</div>
+      <h2 class="title tight reveal r-rise" data-step="1" style="--d:80ms">Cuatro decisiones concretas</h2>
+
+      <div class="warn-grid stagger">
+        <div class="warn-card reveal r-scale" data-step="2">
+          <div class="warn-num-row">
+            <span class="warn-num">01</span>
+            <span class="warn-icon"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5l4 4"/></svg></span>
+          </div>
+          <h3>Medir la factura, no la tarifa</h3>
+          <p>Astra y Fable 5.1 cobran lo mismo por token. La diferencia vive en la caché, que es donde se va el gasto de un agente.</p>
+        </div>
+        <div class="warn-card reveal r-scale" data-step="2">
+          <div class="warn-num-row">
+            <span class="warn-num">02</span>
+            <span class="warn-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="2"/><path d="M12 4v3"/><path d="M12 17v3"/><path d="M4 12h3"/><path d="M17 12h3"/><path d="M5.6 5.6l2.1 2.1"/><path d="M16.3 16.3l2.1 2.1"/><path d="M5.6 18.4l2.1-2.1"/><path d="M16.3 7.7l2.1-2.1"/></svg></span>
+          </div>
+          <h3>Separar el eje agéntico del académico</h3>
+          <p>Una tabla de benchmarks no da un ganador único. Elegir el eje que se parece a tu carga real y descartar el resto.</p>
+        </div>
+        <div class="warn-card reveal r-scale" data-step="2">
+          <div class="warn-num-row">
+            <span class="warn-num">03</span>
+            <span class="warn-icon"><svg viewBox="0 0 24 24"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg></span>
+          </div>
+          <h3>Poner los pesos abiertos en el camino barato</h3>
+          <p>Kimi K3 y DeepSeek V4-Pro absorben el volumen. El modelo caro queda para lo que de verdad lo necesita.</p>
+        </div>
+        <div class="warn-card reveal r-scale" data-step="2">
+          <div class="warn-num-row">
+            <span class="warn-num">04</span>
+            <span class="warn-icon"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg></span>
+          </div>
+          <h3>Leer el modelo, no el nombre</h3>
+          <p>Mythos 5.1 y Fable 5.1 son el mismo modelo con distintas salvaguardas. Solo uno de los dos se puede contratar.</p>
+        </div>
+      </div>
+
+      <div class="payoff reveal r-mask" data-step="3">Cuatro días de lanzamientos, una sola pregunta: qué carga tenés y cuánto estás pagando por ella</div>
+    </div>
+    <div class="footer">
+      <div class="left"></div>
+      <div>Pedro Anze · Sesión técnica · <span class="num">12</span></div>
+    </div>
+  </section>
+
+  <!-- ────────── 13 · Cierre ────────── -->
+  <section class="grad" data-label="13 Cierre" data-steps="1" data-current-step="1">
+    <div class="pad center">
+      <div class="eyebrow">Gracias</div>
+      <h1 class="cover-md">El lunes, medí tu caché</h1>
+      <div class="subtitle">Todas las cifras de esta charla, con su fuente, están en el README del repositorio</div>
+    </div>
+    <div class="footer">
+      <div class="left"></div>
+      <div>Pedro Anze · Sesión técnica · <span class="num">13</span></div>
+    </div>
+  </section>
+
+
+</deck-stage>
+
+<!-- Viewer chrome: progress bar (top) + fullscreen button (top-right) -->
+<div id="progress-bar"></div>
+<button id="fs-btn" type="button" aria-label="Toggle fullscreen" title="Fullscreen">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M3 9V5a2 2 0 0 1 2-2h4M21 9V5a2 2 0 0 0-2-2h-4M21 15v4a2 2 0 0 1-2 2h-4M3 15v4a2 2 0 0 0 2 2h4"/>
+  </svg>
+</button>
+
+<!-- ============================================================
+     <deck-stage> custom element — fixed-aspect canvas with
+     keyboard nav, tap zones, slide overlay, print pagination.
+     Inlined IIFE — no external dependencies.
+     ============================================================ -->
+<script>
+  (() => {
+    const DESIGN_W_DEFAULT = 1920;
+    const DESIGN_H_DEFAULT = 1080;
+    const OVERLAY_HIDE_MS = 1800;
+    const VALIDATE_ATTR = 'no_overflowing_text,no_overlapping_text,slide_sized_text';
+    const pad2 = (n) => String(n).padStart(2, '0');
+
+    const stylesheet = `
+      :host {
+        position: fixed; inset: 0; display: block; background: #000; color: #fff;
+        font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, sans-serif;
+        overflow: hidden;
+      }
+      .stage { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
+      .canvas { position: relative; transform-origin: center center; flex-shrink: 0; background: var(--cs-cream); will-change: transform; }
+      ::slotted(*) {
+        position: absolute !important; inset: 0 !important;
+        width: 100% !important; height: 100% !important;
+        box-sizing: border-box !important; overflow: hidden;
+        opacity: 0; pointer-events: none; visibility: hidden;
+      }
+      ::slotted([data-deck-active]) { opacity: 1; pointer-events: auto; visibility: visible; }
+      .tapzones { position: fixed; inset: 0; display: flex; z-index: 2147482000; pointer-events: none; }
+      .tapzone { flex: 1; pointer-events: auto; -webkit-tap-highlight-color: transparent; }
+      @media (hover: hover) and (pointer: fine) { .tapzones { display: none; } }
+      .overlay {
+        position: fixed; left: 50%; bottom: 22px;
+        transform: translate(-50%, 6px) scale(0.92); filter: blur(6px);
+        display: flex; align-items: center; gap: 4px; padding: 4px;
+        background: #000; color: #fff; border-radius: 999px;
+        font-size: 12px; font-feature-settings: "tnum" 1; letter-spacing: 0.01em;
+        opacity: 0; pointer-events: none;
+        transition: opacity 260ms ease, transform 260ms cubic-bezier(.2,.8,.2,1), filter 260ms ease;
+        transform-origin: center bottom; z-index: 2147483000; user-select: none;
+      }
+      .overlay[data-visible] { opacity: 1; pointer-events: auto; transform: translate(-50%, 0) scale(1); filter: blur(0); }
+      .btn {
+        appearance: none; background: transparent; border: 0; margin: 0; padding: 0;
+        color: rgba(255,255,255,0.72); font: inherit; cursor: default;
+        display: inline-flex; align-items: center; justify-content: center;
+        height: 28px; min-width: 28px; border-radius: 999px;
+        transition: background 140ms ease, color 140ms ease;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .btn:hover { background: rgba(255,255,255,0.12); color: #fff; }
+      .btn:active { background: rgba(255,255,255,0.18); }
+      .btn:focus { outline: none; }
+      .btn:focus-visible { outline: none; box-shadow: 0 0 0 2px rgba(255,255,255,0.9); }
+      .btn svg { width: 14px; height: 14px; display: block; }
+      .btn.reset { font-size: 11px; font-weight: 500; padding: 0 10px 0 12px; gap: 6px; }
+      .btn.reset .kbd {
+        display: inline-flex; align-items: center; justify-content: center;
+        min-width: 16px; height: 16px; padding: 0 4px;
+        font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+        font-size: 10px; line-height: 1; color: rgba(255,255,255,0.88);
+        background: rgba(255,255,255,0.12); border-radius: 4px;
+      }
+      .count {
+        font-variant-numeric: tabular-nums; color: #fff; font-weight: 500;
+        padding: 0 8px; min-width: 42px; text-align: center; font-size: 12px;
+      }
+      .count .sep { color: rgba(255,255,255,0.45); margin: 0 3px; font-weight: 400; }
+      .count .total { color: rgba(255,255,255,0.55); }
+      .divider { width: 1px; height: 14px; background: rgba(255,255,255,0.18); margin: 0 2px; }
+      @media print {
+        :host { position: static; inset: auto; background: none; overflow: visible; color: inherit; }
+        .stage { position: static; display: block; }
+        .canvas { transform: none !important; width: auto !important; height: auto !important; background: none; will-change: auto; }
+        ::slotted(*) {
+          position: relative !important; inset: auto !important;
+          width: var(--deck-design-w) !important; height: var(--deck-design-h) !important;
+          box-sizing: border-box !important;
+          opacity: 1 !important; visibility: visible !important; pointer-events: auto;
+          break-after: page; page-break-after: always; break-inside: avoid; overflow: hidden;
+        }
+        ::slotted(*:last-child) { break-after: auto; page-break-after: auto; }
+        .overlay, .tapzones { display: none !important; }
+      }
+    `;
+
+    class DeckStage extends HTMLElement {
+      static get observedAttributes() { return ['width', 'height', 'noscale']; }
+
+      constructor() {
+        super();
+        this._root = this.attachShadow({ mode: 'open' });
+        this._index = 0;
+        this._slides = [];
+        this._notes = [];
+        this._hideTimer = null;
+        this._onKey = this._onKey.bind(this);
+        this._onResize = this._onResize.bind(this);
+        this._onSlotChange = this._onSlotChange.bind(this);
+        this._onMouseMove = this._onMouseMove.bind(this);
+        this._onTapBack = this._onTapBack.bind(this);
+        this._onTapForward = this._onTapForward.bind(this);
+      }
+
+      get designWidth() { return parseInt(this.getAttribute('width'), 10) || DESIGN_W_DEFAULT; }
+      get designHeight() { return parseInt(this.getAttribute('height'), 10) || DESIGN_H_DEFAULT; }
+
+      connectedCallback() {
+        this._render();
+        this._loadNotes();
+        this._syncPrintPageRule();
+        window.addEventListener('keydown', this._onKey);
+        window.addEventListener('resize', this._onResize);
+        window.addEventListener('mousemove', this._onMouseMove, { passive: true });
+      }
+      disconnectedCallback() {
+        window.removeEventListener('keydown', this._onKey);
+        window.removeEventListener('resize', this._onResize);
+        window.removeEventListener('mousemove', this._onMouseMove);
+        if (this._hideTimer) clearTimeout(this._hideTimer);
+      }
+      attributeChangedCallback() {
+        if (this._canvas) {
+          this._canvas.style.width = this.designWidth + 'px';
+          this._canvas.style.height = this.designHeight + 'px';
+          this._canvas.style.setProperty('--deck-design-w', this.designWidth + 'px');
+          this._canvas.style.setProperty('--deck-design-h', this.designHeight + 'px');
+          this._fit();
+          this._syncPrintPageRule();
+        }
+      }
+
+      _render() {
+        const style = document.createElement('style');
+        style.textContent = stylesheet;
+        const stage = document.createElement('div');
+        stage.className = 'stage';
+        const canvas = document.createElement('div');
+        canvas.className = 'canvas';
+        canvas.style.width = this.designWidth + 'px';
+        canvas.style.height = this.designHeight + 'px';
+        canvas.style.setProperty('--deck-design-w', this.designWidth + 'px');
+        canvas.style.setProperty('--deck-design-h', this.designHeight + 'px');
+        const slot = document.createElement('slot');
+        slot.addEventListener('slotchange', this._onSlotChange);
+        canvas.appendChild(slot);
+        stage.appendChild(canvas);
+        const tapzones = document.createElement('div');
+        tapzones.className = 'tapzones export-hidden';
+        tapzones.setAttribute('aria-hidden', 'true');
+        const tzBack = document.createElement('div'); tzBack.className = 'tapzone tapzone--back';
+        const tzMid = document.createElement('div'); tzMid.className = 'tapzone tapzone--mid'; tzMid.style.pointerEvents = 'none';
+        const tzFwd = document.createElement('div'); tzFwd.className = 'tapzone tapzone--fwd';
+        tzBack.addEventListener('click', this._onTapBack);
+        tzFwd.addEventListener('click', this._onTapForward);
+        tapzones.append(tzBack, tzMid, tzFwd);
+        const overlay = document.createElement('div');
+        overlay.className = 'overlay export-hidden';
+        overlay.setAttribute('role', 'toolbar');
+        overlay.setAttribute('aria-label', 'Deck controls');
+        overlay.innerHTML =
+          '<button class="btn prev" type="button" aria-label="Previous slide" title="Previous (←)">' +
+            '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3L5 8l5 5"/></svg>' +
+          '</button>' +
+          '<span class="count" aria-live="polite"><span class="current">1</span><span class="sep">/</span><span class="total">1</span></span>' +
+          '<button class="btn next" type="button" aria-label="Next slide" title="Next (→)">' +
+            '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3l5 5-5 5"/></svg>' +
+          '</button>' +
+          '<span class="divider"></span>' +
+          '<button class="btn reset" type="button" aria-label="Reset to first slide" title="Reset (R)">Reset<span class="kbd">R</span></button>';
+        overlay.querySelector('.prev').addEventListener('click', () => this._go(this._index - 1, 'click'));
+        overlay.querySelector('.next').addEventListener('click', () => this._go(this._index + 1, 'click'));
+        overlay.querySelector('.reset').addEventListener('click', () => this._go(0, 'click'));
+        this._root.append(style, stage, tapzones, overlay);
+        this._canvas = canvas;
+        this._slot = slot;
+        this._overlay = overlay;
+        this._countEl = overlay.querySelector('.current');
+        this._totalEl = overlay.querySelector('.total');
+      }
+
+      _syncPrintPageRule() {
+        const id = 'deck-stage-print-page';
+        let tag = document.getElementById(id);
+        if (!tag) { tag = document.createElement('style'); tag.id = id; document.head.appendChild(tag); }
+        tag.textContent =
+          '@page { size: ' + this.designWidth + 'px ' + this.designHeight + 'px; margin: 0; } ' +
+          '@media print { html, body { margin: 0 !important; padding: 0 !important; background: none !important; overflow: visible !important; height: auto !important; } * { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }';
+      }
+
+      _onSlotChange() {
+        this._collectSlides();
+        this._restoreIndex();
+        this._applyIndex({ showOverlay: false, broadcast: true, reason: 'init' });
+        this._fit();
+      }
+
+      _collectSlides() {
+        const assigned = this._slot.assignedElements({ flatten: true });
+        this._slides = assigned.filter((el) => {
+          const tag = el.tagName;
+          return tag !== 'TEMPLATE' && tag !== 'SCRIPT' && tag !== 'STYLE';
+        });
+        this._slides.forEach((slide, i) => {
+          const n = i + 1;
+          let label = slide.getAttribute('data-label');
+          if (!label) {
+            const existing = slide.getAttribute('data-screen-label');
+            if (existing) label = existing.replace(/^\s*\d+\s*/, '').trim() || existing;
+          }
+          if (!label) {
+            const h = slide.querySelector('h1, h2, h3, [data-title]');
+            if (h) label = (h.textContent || '').trim().slice(0, 40);
+          }
+          if (!label) label = 'Slide';
+          slide.setAttribute('data-screen-label', `${pad2(n)} ${label}`);
+          if (!slide.hasAttribute('data-om-validate')) slide.setAttribute('data-om-validate', VALIDATE_ATTR);
+          slide.setAttribute('data-deck-slide', String(i));
+        });
+        if (this._totalEl) this._totalEl.textContent = String(this._slides.length || 1);
+        if (this._index >= this._slides.length) this._index = Math.max(0, this._slides.length - 1);
+      }
+
+      _loadNotes() {
+        const tag = document.getElementById('speaker-notes');
+        if (!tag) { this._notes = []; return; }
+        try {
+          const parsed = JSON.parse(tag.textContent || '[]');
+          if (Array.isArray(parsed)) this._notes = parsed;
+        } catch (e) { this._notes = []; }
+      }
+
+      _restoreIndex() {
+        const h = (location.hash || '').match(/^#(\d+)$/);
+        if (h) {
+          const n = parseInt(h[1], 10) - 1;
+          if (n >= 0 && n < this._slides.length) this._index = n;
+        }
+      }
+
+      _applyIndex({ showOverlay = true, broadcast = true, reason = 'init' } = {}) {
+        if (!this._slides.length) return;
+        const prev = this._prevIndex == null ? -1 : this._prevIndex;
+        const curr = this._index;
+        try { history.replaceState(null, '', '#' + (curr + 1)); } catch (e) {}
+        this._slides.forEach((s, i) => {
+          if (i === curr) s.setAttribute('data-deck-active', '');
+          else s.removeAttribute('data-deck-active');
+        });
+        if (this._countEl) this._countEl.textContent = String(curr + 1);
+        if (broadcast) {
+          try { window.postMessage({ slideIndexChanged: curr }, '*'); } catch (e) {}
+          this.dispatchEvent(new CustomEvent('slidechange', {
+            detail: {
+              index: curr, previousIndex: prev,
+              total: this._slides.length,
+              slide: this._slides[curr] || null,
+              previousSlide: prev >= 0 ? (this._slides[prev] || null) : null,
+              reason: reason,
+            },
+            bubbles: true, composed: true,
+          }));
+        }
+        this._prevIndex = curr;
+        if (showOverlay) this._flashOverlay();
+      }
+
+      _flashOverlay() {
+        if (!this._overlay) return;
+        this._overlay.setAttribute('data-visible', '');
+        if (this._hideTimer) clearTimeout(this._hideTimer);
+        this._hideTimer = setTimeout(() => { this._overlay.removeAttribute('data-visible'); }, OVERLAY_HIDE_MS);
+      }
+
+      _fit() {
+        if (!this._canvas) return;
+        if (this.hasAttribute('noscale')) { this._canvas.style.transform = 'none'; return; }
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+        const s = Math.min(vw / this.designWidth, vh / this.designHeight);
+        this._canvas.style.transform = `scale(${s})`;
+      }
+
+      _onResize() { this._fit(); }
+      _onMouseMove() { this._flashOverlay(); }
+      _onTapBack(e) { e.preventDefault(); this._go(this._index - 1, 'tap'); }
+      _onTapForward(e) { e.preventDefault(); this._go(this._index + 1, 'tap'); }
+
+      _onKey(e) {
+        const t = e.target;
+        if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
+        if (e.metaKey || e.ctrlKey || e.altKey) return;
+        const key = e.key;
+        let handled = true;
+        if (key === 'ArrowRight' || key === 'PageDown' || key === ' ' || key === 'Spacebar') this._go(this._index + 1, 'keyboard');
+        else if (key === 'ArrowLeft' || key === 'PageUp') this._go(this._index - 1, 'keyboard');
+        else if (key === 'Home') this._go(0, 'keyboard');
+        else if (key === 'End') this._go(this._slides.length - 1, 'keyboard');
+        else if (key === 'r' || key === 'R') this._go(0, 'keyboard');
+        else if (/^[0-9]$/.test(key)) {
+          const n = key === '0' ? 9 : parseInt(key, 10) - 1;
+          if (n < this._slides.length) this._go(n, 'keyboard');
+        } else handled = false;
+        if (handled) { e.preventDefault(); }
+      }
+
+      _go(i, reason = 'api') {
+        if (!this._slides.length) return;
+        const clamped = Math.max(0, Math.min(this._slides.length - 1, i));
+        if (clamped === this._index) { return; }
+        this._index = clamped;
+        this._applyIndex({ showOverlay: false, broadcast: true, reason });
+      }
+
+      get index() { return this._index; }
+      get length() { return this._slides.length; }
+      goTo(i) { this._go(i, 'api'); }
+      next() { this._go(this._index + 1, 'api'); }
+      prev() { this._go(this._index - 1, 'api'); }
+      reset() { this._go(0, 'api'); }
+    }
+
+    if (!customElements.get('deck-stage')) customElements.define('deck-stage', DeckStage);
+  })();
+</script>
+
+<!-- ============================================================
+     Runtime: lucide icons + step controller + viewer chrome
+     ============================================================ -->
+<script>
+  if (window.lucide) lucide.createIcons();
+
+  const stage = document.querySelector('deck-stage');
+
+  /* Mirror data-deck-active → data-active="true" on the section so CSS
+     animations and `.is-on` reveals can scope on it. */
+  function syncActive() {
+    const slides = stage.querySelectorAll(':scope > section');
+    slides.forEach((s) => {
+      if (s.hasAttribute('data-deck-active')) s.setAttribute('data-active', 'true');
+      else s.removeAttribute('data-active');
+    });
+  }
+
+  /* Formato compartido del contador: lo usan la animacion y el estado final
+     de impresion, para que el PDF muestre exactamente la misma cifra. */
+  function counterParts(el) {
+    const target = parseInt(el.dataset.counter, 10);
+    const unitNode = el.querySelector('.unit');
+    const unitHTML = unitNode ? unitNode.outerHTML : '';
+    const formatVal = (v) => {
+      if (target >= 100000) return (v / 1000).toFixed(0) + 'k';
+      if (target >= 1000)   return (v / 1000).toFixed(1) + 'k';
+      return Math.round(v).toString();
+    };
+    return { target, unitHTML, formatVal };
+  }
+
+  /* Counter animation — runs when [data-counter] reaches data-target-step.
+     Used by the counter+bars pattern (animations.md). */
+  function runCounter(el) {
+    if (el.dataset.played === '1') return;
+    el.dataset.played = '1';
+    const { target, unitHTML, formatVal } = counterParts(el);
+    const duration = 1400;
+    el.innerHTML = formatVal(0) + unitHTML;
+    const start = performance.now();
+    const tick = (now) => {
+      const t = Math.min(1, (now - start) / duration);
+      const eased = 1 - Math.pow(1 - t, 5);
+      el.innerHTML = formatVal(target * eased) + unitHTML;
+      if (t < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }
+
+  function resetCounters(slide) {
+    slide.querySelectorAll('[data-counter]').forEach((el) => {
+      el.dataset.played = '';
+      const unitNode = el.querySelector('.unit');
+      const unitHTML = unitNode ? unitNode.outerHTML : '';
+      el.innerHTML = '0' + unitHTML;
+    });
+  }
+
+  /* Apply current step: every .reveal whose data-step <= current gets .is-on. */
+  function applyStep(slide, step) {
+    slide.dataset.currentStep = String(step);
+    slide.querySelectorAll('.reveal').forEach((el) => {
+      const elStep = parseInt(el.dataset.step || '1', 10);
+      el.classList.toggle('is-on', elStep <= step);
+    });
+    slide.querySelectorAll('[data-counter]').forEach((el) => {
+      const target = parseInt(el.dataset.targetStep || '1', 10);
+      if (target <= step) runCounter(el);
+    });
+    const marker = slide.querySelector('.act-marker .step-num');
+    if (marker) marker.textContent = String(step);
+  }
+
+  /* Reset slide to step 0 (all reveals hidden), then advance to step 1
+     so the first reveal animates in on entry. */
+  function resetAndEnter(slide) {
+    if (!slide) return;
+    slide.querySelectorAll('.reveal').forEach((el) => el.classList.remove('is-on'));
+    resetCounters(slide);
+    slide.dataset.currentStep = '0';
+    requestAnimationFrame(() => requestAnimationFrame(() => applyStep(slide, 1)));
+  }
+
+  /* Capture-phase keydown — runs BEFORE deck-stage's own handler. Advances
+     in-slide steps until exhausted, then lets deck-stage advance the slide. */
+  window.addEventListener('keydown', (e) => {
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    const t = e.target;
+    if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
+    const slide = stage.querySelector(':scope > section[data-deck-active]');
+    if (!slide) return;
+    const total = parseInt(slide.dataset.steps || '1', 10);
+    const current = parseInt(slide.dataset.currentStep || '1', 10);
+    if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+      if (current < total) {
+        applyStep(slide, current + 1);
+        e.preventDefault();
+        e.stopImmediatePropagation();
+      }
+    } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+      if (current > 1) {
+        applyStep(slide, current - 1);
+        e.preventDefault();
+        e.stopImmediatePropagation();
+      }
+    }
+  }, { capture: true });
+
+  /* On slide change: sync data-active, re-enter the new slide, update progress bar */
+  stage.addEventListener('slidechange', (e) => {
+    requestAnimationFrame(() => {
+      syncActive();
+      resetAndEnter(e.detail.slide);
+    });
+    const pct = (e.detail.index + 1) / e.detail.total;
+    const bar = document.getElementById('progress-bar');
+    if (bar) bar.style.transform = 'scaleX(' + pct + ')';
+  });
+
+  /* Entrada inicial: deck-stage puede emitir su primer `slidechange` antes de
+     que este script registre el listener de arriba (define el custom element en
+     el bloque anterior). Sin esto, abrir el deck directo en una slide animada
+     — o deep-linkear con #N — la deja en blanco: los .reveal nunca reciben
+     .is-on. Sembramos el estado a mano una vez, ya con el DOM listo. */
+  function enterInitialSlide() {
+    const slide = stage.querySelector(':scope > section[data-deck-active]');
+    if (!slide) { requestAnimationFrame(enterInitialSlide); return; }
+    syncActive();
+    resetAndEnter(slide);
+    const total = stage.querySelectorAll(':scope > section').length || 1;
+    const idx = Array.prototype.indexOf.call(stage.querySelectorAll(':scope > section'), slide);
+    const bar = document.getElementById('progress-bar');
+    if (bar) bar.style.transform = 'scaleX(' + ((idx + 1) / total) + ')';
+  }
+  requestAnimationFrame(enterInitialSlide);
+
+  /* Antes de imprimir / exportar a PDF: llevar TODAS las slides a su estado
+     final, no solo la activa. El CSS de @media print ya revela los .reveal,
+     pero los contadores [data-counter] necesitan JS: su valor lo calcula
+     runCounter al llegar al paso objetivo, asi que sin esto un dato se
+     imprime como "0" en vez de su cifra real. */
+  function finalizeForPrint() {
+    stage.querySelectorAll(':scope > section').forEach((slide) => {
+      slide.querySelectorAll('.reveal').forEach((el) => el.classList.add('is-on'));
+      slide.querySelectorAll('[data-counter]').forEach((el) => {
+        const { target, unitHTML, formatVal } = counterParts(el);
+        el.dataset.played = '1';
+        el.innerHTML = formatVal(target) + unitHTML;
+      });
+      const marker = slide.querySelector('.act-marker .step-num');
+      if (marker) marker.textContent = slide.dataset.steps || '1';
+    });
+  }
+  window.addEventListener('beforeprint', finalizeForPrint);
+  if (window.matchMedia) {
+    const mq = window.matchMedia('print');
+    if (mq.addEventListener) mq.addEventListener('change', (e) => { if (e.matches) finalizeForPrint(); });
+  }
+
+  /* Fullscreen button — toggle, hide while fullscreen */
+  const fsBtn = document.getElementById('fs-btn');
+  if (fsBtn) {
+    fsBtn.addEventListener('click', () => {
+      if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(() => {});
+      else document.exitFullscreen();
+    });
+    document.addEventListener('fullscreenchange', () => {
+      if (document.fullscreenElement) fsBtn.setAttribute('data-fs', '1');
+      else fsBtn.removeAttribute('data-fs');
+    });
+  }
+</script>
+
+</body>
+</html>

@@ -95,12 +95,17 @@ Para el dato que carga la slide. Usa el contador animado del template: el númer
 }
 .metrica .cifra .unit { font-size: .5em; }
 .metrica .glosa { font-size: 32px; line-height: 1.4; color: var(--cs-body); max-width: 760px; }
+/* .stat-source (definida en template.html) va debajo del .glosa cuando la
+   cifra necesita atribuirse a una fuente externa — benchmarks, precios,
+   cualquier numero que no sea propio. Opcional: una cifra propia no la
+   necesita. */
 ```
 
 ```html
 <div class="metrica reveal r-scale" data-step="2">
   <div class="cifra" data-counter="23" data-target-step="2">0<span class="unit">%</span></div>
   <div class="glosa">Qué significa esa cifra, en una frase.</div>
+  <div class="stat-source">Fuente: Artificial Analysis, benchmarks GPT-6 Astra.</div>
 </div>
 ```
 

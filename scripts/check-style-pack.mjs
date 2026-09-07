@@ -12,7 +12,11 @@
  *
  * Reglas verificadas:
  *   ink  vs bg  >= 7.0  (texto de cuerpo legible)
- *   muted vs bg >= 3.5  (texto secundario legible)
+ *   muted vs bg >= 4.5  (texto secundario legible: mismo umbral AA de texto
+ *                        normal que usa check-contrast.mjs — --cs-muted no
+ *                        tiene un tamaño fijo garantizado, se usa en badges,
+ *                        captions y footers por igual, así que no puede
+ *                        asumirse "texto grande" solo porque es un token)
  *   title vs bg >= 7.0
  *   primary vs bg >= 3.0  (usado en eyebrows y numeros, texto grande)
  *   accent vs bg >= 3.0
@@ -63,7 +67,7 @@ const asHex = (v = '') => (/#([0-9a-f]{6}|[0-9a-f]{3})\b/i.exec(v) || [])[0] || 
 const CHECKS = [
   ['ink de cuerpo vs fondo',  'body',    'cream', 7.0],
   ['titulo vs fondo',         'black',   'cream', 7.0],
-  ['texto atenuado vs fondo', 'muted',   'cream', 3.5],
+  ['texto atenuado vs fondo', 'muted',   'cream', 4.5],
   ['primario vs fondo',       'primary', 'cream', 3.0],
   ['acento vs fondo',         'accent',  'cream', 3.0],
   ['ink de cuerpo vs card',   'body',    'surface', 7.0],

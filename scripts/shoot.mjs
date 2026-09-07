@@ -33,7 +33,6 @@
 import { readFileSync, writeFileSync, rmSync, mkdirSync, existsSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import path from 'node:path';
-import os from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { findChrome } from './lib/find-chrome.mjs';
 
@@ -109,19 +108,42 @@ const harness = `
 <style>*, *::before, *::after { transition: none !important; animation: none !important; }</style>
 <script>
 window.addEventListener('DOMContentLoaded', () => {
-  requestAnimationFrame(() => requestAnimationFrame(() => {
+  // Un solo rAF + setTimeout, no un rAF anidado en otro: en Chrome headless
+  // con --disable-gpu el segundo rAF de una cadena no llega a dispararse la
+  // mayoria de las veces (medido: 9 de 10 corridas se cuelgan esperandolo).
+  // Esta es la causa real de los PNG vacios reportados en las pruebas — el
+  // harness nunca corria, y Chrome exportaba la slide en su estado inicial
+  // (opacidad 0) sin ningun error visible.
+  const reveal = () => {
     try { window.dispatchEvent(new Event('beforeprint')); } catch (e) {}
     // Cinturon y tirantes: si un deck viejo no tiene finalizeForPrint
     // (engine < 1.0.0), al menos revelar los .reveal a mano.
     document.querySelectorAll('.reveal').forEach((el) => el.classList.add('is-on'));
     document.documentElement.setAttribute('data-slizdeck-shot', 'ready');
-  }));
+  };
+  requestAnimationFrame(() => { setTimeout(() => {
+    reveal();
+    // Navegar a #N (para capturar una slide puntual) dispara el propio
+    // slidechange del deck-stage, que llama resetAndEnter(): quita .is-on
+    // de esa slide y la vuelve a poner solo hasta el paso 1, no el final.
+    // Si esa segunda pasada corre DESPUES de la de arriba, gana ella y la
+    // captura sale con el resto de los pasos ocultos — no en blanco, pero
+    // incompleta, y de forma deterministica (no es el bug de rAF de
+    // arriba). Repetir el reveal en una segunda vuelta lo deja ganando
+    // siempre, sin importar el orden real de ambas inicializaciones.
+    setTimeout(reveal, 150);
+  }, 0); });
 });
 </script>
 `;
 
 const withHarness = html.replace('</body>', harness + '</body>');
-const tmp = path.join(os.tmpdir(), `slizdeck-shoot-${process.pid}.html`);
+// El harness se escribe AL LADO del deck real, no en os.tmpdir(): un deck
+// con imagenes/logos locales las referencia con ruta relativa
+// (assets/logos/x.svg), y esa ruta se resuelve contra la carpeta del
+// archivo — copiarlo a /tmp rompe esas rutas en silencio (Chrome no tira
+// error por un <img> que no carga, la imagen simplemente no aparece).
+const tmp = path.join(path.dirname(path.resolve(file)), `.slizdeck-shoot-${process.pid}.html`);
 writeFileSync(tmp, withHarness);
 
 const base = path.basename(file).replace(/\.html$/, '');

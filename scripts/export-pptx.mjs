@@ -148,15 +148,14 @@ function extractSlide(section) {
   const counter = section.querySelector('[data-counter]');
   if (counter && !hasAncestorClass(counter, 'metricas')) push('stat', counterText(counter));
 
-  // Texto suelto de apoyo que no cae en ninguna clase conocida
-  for (const sel of ['.stat-caption', '.ask-line', '.stat-source']) {
-    push(sel === '.stat-source' ? 'caption' : 'body', clean(section.querySelector(sel)));
-  }
+  // Cita de fuente de una cifra (patron .metrica de media-and-data.md).
+  push('caption', clean(section.querySelector('.stat-source')));
 
   // Parrafos sueltos (ej. la mitad de texto de un patron .split) que no
-  // esten ya cubiertos por el body de una .card.
+  // esten ya cubiertos por el body de una .card/.pq-card/.warn-card.
   for (const p of section.querySelectorAll('p')) {
-    if (!hasAncestorClass(p, 'card')) push('body', clean(p));
+    const enCard = ['card', 'pq-card', 'warn-card'].some((c) => hasAncestorClass(p, c));
+    if (!enCard) push('body', clean(p));
   }
 
   // Listas sueltas (ej. .list-strike u otra <ul>/<ol> ad-hoc que no este
@@ -171,12 +170,20 @@ function extractSlide(section) {
     if (items.length) out.blocks.push({ role: 'list', text: '', items });
   }
 
-  for (const card of section.querySelectorAll('.card')) {
+  // .pq-card (Familia 2, components.md) y .warn-card (card-grid-4col) son
+  // variantes del mismo patron con otros nombres de clase — antes solo se
+  // buscaba `.card` a secas y las dos caian afuera enteras salvo el <p>
+  // suelto (que si lo agarraba el fallback de "parrafos sueltos" de mas
+  // abajo). `.pq-consequence` es el remate del patron ("→ De horas a
+  // minutos"): perderlo es perder el punto de la card.
+  for (const card of section.querySelectorAll('.card, .pq-card, .warn-card')) {
+    const consequence = clean(card.querySelector('.pq-consequence'));
+    const body = clean(card.querySelector('p'));
     out.cards.push({
-      num: clean(card.querySelector('.card-num')),
-      eyebrow: clean(card.querySelector('.card-eyebrow')),
+      num: clean(card.querySelector('.card-num, .warn-num')),
+      eyebrow: clean(card.querySelector('.card-eyebrow, .pq-eyebrow')),
       title: clean(card.querySelector('h3')),
-      body: clean(card.querySelector('p')),
+      body: [consequence, body].filter(Boolean).join('\n'),
     });
   }
 
@@ -241,7 +248,7 @@ function findLostText(section, out) {
   for (const p of out.props) { add(p.label); add(p.value); }
   add(out.footer);
 
-  const joined = [...exported].join('   ');
+  const joined = [...exported].join('   ');
   const lost = [];
   for (const el of section.querySelectorAll('*')) {
     if (el.querySelectorAll('*').length) continue;        // solo hojas de texto
@@ -523,12 +530,16 @@ async function main() {
   });
 
   await pptx.writeFile({ fileName: out });
-  console.log(`✓ ${out} · ${sections.length} slides · ${tokens.fontHeading}/${tokens.fontBody}`);
-  console.log('  Editable en PowerPoint y Google Slides. Sin animaciones (estado final de cada slide).');
 
+  // El simbolo y el exit code tienen que contar la misma historia: un
+  // export con contenido perdido no es un "✓" con un aviso al lado, es un
+  // export incompleto. Antes salia con exit 0 pase lo que pase, que es
+  // exactamente lo unico que lee un hook o un CI — el aviso detallado de
+  // abajo era invisible para cualquiera que no leyera stdout a mano.
   if (perdidas.length) {
     const total = perdidas.reduce((s, p) => s + p.lost.length, 0);
-    console.log(`\n⚠ ${total} elemento(s) de texto no viajaron al .pptx, en ${perdidas.length} slide(s).`);
+    console.log(`⚠ ${out} · ${sections.length} slides · ${tokens.fontHeading}/${tokens.fontBody} — EXPORT INCOMPLETO`);
+    console.log(`  ${total} elemento(s) de texto no viajaron al .pptx, en ${perdidas.length} slide(s).`);
     console.log('  Son patrones de layout fuera del set que el export reconoce (ver cabecera de este script).');
     for (const { n, lost } of perdidas) {
       console.log(`\n  slide ${n} — ${lost.length} elemento(s):`);
@@ -540,7 +551,12 @@ async function main() {
     }
     console.log('\n  Opciones: reescribir esas slides con un patron soportado, sumar soporte al script,');
     console.log('  o completar el contenido a mano en PowerPoint despues de exportar.');
+    process.exitCode = 1;
+    return;
   }
+
+  console.log(`✓ ${out} · ${sections.length} slides · ${tokens.fontHeading}/${tokens.fontBody}`);
+  console.log('  Editable en PowerPoint y Google Slides. Sin animaciones (estado final de cada slide).');
 }
 
 main().catch((err) => {

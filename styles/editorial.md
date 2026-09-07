@@ -32,6 +32,9 @@
   --cs-font-sans:   'Chivo', ui-sans-serif, system-ui, sans-serif;
   --cs-font-heading: 'Young Serif', Georgia, 'Times New Roman', serif;
   --cs-font-mono:   ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  /* Young Serif solo viene en 400: pedirle 600 al navegador (el default del
+     template) fuerza negrita sintetica, que en un display serif se nota. */
+  --cs-weight-heading: 400;
 }
 ```
 
@@ -47,6 +50,7 @@ Serif de texto clásica en vez de Young Serif (que es display de un solo peso): 
 ```css
 --cs-font-sans:    'Work Sans', ui-sans-serif, system-ui, sans-serif;
 --cs-font-heading: 'Spectral', Georgia, 'Times New Roman', serif;
+--cs-weight-heading: 600;
 ```
 ```
 https://fonts.googleapis.com/css2?family=Spectral:wght@400;500;600;700&family=Work+Sans:wght@300;400;500;600;700;800&display=swap
@@ -57,13 +61,14 @@ Serif de libro, más formal y menos contemporánea que Young Serif; para confere
 ```css
 --cs-font-sans:    'Karla', ui-sans-serif, system-ui, sans-serif;
 --cs-font-heading: 'Libre Caslon Text', Georgia, 'Times New Roman', serif;
+--cs-weight-heading: 700;
 ```
 ```
 https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:wght@400;700&family=Karla:wght@400;500;600;700&display=swap
 ```
 
 **Composición:**
-- Young Serif solo tiene un peso (400): la jerarquía sale de la escala, no del grosor. No pedir bold en los títulos.
+- Young Serif solo tiene un peso (400): la jerarquía sale de la escala, no del grosor. El pack ya fija `--cs-weight-heading` acorde a cada alternativa (400 en el default, 600 en Spectral, 700 en Libre Caslon Text) — no pedir un peso distinto a mano en los títulos.
 - El cuerpo en Chivo, nunca en la serif: el contraste serif/sans es la estructura del pack.
 - Medida de línea corta en los párrafos (`max-width` ~1100px): es un pack de lectura.
 - El verde en eyebrows; el claret únicamente en una palabra de énfasis o una cifra, jamás en ambos a la vez.

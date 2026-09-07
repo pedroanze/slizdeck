@@ -1,0 +1,1733 @@
+<!doctype html>
+<!-- slizdeck-engine-version: 1.4.0 — no borrar este comentario. scripts/doctor.mjs
+     lo lee para saber contra qué versión del engine se generó este deck y
+     detectar si hay fixes de template.html posteriores que no llegaron acá
+     (ver CHANGELOG.md). Se copia tal cual al generar un deck nuevo en build. -->
+<!-- lang: ajustar al idioma del deck (es, en, pt...). Afecta la
+     hifenizacion, el corrector y como lo lee un lector de pantalla. -->
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>La frontera cambió de moneda · tesis sobre modelos de frontera</title>
+<link href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Chivo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<!-- Iconos lucide: opt-in. La mayoria de los decks no usa ninguno, y
+     cargarlo siempre es una peticion de red que no hace falta. Descomentar
+     solo si el deck usa <i data-lucide="nombre"> (ver reference/icons.md).
+     Version fijada a proposito: @latest ejecuta en el deck lo que haya
+     publicado el CDN ese dia. -->
+<!-- <script src="https://unpkg.com/lucide@0.469.0"></script> -->
+<style>
+  /* ============================================================
+     SLIZDECK DESIGN TOKENS
+     ============================================================ */
+  :root {
+    /* --- Colores: primario/secundario dominan, acento se usa con cuentagotas --- */
+    --cs-primary:     #2D7A52;
+    --cs-secondary:   #2B2622;
+    --cs-accent:      #7B2233;
+    --cs-cream:       #FFFFFF;
+    --cs-cream-2:     #F3F2F0;
+    --cs-black:       #14110F;
+    --cs-body:        #3D3833;
+    --cs-muted:       #6E655D;
+    --cs-white:       #FFFFFF;
+    /* Superficie de cards/paneles y fondo del letterbox. Separados de
+       --cs-white/--cs-black para que un style pack oscuro pueda invertirlos
+       sin tocar el resto del sistema. */
+    --cs-surface:     #FAF9F8;
+    --cs-void:        #14110F;
+    --cs-border:      rgba(20,17,15,0.12);
+    --cs-border-strong: rgba(20,17,15,0.22);
+    --cs-scrim:       rgba(20,17,15,0.05);
+    --cs-grain:       .09;
+    --cs-grad-radial: radial-gradient(112% 150% at 0% 100% in oklch, #2D7A52 0%, #14110F 100%);
+    --cs-grad-linear: linear-gradient(135deg in oklch, #2D7A52 0%, #14110F 100%);
+    --cs-grad-text:   linear-gradient(135deg in oklch, #2D7A52 0%, #24402F 50%, #14110F 100%);
+
+    /* --- Tipografía: heading serif con carácter editorial, body sans funcional --- */
+    --cs-font-sans:   'Chivo', ui-sans-serif, system-ui, sans-serif;
+    --cs-font-heading: 'Young Serif', Georgia, 'Times New Roman', serif;
+    --cs-font-mono:   ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+
+    /* --- Radios: escala corta, todo el sistema de componentes usa estos 3 --- */
+    --cs-radius-sm:   12px;
+    --cs-radius-md:   20px;
+    --cs-radius-lg:   26px;
+
+    /* --- Padding del frame estándar de cada slide (.pad) --- */
+    --cs-pad-x:       120px;
+    --cs-pad-top:     96px;
+    --cs-pad-bottom:  120px;
+
+    --cs-shadow-1:    0 1px 2px rgba(0,0,0,0.04), 0 1px 1px rgba(0,0,0,0.03);
+    --cs-shadow-2:    0 4px 12px rgba(0,0,0,0.06), 0 2px 4px rgba(0,0,0,0.04);
+    --cs-shadow-3:    0 12px 32px rgba(0,0,0,0.08), 0 4px 10px rgba(0,0,0,0.05);
+    --cs-fg-1:        var(--cs-black);
+    --cs-fg-2:        var(--cs-body);
+    --cs-fg-3:        var(--cs-muted);
+    --cs-ease-std:    cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  /* ============================================================
+     BASE
+     ============================================================ */
+  * { box-sizing: border-box; }
+  html, body { background: var(--cs-void); margin: 0; padding: 0; }
+  body {
+    font-family: var(--cs-font-sans);
+    color: var(--cs-fg-2);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* ============================================================
+     SECTION = single slide canvas (1920×1080 default)
+     deck-stage scales the canvas to fit viewport, letterboxed.
+     ============================================================ */
+  deck-stage > section {
+    background: var(--cs-cream);
+    color: var(--cs-fg-2);
+    overflow: hidden;
+    position: relative;
+    transition: opacity 120ms ease;
+  }
+
+  /* Surface helpers */
+  .grad   { background: var(--cs-grad-radial) !important; color: #fff !important; }
+  .cream  { background: var(--cs-cream); color: var(--cs-body); }
+
+  /* Grano sobre el degradado.
+     Un degradado puro se lee digital y plano, sobre todo proyectado: el
+     banding se nota en las transiciones suaves. Una capa de ruido finisimo
+     lo rompe y le da textura de impresion. El ruido es un SVG inline
+     (feTurbulence), asi que no hay archivo externo ni peticion de red y el
+     deck sigue siendo autonomo.
+     Sin mix-blend-mode a proposito: `overlay` es practicamente invisible
+     sobre fondos oscuros, porque el ruido gris medio apenas desplaza el
+     color. Comprobado renderizando las dos variantes.
+     Intensidad: --cs-grain (0 lo apaga, .09 default, .16 es marcado). */
+  .grad::before {
+    content: "";
+    position: absolute; inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    opacity: var(--cs-grain, .09);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 140px 140px;
+  }
+  /* El contenido va por encima del grano */
+  .grad > * { position: relative; z-index: 1; }
+
+  /* Standard frame inside a slide */
+  .pad {
+    padding: var(--cs-pad-top) var(--cs-pad-x) var(--cs-pad-bottom);
+    height: 100%;
+    box-sizing: border-box;
+    display: flex; flex-direction: column;
+    justify-content: flex-start;
+    position: relative;
+  }
+  .pad.center { justify-content: center; align-items: center; text-align: center; }
+  /* Centrado vertical conservando la alineacion a la izquierda. Para slides
+     de contenido con poco material, donde alinear arriba deja el tercio
+     inferior vacio y el conjunto se lee sin terminar. */
+  .pad.mid { justify-content: center; }
+
+  /* ============================================================
+     TYPOGRAPHY
+     ============================================================ */
+  .eyebrow {
+    font-size: 24px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--cs-primary);
+    margin: 0 0 36px;
+  }
+  .grad .eyebrow { color: rgba(255,255,255,.9); }
+
+  h1.cover {
+    font-family: var(--cs-font-heading);
+    font-size: 168px; line-height: 0.98;
+    letter-spacing: -0.02em;
+    margin: 0; font-weight: 600; color: #fff;
+  }
+  h1.cover-md {
+    font-family: var(--cs-font-heading);
+    font-size: 132px; line-height: 1.0;
+    letter-spacing: -0.02em;
+    margin: 0; font-weight: 600; color: #fff;
+  }
+  h2.title {
+    font-family: var(--cs-font-heading);
+    font-size: 76px; line-height: 1.05;
+    letter-spacing: -0.015em;
+    margin: 0 0 56px;
+    font-weight: 600; color: var(--cs-black);
+  }
+  h2.title.tight { margin-bottom: 40px; }
+
+  .subtitle {
+    font-size: 36px; line-height: 1.4;
+    font-weight: 300;
+    color: rgba(255,255,255,.86);
+    max-width: 1300px;
+    margin-top: 48px;
+  }
+
+  .payoff {
+    font-size: 30px; line-height: 1.4;
+    color: var(--cs-black); font-weight: 600;
+    margin-top: 56px; max-width: 1500px;
+  }
+  .payoff em { font-style: normal; }
+
+  /* Gradient word — wrap a span/em inside any heading */
+  .grad-word {
+    background: var(--cs-grad-text);
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent; color: transparent;
+    font-style: normal;
+  }
+
+  /* Mono helper */
+  .mono { font-family: var(--cs-font-mono); }
+
+  /* Transition slide title (cream + huge centered title) */
+  .ts-title {
+    font-family: var(--cs-font-heading);
+    font-size: 168px; line-height: 0.98;
+    letter-spacing: -0.02em;
+    margin: 0; font-weight: 600; color: var(--cs-black);
+    text-align: center;
+  }
+  .ts-title .grad-word { font-weight: 600; }
+  .ts-tagline {
+    margin-top: 36px;
+    font-size: 36px; line-height: 1.4;
+    font-weight: 300;
+    color: var(--cs-body);
+    text-align: center;
+    max-width: 1300px;
+  }
+
+  /* .ts-title a 168px asume una frase corta (menos de ~45 caracteres): a
+     ese tamano, una oracion mas larga se parte en 3-4 lineas y deja de
+     leerse como un remate. Elegir el tamano por longitud del texto, no
+     usar siempre el default:
+       < 45 caracteres  -> .ts-title    (168px, 1 linea)
+       45-80 caracteres -> .ts-title-md (96px,  1-2 lineas)
+       80-120 caracteres -> .ts-title-sm (64px, 2-3 lineas)
+       > 120 caracteres  -> no usar este patron: acortar la frase o pasarla
+                            a una slide de contenido con cuerpo de texto. */
+  .ts-title-md {
+    font-family: var(--cs-font-heading);
+    font-size: 96px; line-height: 1.08;
+    letter-spacing: -0.015em;
+    margin: 0; font-weight: 600; color: var(--cs-black);
+    text-align: center;
+  }
+  .ts-title-sm {
+    font-family: var(--cs-font-heading);
+    font-size: 64px; line-height: 1.15;
+    letter-spacing: -0.01em;
+    margin: 0; font-weight: 600; color: var(--cs-black);
+    text-align: center;
+  }
+  .ts-title-md .grad-word, .ts-title-sm .grad-word { font-weight: 600; }
+
+  /* Resaltar una palabra o frase suelta sin necesitar un fondo degradado:
+     negrita + color primario. Como maximo un .hl por slide (mismo cupo
+     visual que el acento) — no es una alternativa al gradiente, es para
+     las slides en --cs-cream que quieren un remate sin cambiar de fondo. */
+  .hl { font-weight: 700; color: var(--cs-primary); }
+  .hl-accent { font-weight: 700; color: var(--cs-accent); }
+
+  /* Separador de seccion: mismo .ts-title/.ts-tagline centrado, pero sobre
+     class="grad" (el mismo fondo invertido que cover/cierre) en vez de
+     --cs-cream. La diferenciacion es el fondo, no un numero de fondo
+     (probado: un "01" gigante detras del titulo choca contra las letras
+     a estos tamanos). .ts-title/.ts-tagline son negro por default; sobre
+     .grad necesitan pasar a blanco, igual que ya hace .eyebrow arriba. */
+  .grad .ts-title, .grad .ts-tagline { color: #fff; }
+
+  /* ============================================================
+     FOOTER (always present on every slide)
+     ============================================================ */
+  .footer {
+    position: absolute;
+    left: 120px; right: 120px; bottom: 48px;
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 24px; letter-spacing: 0.06em;
+    color: var(--cs-muted); font-weight: 500;
+  }
+  .footer img { height: 22px; display: block; }
+  .footer .left { display: flex; align-items: center; gap: 18px; }
+  .footer .num {
+    font-variant-numeric: tabular-nums; font-weight: 600;
+    color: var(--cs-fg-1); opacity: .55;
+  }
+  .grad .footer { color: rgba(255,255,255,.6); }
+  .grad .footer .num { color: #fff; opacity: .8; }
+
+  /* ============================================================
+     COMMON COMPONENTS — baseline only
+     For richer patterns (.pq-card, terminals, mockups, mini-diagrams)
+     copy from components.md. For animation snippets (popup, SVG path
+     drawing, packets) copy from animations.md.
+     ============================================================ */
+
+  .card {
+    background: var(--cs-surface);
+    border: 1px solid var(--cs-border);
+    border-radius: var(--cs-radius-lg);
+    padding: 40px 44px;
+    box-shadow: var(--cs-shadow-2);
+  }
+  .card .card-eyebrow {
+    font-size: 24px; letter-spacing: 0.22em;
+    text-transform: uppercase; font-weight: 700;
+    color: var(--cs-muted); margin-bottom: 18px;
+  }
+  .card h3 {
+    font-size: 32px; line-height: 1.15;
+    letter-spacing: -0.01em;
+    color: var(--cs-black); font-weight: 700;
+    margin: 0 0 14px;
+  }
+  .card p {
+    font-size: 24px; line-height: 1.5;
+    color: var(--cs-body); margin: 0;
+  }
+
+  .badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 20px; font-weight: 700;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    padding: 7px 14px; border-radius: 999px;
+  }
+  .badge-primary { background: rgba(14,124,102,0.10); color: var(--cs-primary); }
+  .badge-green  { background: rgba(22, 163, 74, 0.12); color: #15803d; }
+  .badge-red    { background: rgba(220, 38, 38, 0.10); color: #b91c1c; }
+  .badge-orange { background: rgba(217, 119, 6, 0.12); color: #b45309; }
+  .badge-muted  { background: var(--cs-scrim); color: var(--cs-muted); }
+
+  /* ============================================================
+     ANIMATION SYSTEM — opt-in
+     Add `class="reveal" data-step="N"` to elements you want to
+     reveal at step N. Add `data-steps="N" data-current-step="0"`
+     to the section. The step controller (in <script> below)
+     intercepts ←/→/space and toggles `.is-on` per step.
+
+     For STATIC slides: don't add `.reveal` anywhere. Set
+     `data-steps="1" data-current-step="1"` on the section.
+     ============================================================ */
+
+  .reveal {
+    opacity: 0;
+    transform: translateY(16px);
+    transition:
+      opacity 520ms var(--cs-ease-std),
+      transform 520ms var(--cs-ease-std),
+      filter 520ms var(--cs-ease-std),
+      clip-path 720ms var(--cs-ease-std);
+    transition-delay: var(--d, 0ms);
+    will-change: opacity, transform;
+  }
+  /* ── Variantes de entrada ──────────────────────────────────────────
+     Se combinan con .reveal: class="reveal r-rise". Un deck que revela
+     todo con el mismo fade-up se siente mecanico; variar la entrada
+     segun el tipo de elemento es lo que le da intencion.
+
+       r-rise    sube mas y con mas recorrido — titulos
+       r-fade    solo opacidad, sin desplazamiento — texto largo
+       r-scale   entra creciendo desde 96% — cifras, datos
+       r-blur    desenfoque que se resuelve — imagenes, citas
+       r-left    entra desde la izquierda — listas, pasos
+       r-wipe    se descubre de izquierda a derecha — barras, reglas
+       r-mask    el texto emerge desde abajo de su propia linea — remates
+  */
+  .reveal.r-rise  { transform: translateY(44px); }
+  .reveal.r-fade  { transform: none; }
+  .reveal.r-scale { transform: scale(.96); transform-origin: left center; }
+  .pad.center .reveal.r-scale { transform-origin: center; }
+  .reveal.r-blur  { filter: blur(14px); transform: scale(1.02); }
+  .reveal.r-left  { transform: translateX(-36px); }
+  .reveal.r-wipe  { opacity: 1; clip-path: inset(0 100% 0 0); transform: none; }
+  .reveal.r-wipe.is-on { clip-path: inset(0 0 0 0); }
+  .reveal.r-mask  { opacity: 1; clip-path: inset(0 0 110% 0); transform: none; }
+  .reveal.r-mask.is-on { clip-path: inset(-20% 0 -20% 0); }
+
+  /* .reveal.is-on tiene que ganar la cascada sobre CUALQUIER variante
+     r-rise/r-scale/r-blur/r-left de arriba: misma especificidad (dos
+     clases), asi que el orden de aparicion decide, y por eso esta regla
+     va deliberadamente DESPUES de todas ellas. Declarada antes (como
+     estaba originalmente), el elemento revelado se quedaba con el
+     transform de su animacion aplicado para siempre en la vista en vivo
+     — se notaba como texto corrido a la izquierda en cualquier .r-left
+     ya revelado. El @media print de mas abajo lo tapaba con !important,
+     por eso el PDF salia bien pero la vista en vivo no. */
+  .reveal.is-on { opacity: 1; transform: none; filter: none; }
+
+  /* Escalonado automatico: en un contenedor con .stagger, cada hijo
+     .reveal del mismo paso entra 90ms despues del anterior, sin tener
+     que escribir --d a mano en cada uno. */
+  .stagger > .reveal:nth-child(1) { --d: 0ms; }
+  .stagger > .reveal:nth-child(2) { --d: 90ms; }
+  .stagger > .reveal:nth-child(3) { --d: 180ms; }
+  .stagger > .reveal:nth-child(4) { --d: 270ms; }
+  .stagger > .reveal:nth-child(5) { --d: 360ms; }
+  .stagger > .reveal:nth-child(6) { --d: 450ms; }
+
+  /* Sweep no-op (legacy markup compatibility — keep div as harmless empty) */
+  .sweep { display: none; }
+
+  /* Act marker — top-right step indicator on multi-step slides */
+  .act-marker {
+    position: absolute;
+    top: 96px; right: 120px;
+    display: flex; align-items: center; gap: 10px;
+    font-family: var(--cs-font-mono);
+    font-size: 24px;
+    color: var(--cs-muted);
+    letter-spacing: 0.08em;
+    z-index: 2;
+  }
+  .grad .act-marker { color: rgba(255,255,255,0.5); }
+  .act-marker .step-num { color: var(--cs-fg-1); font-weight: 700; }
+  .grad .act-marker .step-num { color: #fff; }
+  /* El total ("/3") va atenuado respecto al paso actual, pero sigue siendo
+     informacion legible, no decoracion. El inline `opacity:.4` que se usaba
+     antes dejaba --cs-muted en 1.7:1 sobre blanco: por debajo de cualquier
+     umbral. .8 lo deja en ~3.3:1, que es el minimo AA para 24px. */
+  .act-marker .step-total { opacity: .8; }
+
+  /* Reduced motion — show everything immediately */
+  @media (prefers-reduced-motion: reduce) {
+    .reveal { opacity: 1 !important; transform: none !important; filter: none !important; clip-path: none !important; transition: none !important; }
+    *, *::before, *::after { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+  }
+
+  /* Print / PDF — el estado final de cada slide, no el estado inicial.
+     Sin esto, exportar a PDF un deck animado produce slides en blanco:
+     los elementos .reveal nacen con opacity 0 y solo el step controller
+     (que no corre al imprimir) les pone .is-on.
+     El viewer chrome (barra de progreso, boton de fullscreen) es UI del
+     reproductor, no contenido de la slide: no debe aparecer en el PDF. */
+  @media print {
+    .reveal { opacity: 1 !important; transform: none !important; filter: none !important; clip-path: none !important; transition: none !important; }
+    #progress-bar, #fs-btn { display: none !important; }
+    /* background-clip:text degrada mal al imprimir: Chrome dibuja la caja del
+       gradiente como un recuadro visible alrededor de la palabra. En PDF la
+       palabra de enfasis va en color solido. */
+    .grad-word {
+      background: none !important;
+      -webkit-text-fill-color: var(--cs-primary) !important;
+      color: var(--cs-primary) !important;
+    }
+  }
+
+  /* ============================================================
+     VIEWER CHROME — fullscreen button + progress bar
+     Outside deck-stage, fixed to viewport.
+     ============================================================ */
+
+  #fs-btn {
+    position: fixed;
+    top: 18px; right: 18px;
+    z-index: 2147483647;
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.2);
+    background: rgba(0,0,0,0.5);
+    color: rgba(255,255,255,0.85);
+    cursor: pointer;
+    display: grid; place-items: center;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    transition: opacity 200ms ease, background 200ms ease, color 200ms ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+  #fs-btn:hover { background: rgba(0,0,0,0.7); color: #fff; }
+  #fs-btn:focus { outline: none; }
+  #fs-btn:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(255,255,255,0.9); }
+  #fs-btn svg { width: 18px; height: 18px; display: block; }
+  #fs-btn[data-fs="1"] { opacity: 0; pointer-events: none; }
+
+  #progress-bar {
+    position: fixed;
+    top: 0; left: 0;
+    height: 3px;
+    width: 100%;
+    background: var(--cs-grad-linear);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 240ms cubic-bezier(0.22, 1, 0.36, 1);
+    z-index: 2147483646;
+    pointer-events: none;
+  }
+
+  /* ============================================================
+     INSERT SLIDE-SPECIFIC CSS BELOW
+     Copy snippets from components.md (layouts: .pq-card, terminal,
+     mockups, etc.) or animations.md (popup, SVG paths, packets) here.
+     ============================================================ */
+
+  /* ============================================================
+     TEST-03 · CSS de slides
+     ============================================================ */
+
+  /* Pack Editorial: Young Serif solo trae el peso 400 y styles/editorial.md
+     pide no forzar bold en titulos. El template los declara en 600, lo que
+     dispara bold sintetico. Se normaliza a 400. */
+  h1.cover, h1.cover-md, h2.title,
+  .ts-title, .ts-title-md, .ts-title-sm { font-weight: 400; }
+
+  /* El tinte de .badge-primary sigue hardcodeado al teal del template
+     original (rgba(14,124,102,...)) y apply-style-pack.mjs no lo toca.
+     Se reescribe al verde de prensa del pack. */
+  .badge-primary { background: rgba(45,122,82,0.10); color: var(--cs-primary); }
+  .badge-accent  { background: rgba(123,34,51,0.09); color: var(--cs-accent); }
+
+  /* ---- Tipografia de apoyo ---- */
+  .lead {
+    font-size: 30px; line-height: 1.5;
+    color: var(--cs-body); max-width: 1100px; margin: 0;
+  }
+  .lead-wide { max-width: 1420px; }
+  .src {
+    font-size: 19px; line-height: 1.45;
+    color: var(--cs-muted); margin-top: 26px; max-width: 1500px;
+  }
+  .src b { font-weight: 600; color: var(--cs-body); }
+  .rule { height: 1px; background: var(--cs-border-strong); margin: 34px 0; }
+
+  /* ---- Listas numeradas de argumento (sin bullets) ---- */
+  .claims { display: grid; gap: 26px; margin-top: 40px; max-width: 1420px; }
+  .claim { display: grid; grid-template-columns: 86px 1fr; gap: 26px; align-items: start; }
+  .claim .n {
+    font-family: var(--cs-font-mono); font-size: 26px; font-weight: 700;
+    color: var(--cs-primary); line-height: 1.5; letter-spacing: .06em;
+  }
+  .claim .t { font-size: 27px; line-height: 1.5; color: var(--cs-body); margin: 0; }
+
+  /* ============================================================
+     GRAFICAS NATIVAS (SVG inline, sin libreria ni CDN)
+     components.md y media-and-data.md no traen ningun patron de serie
+     temporal ni de curva: solo barras comparativas y proporcion. Lo que
+     sigue es un idioma minimo de ejes/lineas construido a mano sobre los
+     tokens del design system.
+     ============================================================ */
+  .chart { width: 100%; }
+  .chart > svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .ax   { fill: none; stroke: var(--cs-border-strong); stroke-width: 1.5; }
+  .grid { fill: none; stroke: var(--cs-border); stroke-width: 1; }
+  .grid-dash {
+    fill: none; stroke: var(--cs-border-strong);
+    stroke-width: 1.5; stroke-dasharray: 7 9;
+  }
+  text.tick {
+    font-family: var(--cs-font-sans); font-size: 19px;
+    font-weight: 500; fill: var(--cs-muted);
+  }
+  text.lbl {
+    font-family: var(--cs-font-sans); font-size: 21px;
+    font-weight: 600; fill: var(--cs-body);
+  }
+  text.lbl-p {
+    font-family: var(--cs-font-sans); font-size: 23px;
+    font-weight: 700; fill: var(--cs-primary);
+  }
+  text.lbl-a {
+    font-family: var(--cs-font-sans); font-size: 23px;
+    font-weight: 700; fill: var(--cs-accent);
+  }
+  .band   { fill: var(--cs-primary); opacity: .13; stroke: none; }
+  .band-a { fill: var(--cs-accent);  opacity: .11; stroke: none; }
+  .ln   { fill: none; stroke: var(--cs-primary); stroke-width: 4;
+          stroke-linecap: round; stroke-linejoin: round; }
+  .ln-a { fill: none; stroke: var(--cs-accent);  stroke-width: 4;
+          stroke-linecap: round; stroke-linejoin: round; }
+  .ln-thin { stroke-width: 2.5; }
+  .dot   { fill: var(--cs-surface); stroke: var(--cs-primary); stroke-width: 4; }
+  .dot-a { fill: var(--cs-surface); stroke: var(--cs-accent);  stroke-width: 4; }
+  .dot-f { fill: var(--cs-primary); stroke: none; }
+
+  /* ---- HEAVY: dibujo de path (animations.md > SVG path drawing) ----
+     Gotcha #1: .reveal aplica translateY(16px), que desplazaria el path
+     entero. Gotcha #2: la opacity sigue haciendo falta.
+     La regla .draw.reveal.is-on lleva 3 clases para ganarle a la
+     .reveal.is-on del template (2 clases) que ya declara opacity:1. */
+  .draw.reveal {
+    opacity: 0;
+    transform: none !important;
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    transition: stroke-dashoffset 1250ms cubic-bezier(0.65, 0.05, 0.36, 1),
+                opacity 220ms ease;
+    transition-delay: var(--d, 0ms);
+  }
+  .draw.reveal.is-on { opacity: 1; stroke-dashoffset: 0; }
+
+  /* Elementos SVG que solo hacen fade (bandas, dots, textos) */
+  .fx.reveal { opacity: 0; transform: none !important;
+               transition: opacity 520ms var(--cs-ease-std); transition-delay: var(--d, 0ms); }
+  .fx.reveal.is-on { opacity: 1; }
+  .fx.band.reveal.is-on   { opacity: .13; }
+  .fx.band-a.reveal.is-on { opacity: .11; }
+
+  /* HEAVY: pulso del punto de quiebre, disparado por el step actual */
+  @keyframes brkPulse {
+    0%, 100% { r: 9;  opacity: 1; }
+    50%      { r: 15; opacity: .55; }
+  }
+  section[data-current-step="3"] .brk-dot.fx.reveal.is-on {
+    animation: brkPulse 1400ms cubic-bezier(0.4, 0, 0.2, 1) 400ms 2;
+  }
+
+  /* ============================================================
+     Barras de capex con rango (min firme + extension tenue)
+     ============================================================ */
+  .cx-rows { display: grid; gap: 26px; margin-top: 12px; }
+  .cx-row  { display: grid; grid-template-columns: 250px 1fr 300px;
+             align-items: center; gap: 32px; }
+  .cx-name { font-size: 22px; font-weight: 700; letter-spacing: .12em;
+             text-transform: uppercase; color: var(--cs-body); }
+  .cx-track { position: relative; height: 44px; background: var(--cs-cream-2); }
+  .cx-fill  { position: absolute; left: 0; top: 0; bottom: 0; background: var(--cs-primary); }
+  .cx-ext   { position: absolute; top: 0; bottom: 0; background: var(--cs-primary); opacity: .28; }
+  .cx-val   { font-size: 25px; font-weight: 600; color: var(--cs-black);
+              font-variant-numeric: tabular-nums; }
+  .cx-total { display: flex; align-items: baseline; gap: 22px; margin-top: 42px; }
+  .cx-total .big {
+    font-family: var(--cs-font-heading); font-size: 108px; line-height: .9;
+    color: var(--cs-accent); font-variant-numeric: tabular-nums;
+  }
+  .cx-total .glosa { font-size: 26px; line-height: 1.4; color: var(--cs-body); max-width: 900px; }
+
+  /* ============================================================
+     Puntos ECI (abierto vs cerrado) sobre una escala comun
+     ============================================================ */
+  .eci-scale { display: grid; grid-template-columns: 340px 1fr 110px; gap: 26px;
+               margin: 28px 0 20px; flex-shrink: 0; }
+  .eci-scale .eci-marks { position: relative; height: 26px; }
+  .eci-scale .mk { position: absolute; top: 0; font-size: 19px; font-weight: 500;
+                   color: var(--cs-muted); margin-left: -14px; }
+  .eci-rows { display: grid; gap: 20px; }
+  .eci-row  { display: grid; grid-template-columns: 340px 1fr 110px;
+              align-items: center; gap: 26px; }
+  .eci-name { font-size: 23px; font-weight: 600; color: var(--cs-body); }
+  .eci-track { position: relative; height: 3px; background: var(--cs-cream-2); }
+  .eci-gap {
+    position: absolute; top: -14px; bottom: -14px;
+    background: var(--cs-accent); opacity: .08;
+  }
+  .eci-pt {
+    position: absolute; top: 50%; width: 22px; height: 22px; border-radius: 50%;
+    margin-left: -11px; margin-top: -11px;
+  }
+  .eci-pt.c { background: var(--cs-primary); }
+  .eci-pt.o { background: var(--cs-accent); }
+  .eci-val { font-size: 24px; font-weight: 600; color: var(--cs-black);
+             font-variant-numeric: tabular-nums; text-align: right; }
+  .legend { display: flex; gap: 42px; margin-top: 34px; }
+  .legend span { display: flex; align-items: center; gap: 12px;
+                 font-size: 21px; font-weight: 600; color: var(--cs-body); }
+  .legend i { width: 16px; height: 16px; border-radius: 50%; display: block; font-style: normal; }
+  .legend i.c { background: var(--cs-primary); }
+  .legend i.o { background: var(--cs-accent); }
+
+  /* ============================================================
+     Citas atribuidas
+     ============================================================ */
+  .quotes { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; margin-top: 8px; }
+  .quote { border-left: 3px solid var(--cs-primary); padding-left: 40px; }
+  .quote blockquote {
+    font-family: var(--cs-font-heading); font-size: 40px; line-height: 1.28;
+    color: var(--cs-black); margin: 0 0 30px;
+  }
+  .quote .who { font-size: 23px; line-height: 1.45; color: var(--cs-body); font-weight: 600; }
+  .quote .where { font-size: 19px; line-height: 1.45; color: var(--cs-muted); margin-top: 8px; }
+
+  /* ============================================================
+     Cards numeradas (3 col) y comparativa (2 col)
+     ============================================================ */
+  .num-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; margin-top: 8px; }
+  .num-card {
+    background: var(--cs-surface); border: 1px solid var(--cs-border);
+    border-radius: var(--cs-radius-md); padding: 38px 40px;
+    box-shadow: var(--cs-shadow-2);
+    display: flex; flex-direction: column; gap: 14px;
+  }
+  .num-card-num { font-family: var(--cs-font-mono); font-size: 26px; font-weight: 800;
+                  color: var(--cs-primary); line-height: 1; letter-spacing: .06em; }
+  .num-card h3 { font-size: 32px; font-weight: 700; color: var(--cs-black);
+                 margin: 0; line-height: 1.15; }
+  .num-card .big-n {
+    font-family: var(--cs-font-heading); font-size: 76px; line-height: .95;
+    color: var(--cs-black); font-variant-numeric: tabular-nums; margin: 4px 0 2px;
+  }
+  .num-card p { font-size: 21px; line-height: 1.5; color: var(--cs-body); margin: 0; }
+  .num-card .src { margin-top: auto; padding-top: 14px; font-size: 17px; }
+
+  .pq-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 8px; }
+  .pq-card {
+    background: var(--cs-surface); border: 1px solid var(--cs-border);
+    border-radius: var(--cs-radius-lg); padding: 54px 52px;
+    box-shadow: var(--cs-shadow-2); min-height: 430px;
+    display: flex; flex-direction: column; justify-content: center;
+  }
+  .pq-card .pq-eyebrow { font-size: 20px; letter-spacing: .18em; text-transform: uppercase;
+                         font-weight: 700; color: var(--cs-primary); margin-bottom: 26px; }
+  .pq-card .pq-figs { display: flex; align-items: baseline; gap: 24px; margin-bottom: 22px; }
+  .pq-card .fig-from {
+    font-family: var(--cs-font-heading); font-size: 62px; line-height: 1;
+    color: var(--cs-muted); font-variant-numeric: tabular-nums;
+  }
+  .pq-card .fig-to {
+    font-family: var(--cs-font-heading); font-size: 88px; line-height: 1;
+    color: var(--cs-black); font-variant-numeric: tabular-nums;
+  }
+  .pq-card .fig-arrow { font-size: 40px; color: var(--cs-muted); }
+  .pq-card .pq-consequence {
+    font-family: var(--cs-font-mono); font-size: 21px; font-weight: 700;
+    color: var(--cs-accent); letter-spacing: .06em; text-transform: uppercase; margin: 0 0 26px;
+  }
+  .pq-card p { font-size: 23px; line-height: 1.5; color: var(--cs-body); margin: 0; }
+  .pq-card .src { margin-top: 26px; font-size: 17px; }
+
+  /* ============================================================
+     Standby (media-and-data.md > Pantalla de inicio)
+     ============================================================ */
+  .standby { position: relative; height: 100%; }
+  .standby .marca { font-size: 26px; letter-spacing: .2em; text-transform: uppercase;
+                    font-weight: 700; color: rgba(255,255,255,.78); }
+  .standby .cuando { margin-top: auto; font-size: 30px; color: rgba(255,255,255,.72); }
+  @keyframes respira { 0%, 100% { opacity: .55 } 50% { opacity: 1 } }
+  .standby .senal { animation: respira 3.4s ease-in-out infinite; }
+  @media (prefers-reduced-motion: reduce) { .standby .senal { animation: none } }
+
+  /* Cover: bloque de credito bajo el titulo */
+  .cover-meta { margin-top: 54px; font-size: 26px; line-height: 1.5;
+                color: rgba(255,255,255,.78); max-width: 1300px; }
+
+</style>
+</head>
+<body>
+
+<deck-stage width="1920" height="1080">
+
+  <!-- ============================================================
+       INSERT SLIDES HERE
+       Each slide is a <section> with these conventions:
+       - data-label="NN Title"            (used for nav labels)
+       - data-steps="N" data-current-step="0"   (animated)
+         OR data-steps="1" data-current-step="1" (static)
+       - class="grad"                     (gradient bg, for cover)
+       - <div class="pad">                (standard padding frame)
+       - <div class="pad center">         (vertically centered, for transitions)
+       - <div class="footer">             (logo + speaker + slide num)
+
+       Catalog references:
+       - components.md  → layout patterns
+       - animations.md  → animation techniques
+       - icons.md       → SVG icons library
+       ============================================================ -->
+
+  <!-- ══════════ 00 · Standby (no cuenta como slide de la charla) ══════════ -->
+  <!-- SLIZDECK-ASSET-PENDING: standby — imagen de fondo a sangre (1920x1080) del auditorio o de un datacenter; decision del usuario simulado: seguir sin ella, la pantalla funciona en gradiente puro -->
+  <section class="grad" data-label="00 Standby" data-steps="1" data-current-step="1">
+    <div class="pad standby">
+      <div class="marca">Sesión de tesis · Modelos de frontera</div>
+      <div style="margin:auto 0">
+        <h1 class="cover-md">La frontera cambió de moneda</h1>
+        <div class="subtitle">Qué compra hoy la capacidad de un modelo, y quién puede pagarla</div>
+      </div>
+      <div class="cuando senal">Empezamos en unos minutos</div>
+    </div>
+    <div class="footer"><div class="left"></div><div></div></div>
+  </section>
+
+  <!-- ══════════ 01 · Cover ══════════ -->
+  <section class="grad" data-label="01 Portada" data-steps="1" data-current-step="1">
+    <div class="pad">
+      <div class="eyebrow">Charla de tesis · 6 de septiembre de 2026</div>
+      <div style="margin:auto 0">
+        <h1 class="cover">La frontera cambió de moneda</h1>
+        <div class="subtitle">El escalado dejó de ser la variable de decisión. Lo que viene se decide en el coste marginal del razonamiento</div>
+      </div>
+      <div class="cover-meta">Toda cifra de esta charla está trazada a su fuente primaria. Las fuentes se listan al final y en el pie de cada gráfica.</div>
+    </div>
+    <div class="footer">
+      <div class="left"></div>
+      <div>Tesis de frontera · sep 2026 · <span class="num">01</span></div>
+    </div>
+  </section>
+
+  <!-- ══════════ 02 · La tesis ══════════ -->
+  <section data-label="02 La tesis" data-steps="3" data-current-step="0">
+    <div class="pad mid">
+      <div class="act-marker"><span class="step-num">1</span><span class="step-total">/3</span></div>
+      <div class="eyebrow reveal" data-step="1">La tesis</div>
+      <h2 class="title tight reveal r-rise" data-step="1" style="--d:80ms">La frontera ya no se compra: se gana</h2>
+      <p class="lead lead-wide reveal r-fade" data-step="2">Entre 2020 y 2024 la capacidad se compraba con cómputo de pre-entrenamiento. Desde abril de 2024 la curva de capacidad se <span class="hl">acelera</span> justo cuando datos, energía y capex se vuelven restricciones vinculantes. Esa aceleración no sale del pre-entrenamiento: sale del razonamiento, que es cómputo de inferencia.</p>
+      <div class="claims">
+        <div class="claim reveal r-left" data-step="3"><div class="n">01</div><p class="t">El precio de una capacidad fija se desploma mientras el precio de la frontera del día sube. No es contradicción: son dos mercados distintos.</p></div>
+        <div class="claim reveal r-left" data-step="3" style="--d:110ms"><div class="n">02</div><p class="t">La ventaja de los pesos cerrados se comprimió a meses, no a años. Un foso de capex no protege una frontera que se gana en inferencia.</p></div>
+        <div class="claim reveal r-left" data-step="3" style="--d:220ms"><div class="n">03</div><p class="t">Hacia 2030 el límite que muerde primero es la red eléctrica, no el corpus de texto.</p></div>
+      </div>
+    </div>
+    <div class="footer"><div class="left"></div><div>Tesis de frontera · sep 2026 · <span class="num">02</span></div></div>
+  </section>
+
+  <!-- ══════════ 03 · Capitulo 01 ══════════ -->
+  <section class="grad" data-label="03 Capitulo 01" data-steps="1" data-current-step="1">
+    <div class="pad center">
+      <h1 class="ts-title">La moneda vieja</h1>
+      <div class="ts-tagline">01 · Qué compraba el cómputo de pre-entrenamiento</div>
+    </div>
+    <div class="footer"><div class="left"></div><div>Tesis de frontera · sep 2026 · <span class="num">03</span></div></div>
+  </section>
+
+  <!-- ══════════ 04 · Computo de entrenamiento ══════════ -->
+  <section data-label="04 Computo 4-5x" data-steps="3" data-current-step="0">
+    <div class="pad">
+      <div class="act-marker"><span class="step-num">1</span><span class="step-total">/3</span></div>
+      <div class="eyebrow reveal" data-step="1">La ley que funcionó</div>
+      <h2 class="title tight reveal r-rise" data-step="1" style="--d:80ms">Catorce años multiplicando por cinco</h2>
+      <div class="chart reveal r-fade" data-step="2">
+        <svg viewBox="0 0 1560 500" role="img" aria-label="Cómputo de entrenamiento de modelos notables, escala logarítmica, 2010 a 2025, banda de crecimiento de 4 a 5 veces por año">
+          <line class="grid" x1="120" y1="391" x2="1500" y2="391"/>
+          <line class="grid" x1="120" y1="313" x2="1500" y2="313"/>
+          <line class="grid" x1="120" y1="235" x2="1500" y2="235"/>
+          <line class="grid" x1="120" y1="157" x2="1500" y2="157"/>
+          <line class="grid" x1="120" y1="79"  x2="1500" y2="79"/>
+          <text class="tick" x="108" y="397" text-anchor="end">1e18</text>
+          <text class="tick" x="108" y="319" text-anchor="end">1e20</text>
+          <text class="tick" x="108" y="241" text-anchor="end">1e22</text>
+          <text class="tick" x="108" y="163" text-anchor="end">1e24</text>
+          <text class="tick" x="108" y="85"  text-anchor="end">1e26</text>
+          <path class="band fx reveal" data-step="2" d="M 120 416 L 1500 64 L 1500 57 L 241 430 L 120 430 Z"/>
+          <path class="ln draw reveal" data-step="2" pathLength="1" style="--d:120ms" d="M 120 416 L 1500 64"/>
+          <path class="ln draw reveal" data-step="2" pathLength="1" style="--d:320ms" d="M 241 430 L 1500 57"/>
+          <line class="ax" x1="120" y1="430" x2="1500" y2="430"/>
+          <text class="tick" x="120"  y="462" text-anchor="middle">2010</text>
+          <text class="tick" x="580"  y="462" text-anchor="middle">2015</text>
+          <text class="tick" x="1040" y="462" text-anchor="middle">2020</text>
+          <text class="tick" x="1500" y="462" text-anchor="middle">2025</text>
+          <g class="fx reveal" data-step="3">
+            <circle class="dot" cx="1077" cy="177" r="10"/>
+            <text class="lbl" x="1063" y="152" text-anchor="end">GPT-3 · 3e23 FLOP</text>
+            <circle class="dot" cx="1334" cy="106" r="10"/>
+            <text class="lbl" x="1320" y="82" text-anchor="end">GPT-4 · 2e25 FLOP</text>
+            <circle class="dot" cx="1403" cy="91" r="10"/>
+            <text class="lbl" x="1419" y="128" text-anchor="start">Gemini Ultra · 5e25</text>
+          </g>
+          <text class="lbl-p" x="380" y="392" transform="rotate(-15 380 392)">Banda 4x a 5x por año</text>
+        </svg>
+      </div>
+      <p class="src reveal r-fade" data-step="3" style="--d:160ms"><b>Fuente:</b> Epoch AI, "Training compute of frontier AI models grows by 4-5x per year" (28 may 2024). Modelos notables 4,1x/año (IC 90%: 3,7x a 4,6x); frontera 5,3x/año (IC 90%: 4,9x a 5,7x). La banda dibujada está anclada en el valor citado de GPT-4 (2e25 FLOP, mar 2023); los tres puntos son los valores publicados por Epoch, no una serie completa.</p>
+    </div>
+    <div class="footer"><div class="left"></div><div>Tesis de frontera · sep 2026 · <span class="num">04</span></div></div>
+  </section>
+
+  <!-- ══════════ 05 · Precio por capacidad fija ══════════ -->
+  <section data-label="05 Precio por capacidad" data-steps="3" data-current-step="0">
+    <div class="pad">
+      <div class="act-marker"><span class="step-num">1</span><span class="step-total">/3</span></div>
+      <div class="eyebrow reveal" data-step="1">Lo que el escalado compró</div>
+      <h2 class="title tight reveal r-rise" data-step="1" style="--d:80ms">Una capacidad alcanzada se vuelve casi gratis</h2>
+      <div class="chart reveal r-fade" data-step="2">
+        <svg viewBox="0 0 1560 452" role="img" aria-label="Precio por millón de tokens para alcanzar un nivel fijo de rendimiento en MMLU, escala logarítmica, 2021 a 2025">
+          <line class="grid" x1="130" y1="40"  x2="1500" y2="40"/>
+          <line class="grid" x1="130" y1="143" x2="1500" y2="143"/>
+          <line class="grid" x1="130" y1="246" x2="1500" y2="246"/>
+          <line class="grid" x1="130" y1="349" x2="1500" y2="349"/>
+          <text class="tick" x="118" y="46"  text-anchor="end">100 USD</text>
+          <text class="tick" x="118" y="149" text-anchor="end">10 USD</text>
+          <text class="tick" x="118" y="252" text-anchor="end">1 USD</text>
+          <text class="tick" x="118" y="355" text-anchor="end">0,10 USD</text>
+          <path class="ln-a draw reveal" data-step="2" pathLength="1" d="M 257 63 L 544 112 L 1257 365"/>
+          <path class="ln draw reveal" data-step="2" pathLength="1" style="--d:260ms" d="M 716 84 L 1370 323"/>
+          <line class="ax" x1="130" y1="380" x2="1500" y2="380"/>
+          <text class="tick" x="301"  y="412" text-anchor="middle">2022</text>
+          <text class="tick" x="644"  y="412" text-anchor="middle">2023</text>
+          <text class="tick" x="986"  y="412" text-anchor="middle">2024</text>
+          <text class="tick" x="1329" y="412" text-anchor="middle">2025</text>
+          <g class="fx reveal" data-step="3">
+            <circle class="dot-a" cx="257"  cy="63"  r="9"/>
+            <circle class="dot-a" cx="544"  cy="112" r="9"/>
+            <circle class="dot-a" cx="1257" cy="365" r="9"/>
+            <circle class="dot"   cx="716"  cy="84"  r="9"/>
+            <circle class="dot"   cx="1370" cy="323" r="9"/>
+            <text class="lbl-a" x="275" y="48">Nivel GPT-3: 60,00 USD (nov 2021)</text>
+            <text class="lbl-a" x="1245" y="345" text-anchor="end">0,07 USD (oct 2024)</text>
+            <text class="lbl-p" x="734" y="69">Nivel GPT-4: 37,50 USD (mar 2023)</text>
+            <text class="lbl-p" x="1358" y="303" text-anchor="end">0,18 USD (feb 2025)</text>
+          </g>
+        </svg>
+      </div>
+      <p class="src reveal r-fade" data-step="3" style="--d:160ms"><b>Fuente:</b> Epoch AI, "LLM inference prices have fallen rapidly but unequally across tasks" (12 mar 2025). Precio por millón de tokens para igualar un nivel fijo en MMLU. Nivel GPT-3: 60,00 USD (nov 2021) a 0,07 USD (Gemini 1.5 Flash-8B, oct 2024). Nivel GPT-4: 37,50 USD (GPT-4-0314, mar 2023) a 0,18 USD (Gemini 2.0 Flash, feb 2025). El ritmo de caída va de 9x a 900x por año según el hito medido.</p>
+    </div>
+    <div class="footer"><div class="left"></div><div>Tesis de frontera · sep 2026 · <span class="num">05</span></div></div>
+  </section>
+
+  <!-- ══════════ 06 · Capitulo 02 ══════════ -->
+  <section class="grad" data-label="06 Capitulo 02" data-steps="1" data-current-step="1">
+    <div class="pad center">
+      <h1 class="ts-title">El quiebre</h1>
+      <div class="ts-tagline">02 · Abril de 2024, cuando la curva cambió de pendiente</div>
+    </div>
+    <div class="footer"><div class="left"></div><div>Tesis de frontera · sep 2026 · <span class="num">06</span></div></div>
+  </section>
+
+  <!-- ══════════ 07 · La aceleracion (HEAVY) ══════════ -->
+  <section data-label="07 La aceleracion" data-steps="4" data-current-step="0">
+    <div class="pad">
+      <div class="act-marker"><span class="step-num">1</span><span class="step-total">/4</span></div>
+      <div class="eyebrow reveal" data-step="1">El dato que sostiene la tesis</div>
+      <h2 class="title tight reveal r-rise" data-step="1" style="--d:80ms">La capacidad se aceleró cuando el pre-entrenamiento se encarecía</h2>
+      <div class="chart" style="max-width:1360px">
+        <svg viewBox="0 0 1560 500" role="img" aria-label="Índice de capacidades de Epoch en el tiempo, con un cambio de pendiente en abril de 2024">
+          <line class="grid" x1="130" y1="350" x2="1480" y2="350"/>
+          <line class="grid" x1="130" y1="250" x2="1480" y2="250"/>
+          <line class="grid" x1="130" y1="150" x2="1480" y2="150"/>
+          <line class="grid" x1="130" y1="50"  x2="1480" y2="50"/>
+          <text class="tick" x="118" y="356" text-anchor="end">110 ECI</text>
+          <text class="tick" x="118" y="256" text-anchor="end">130 ECI</text>
+          <text class="tick" x="118" y="156" text-anchor="end">150 ECI</text>
+          <text class="tick" x="118" y="56"  text-anchor="end">170 ECI</text>
+          <path class="ln ln-thin draw reveal" data-step="2" pathLength="1" d="M 146 370 L 770 274"/>
+          <text class="lbl fx reveal" data-step="2" x="300" y="318" style="--d:900ms">8,3 puntos por año</text>
+          <line class="grid-dash fx reveal" data-step="3" x1="770" y1="40" x2="770" y2="410"/>
+          <path class="ln draw reveal" data-step="3" pathLength="1" style="--d:240ms" d="M 770 274 L 1418 88"/>
+          <circle class="dot-f brk-dot fx reveal" data-step="3" cx="770" cy="274" r="9" style="--d:200ms"/>
+          <text class="lbl-p fx reveal" data-step="3" x="1000" y="215" style="--d:1100ms">15,5 puntos por año</text>
+          <text class="lbl fx reveal" data-step="3" x="770" y="440" text-anchor="middle" style="--d:120ms">8 abr 2024</text>
+          <line class="ax" x1="130" y1="410" x2="1480" y2="410"/>
+          <text class="tick" x="157"  y="470" text-anchor="middle">2022</text>
+          <text class="tick" x="427"  y="470" text-anchor="middle">2023</text>
+          <text class="tick" x="697"  y="470" text-anchor="middle">2024</text>
+          <text class="tick" x="967"  y="470" text-anchor="middle">2025</text>
+          <text class="tick" x="1237" y="470" text-anchor="middle">2026</text>
+          <g class="fx reveal" data-step="4">
+            <circle class="dot" cx="1418" cy="88" r="11"/>
+            <text class="lbl-p" x="1404" y="64" text-anchor="end">Claude Fable 5 · 162,48 ECI</text>
+          </g>
+        </svg>
+      </div>
+      <p class="src reveal r-fade" data-step="4" style="--d:160ms"><b>Fuentes:</b> Epoch AI, "AI capabilities progress has sped up" (23 dic 2025): regresión de dos segmentos, 17 puntos de frontera (dic 2021 a dic 2025), quiebre el 8 abr 2024, pendiente de 8,3 a 15,5 puntos ECI/año, factor 1,85x, R2 = 0,9653. Y Epoch AI, "The ECI frontier has advanced by 14 points per year..." (1 sep 2026): Claude Fable 5 en 162,48 ECI. Las dos rectas se reconstruyen con las pendientes publicadas, ancladas en el único valor absoluto publicado.</p>
+    </div>
+    <div class="footer"><div class="left"></div><div>Tesis de frontera · sep 2026 · <span class="num">07</span></div></div>
+  </section>
+
+  <!-- ══════════ 08 · Que se escala ahora (citas) ══════════ -->
+  <!-- SLIZDECK-ASSET-PENDING: slide 08 — retratos de Ilya Sutskever y Dario Amodei (recuadro, 1:1). Decision del usuario simulado: seguir sin ellos. No se hotlinkean fotos de terceros y la slide se sostiene solo con tipografia, que es lo que el pack editorial hace bien. -->
+  <section data-label="08 Que se escala ahora" data-steps="3" data-current-step="0">
+    <div class="pad mid">
+      <div class="act-marker"><span class="step-num">1</span><span class="step-total">/3</span></div>
+      <div class="eyebrow reveal" data-step="1">Lo dicen los que lo están construyendo</div>
+      <h2 class="title tight reveal r-rise" data-step="1" style="--d:80ms">Lo que se escala cambió antes que la curva</h2>
+      <div class="quotes">
+        <div class="quote reveal r-blur" data-step="2">
+          <blockquote>"In 2024, the idea of using reinforcement learning (RL) to train models to generate chains of thought has become a new focus of scaling."</blockquote>
+          <div class="who">Dario Amodei, CEO de Anthropic</div>
+          <div class="where">"On DeepSeek and Export Controls", enero de 2025. darioamodei.com</div>
+        </div>
+        <div class="quote reveal r-blur" data-step="3">
+          <blockquote>"So it's back to the age of research again, just with big computers."</blockquote>
+          <div class="who">Ilya Sutskever, cofundador de Safe Superintelligence</div>
+          <div class="where">Entrevista con Dwarkesh Patel, 25 de noviembre de 2025</div>
+        </div>
+      </div>
+      <p class="src reveal r-fade" data-step="3" style="--d:200ms">Citas verbatim en su idioma original, sin traducir, para no alterar la formulación. Amodei fecha el cambio de objeto de escalado en 2024, el mismo año del quiebre que mide Epoch. Sutskever describe la consecuencia: el cómputo sigue creciendo, pero deja de ser la variable que explica el progreso.</p>
+    </div>
+    <div class="footer"><div class="left"></div><div>Tesis de frontera · sep 2026 · <span class="num">08</span></div></div>
+  </section>
+
+  <!-- ══════════ 09 · Capitulo 03 ══════════ -->
+  <section class="grad" data-label="09 Capitulo 03" data-steps="1" data-current-step="1">
+    <div class="pad center">
+      <h1 class="ts-title">La factura</h1>
+      <div class="ts-tagline">03 · Datos, energía y capex: tres relojes distintos</div>
+    </div>
+    <div class="footer"><div class="left"></div><div>Tesis de frontera · sep 2026 · <span class="num">09</span></div></div>
+  </section>
+
+  <!-- ══════════ 10 · Tres relojes ══════════ -->
+  <section data-label="10 Tres relojes" data-steps="4" data-current-step="0">
+    <div class="pad mid">
+      <div class="act-marker"><span class="step-num">1</span><span class="step-total">/4</span></div>
+      <div class="eyebrow reveal" data-step="1">Los límites, ordenados por cuándo muerden</div>
+      <h2 class="title tight reveal r-rise" data-step="1" style="--d:80ms">Ninguno de los tres es el mismo problema</h2>
+      <div class="num-grid">
+        <div class="num-card reveal r-left" data-step="2">
+          <div class="num-card-num">01</div>
+          <h3>Datos</h3>
+          <div class="big-n">2026-2032</div>
+          <p>Ventana en la que los datasets alcanzan el stock de texto público generado por humanos. Es el reloj más lento y el más negociable: datos sintéticos, transferencia y eficiencia lo corren hacia adelante.</p>
+          <div class="src">Villalobos et al., arXiv:2211.04325 (rev. jun 2024)</div>
+        </div>
+        <div class="num-card reveal r-left" data-step="3">
+          <div class="num-card-num">02</div>
+          <h3>Energía</h3>
+          <div class="big-n">4-16 GW</div>
+          <p>Consumo estimado del mayor entrenamiento individual en 2030, creciendo de 2,2x a 2,9x por año desde los más de 100 MW de hoy. Este reloj no se negocia: se construye, y tarda años.</p>
+          <div class="src">Epoch AI, power demands of frontier AI training (11 ago 2025)</div>
+        </div>
+        <div class="num-card reveal r-left" data-step="4">
+          <div class="num-card-num">03</div>
+          <h3>Capex</h3>
+          <div class="big-n">660-690</div>
+          <p>Miles de millones de dólares comprometidos en 2026 por los cinco mayores proveedores de nube e infraestructura de IA, casi el doble que en 2025. Es el reloj más rápido y el más reversible.</p>
+          <div class="src">Futurum Group, AI Capex 2026 (12 feb 2026)</div>
+        </div>
+      </div>
+    </div>
+    <div class="footer"><div class="left"></div><div>Tesis de frontera · sep 2026 · <span class="num">10</span></div></div>
+  </section>
+
+  <!-- ══════════ 11 · Energia (HEAVY) ══════════ -->
+  <section data-label="11 Energia" data-steps="3" data-current-step="0">
+    <div class="pad">
+      <div class="act-marker"><span class="step-num">1</span><span class="step-total">/3</span></div>
+      <div class="eyebrow reveal" data-step="1">El límite que no se negocia</div>
+      <h2 class="title tight reveal r-rise" data-step="1" style="--d:80ms">De cien megavatios a una central nuclear</h2>
+      <div class="chart">
+        <svg viewBox="0 0 1420 400" role="img" aria-label="Proyección de potencia del mayor entrenamiento individual, escala logarítmica, de 2025 a 2030">
+          <line class="grid" x1="120" y1="305" x2="1360" y2="305"/>
+          <line class="grid" x1="120" y1="190" x2="1360" y2="190"/>
+          <line class="grid" x1="120" y1="75"  x2="1360" y2="75"/>
+          <text class="tick" x="108" y="311" text-anchor="end">0,1 GW</text>
+          <text class="tick" x="108" y="196" text-anchor="end">1 GW</text>
+          <text class="tick" x="108" y="81"  text-anchor="end">10 GW</text>
+          <path class="band fx reveal" data-step="2" d="M 120 305 L 1360 121 L 1360 51 Z"/>
+          <path class="ln draw reveal" data-step="2" pathLength="1" style="--d:120ms" d="M 120 305 L 1360 121"/>
+          <path class="ln draw reveal" data-step="2" pathLength="1" style="--d:340ms" d="M 120 305 L 1360 51"/>
+          <line class="ax" x1="120" y1="340" x2="1360" y2="340"/>
+          <text class="tick" x="120"  y="372" text-anchor="middle">2025</text>
+          <text class="tick" x="368"  y="372" text-anchor="middle">2026</text>
+          <text class="tick" x="616"  y="372" text-anchor="middle">2027</text>
+          <text class="tick" x="864"  y="372" text-anchor="middle">2028</text>
+          <text class="tick" x="1112" y="372" text-anchor="middle">2029</text>
+          <text class="tick" x="1360" y="372" text-anchor="middle">2030</text>
+          <g class="fx reveal" data-step="3">
+            <circle class="dot" cx="120"  cy="305" r="10"/>
+            <text class="lbl" x="420" y="300">Más de 100 MW hoy</text>
+            <circle class="dot" cx="1360" cy="121" r="10"/>
+            <circle class="dot" cx="1360" cy="51"  r="10"/>
+            <text class="lbl-p" x="1344" y="97" text-anchor="end">4 GW</text>
+            <text class="lbl-p" x="1344" y="34" text-anchor="end">16 GW</text>
+            <text class="lbl" x="700" y="130" transform="rotate(-9 700 130)">Crecimiento de 2,2x a 2,9x por año</text>
+          </g>
+        </svg>
+      </div>
+      <p class="src reveal r-fade" data-step="3" style="--d:160ms"><b>Fuente:</b> Epoch AI, "How much power will frontier AI training demand in 2030?" (11 ago 2025). "The largest individual frontier training runs in 2030 will likely draw 4-16 gigawatts (GW)". Para el conjunto del sector proyectan más de 100 GW en el mundo y más de 50 GW en Estados Unidos hacia 2030, cerca del 5% de su capacidad total de generación. El cono dibujado une el punto de partida citado con el rango publicado para 2030.</p>
+    </div>
+    <div class="footer"><div class="left"></div><div>Tesis de frontera · sep 2026 · <span class="num">11</span></div></div>
+  </section>
+
+  <!-- ══════════ 12 · Capex 2026 ══════════ -->
+  <section data-label="12 Capex 2026" data-steps="3" data-current-step="0">
+    <div class="pad mid">
+      <div class="act-marker"><span class="step-num">1</span><span class="step-total">/3</span></div>
+      <div class="eyebrow reveal" data-step="1">Quién está pagando la moneda vieja</div>
+      <h2 class="title tight reveal r-rise" data-step="1" style="--d:80ms">Capex comprometido para 2026, en miles de millones de dólares</h2>
+      <div class="cx-rows">
+        <div class="cx-row reveal r-wipe" data-step="2">
+          <div class="cx-name">Amazon</div>
+          <div class="cx-track"><div class="cx-fill" style="width:95.2%"></div></div>
+          <div class="cx-val">200</div>
+        </div>
+        <div class="cx-row reveal r-wipe" data-step="2" style="--d:90ms">
+          <div class="cx-name">Alphabet</div>
+          <div class="cx-track"><div class="cx-fill" style="width:83.3%"></div><div class="cx-ext" style="left:83.3%;width:4.8%"></div></div>
+          <div class="cx-val">175 a 185</div>
+        </div>
+        <div class="cx-row reveal r-wipe" data-step="2" style="--d:180ms">
+          <div class="cx-name">Microsoft</div>
+          <div class="cx-track"><div class="cx-fill" style="width:57.1%"></div><div class="cx-ext" style="left:57.1%;width:6%"></div></div>
+          <div class="cx-val">120 o más</div>
+        </div>
+        <div class="cx-row reveal r-wipe" data-step="2" style="--d:270ms">
+          <div class="cx-name">Meta</div>
+          <div class="cx-track"><div class="cx-fill" style="width:54.8%"></div><div class="cx-ext" style="left:54.8%;width:9.5%"></div></div>
+          <div class="cx-val">115 a 135</div>
+        </div>
+        <div class="cx-row reveal r-wipe" data-step="2" style="--d:360ms">
+          <div class="cx-name">Oracle</div>
+          <div class="cx-track"><div class="cx-fill" style="width:23.8%"></div></div>
+          <div class="cx-val">50</div>
+        </div>
+      </div>
+      <div class="cx-total reveal r-scale" data-step="3">
+        <div class="big" data-counter="675" data-target-step="3">0</div>
+        <div class="glosa">Miles de millones en total, casi el doble de los 380 de 2025. El sector está comprando a ritmo de ley de escalado una frontera que ya no se decide ahí.</div>
+      </div>
+      <p class="src reveal r-fade" data-step="3" style="--d:200ms"><b>Fuente:</b> Futurum Group, "AI Capex 2026: The $690B Infrastructure Sprint" (12 feb 2026): "The five largest US cloud and AI infrastructure providers have collectively committed to spending between $660 billion and $690 billion on capital expenditure in 2026, nearly doubling 2025 levels". La cifra grande es el punto medio del rango publicado.</p>
+    </div>
+    <div class="footer"><div class="left"></div><div>Tesis de frontera · sep 2026 · <span class="num">12</span></div></div>
+  </section>
+
+  <!-- ══════════ 13 · Capitulo 04 ══════════ -->
+  <section class="grad" data-label="13 Capitulo 04" data-steps="1" data-current-step="1">
+    <div class="pad center">
+      <h1 class="ts-title">La evidencia</h1>
+      <div class="ts-tagline">04 · Lo que ya se ve en el precio y en la brecha</div>
+    </div>
+    <div class="footer"><div class="left"></div><div>Tesis de frontera · sep 2026 · <span class="num">13</span></div></div>
+  </section>
+
+  <!-- ══════════ 14 · El precio se dio vuelta ══════════ -->
+  <section data-label="14 Precio invertido" data-steps="4" data-current-step="0">
+    <div class="pad mid">
+      <div class="act-marker"><span class="step-num">1</span><span class="step-total">/4</span></div>
+      <div class="eyebrow reveal" data-step="1">Prueba número uno</div>
+      <h2 class="title tight reveal r-rise" data-step="1" style="--d:80ms">Dos precios que van en direcciones opuestas</h2>
+      <div class="pq-grid">
+        <div class="pq-card reveal r-left" data-step="2">
+          <div class="pq-eyebrow">Una capacidad fija</div>
+          <div class="pq-figs">
+            <span class="fig-from">37,50</span>
+            <span class="fig-arrow">a</span>
+            <span class="fig-to">0,18</span>
+          </div>
+          <div class="pq-consequence">Doscientas veces más barato</div>
+          <p>Dólares por millón de tokens para igualar el nivel de GPT-4 en MMLU, entre marzo de 2023 y febrero de 2025.</p>
+          <div class="src">Epoch AI, LLM inference price trends (12 mar 2025)</div>
+        </div>
+        <div class="pq-card reveal r-left" data-step="3">
+          <div class="pq-eyebrow">La frontera del día</div>
+          <div class="pq-figs">
+            <span class="fig-from">4 y 20</span>
+            <span class="fig-arrow">a</span>
+            <span class="fig-to">10 y 50</span>
+          </div>
+          <div class="pq-consequence">Dos veces y media más caro</div>
+          <p>Entrada y salida por millón de tokens, de GPT-5.6 Sol a GPT-6 Astra, en una sola generación y seis meses.</p>
+          <div class="src">OpenAI via CloudZero, GPT-6 Astra pricing (sep 2026)</div>
+        </div>
+      </div>
+      <p class="lead lead-wide reveal r-fade" data-step="4" style="margin-top:44px">Anthropic hace el mismo movimiento por otra vía: Fable 5.1 mantiene los 10 y 50 dólares de Fable 5 y recorta un 75% la lectura de caché, hasta 0,25 dólares. El precio de la frontera no baja: <span class="hl">baja el precio de repetir lo que ya se pensó</span>.</p>
+      <p class="src reveal r-fade" data-step="4" style="--d:160ms"><b>Fuentes:</b> anthropic.com, "Introducing Claude Fable 5.1 and Claude Mythos 5.1" (sep 2026): 10 USD entrada, 50 USD salida, 0,25 USD lectura de caché, ahorro de "around 25%" en cargas típicas y "up to around 45%" en agénticas. CloudZero, "GPT-6 Astra pricing" (sep 2026): Astra el 3 sep 2026 a 10 y 50 USD, caché 1 USD, escritura de caché 12,50 USD, ventana de 1 millón de tokens; Sol a 4 y 20 USD en tarifa promocional hasta el 21 nov 2026.</p>
+    </div>
+    <div class="footer"><div class="left"></div><div>Tesis de frontera · sep 2026 · <span class="num">14</span></div></div>
+  </section>
+
+  <!-- ══════════ 15 · La brecha abierto vs cerrado ══════════ -->
+  <section data-label="15 Brecha abierto cerrado" data-steps="4" data-current-step="0">
+    <div class="pad mid">
+      <div class="act-marker"><span class="step-num">1</span><span class="step-total">/4</span></div>
+      <div class="eyebrow reveal" data-step="1">Prueba número dos</div>
+      <h2 class="title tight reveal r-rise" data-step="1" style="--d:80ms">Ocho puntos separan lo abierto de lo cerrado</h2>
+      <div class="eci-scale reveal r-fade" data-step="2">
+        <div></div>
+        <div class="eci-marks">
+          <span class="mk" style="left:0%">148</span>
+          <span class="mk" style="left:28.6%">152</span>
+          <span class="mk" style="left:57.1%">156</span>
+          <span class="mk" style="left:85.7%">160</span>
+        </div>
+        <div></div>
+      </div>
+      <div class="eci-rows">
+        <div class="eci-row reveal r-left" data-step="2">
+          <div class="eci-name">GPT-5.5 Pro</div>
+          <div class="eci-track"><div class="eci-pt c" style="left:81.1%"></div></div>
+          <div class="eci-val">159,35</div>
+        </div>
+        <div class="eci-row reveal r-left" data-step="2" style="--d:80ms">
+          <div class="eci-name">Gemini 3.5 Flash</div>
+          <div class="eci-track"><div class="eci-pt c" style="left:59.4%"></div></div>
+          <div class="eci-val">156,31</div>
+        </div>
+        <div class="eci-row reveal r-left" data-step="2" style="--d:160ms">
+          <div class="eci-name">Claude Opus 4.7</div>
+          <div class="eci-track"><div class="eci-pt c" style="left:58.4%"></div></div>
+          <div class="eci-val">156,18</div>
+        </div>
+        <div class="eci-row reveal r-left" data-step="3">
+          <div class="eci-name">Kimi K2.6 (pesos abiertos)</div>
+          <div class="eci-track"><div class="eci-gap" style="left:25.7%;width:32.7%"></div><div class="eci-pt o" style="left:25.7%"></div></div>
+          <div class="eci-val">151,60</div>
+        </div>
+        <div class="eci-row reveal r-left" data-step="3" style="--d:80ms">
+          <div class="eci-name">Qwen 3.6 Max Preview (abiertos)</div>
+          <div class="eci-track"><div class="eci-pt o" style="left:15.4%"></div></div>
+          <div class="eci-val">150,16</div>
+        </div>
+        <div class="eci-row reveal r-left" data-step="3" style="--d:160ms">
+          <div class="eci-name">GLM-5.1 (pesos abiertos)</div>
+          <div class="eci-track"><div class="eci-pt o" style="left:13.9%"></div></div>
+          <div class="eci-val">149,94</div>
+        </div>
+      </div>
+      <div class="legend reveal r-fade" data-step="4">
+        <span><i class="c"></i>Pesos cerrados</span>
+        <span><i class="o"></i>Pesos abiertos</span>
+        <span>Brecha media desde enero de 2026: cuatro meses</span>
+      </div>
+      <p class="src reveal r-fade" data-step="4" style="--d:160ms"><b>Fuentes:</b> Epoch AI, "Open models lag state-of-the-art closed models by 4 months" (29 may 2026): "The average ECI gap was 8 points, similar to the gap between GPT-5 and GPT-5.5". Kimi K3 (Moonshot, 2,8 billones de parámetros totales y unos 50 mil millones activos por token, 16 de 896 expertos, ventana de 1 millón de tokens) publicó pesos el 27 jul 2026, después del corte de esta medición.</p>
+    </div>
+    <div class="footer"><div class="left"></div><div>Tesis de frontera · sep 2026 · <span class="num">15</span></div></div>
+  </section>
+
+  <!-- ══════════ 16 · Tres predicciones falsables ══════════ -->
+  <section data-label="16 Predicciones" data-steps="4" data-current-step="0">
+    <div class="pad mid">
+      <div class="act-marker"><span class="step-num">1</span><span class="step-total">/4</span></div>
+      <div class="eyebrow reveal" data-step="1">Cómo saber si esta tesis es falsa</div>
+      <h2 class="title tight reveal r-rise" data-step="1" style="--d:80ms">Tres predicciones que se pueden desmentir</h2>
+      <div class="num-grid">
+        <div class="num-card reveal r-scale" data-step="2">
+          <div class="num-card-num">01</div>
+          <h3>El techo es la red, no el corpus</h3>
+          <p>El mayor entrenamiento individual de 2030 caerá entre 4 y 16 GW y la restricción vinculante será la potencia contratada.</p>
+          <div class="src">Falsa si en 2030 el límite operativo declarado sigue siendo la disponibilidad de datos.</div>
+        </div>
+        <div class="num-card reveal r-scale" data-step="3">
+          <div class="num-card-num">02</div>
+          <h3>La brecha abierta no vuelve a un año</h3>
+          <p>El retraso de los pesos abiertos se queda por debajo de seis meses de forma sostenida, porque el diferencial se juega en gasto de inferencia, no en foso de capex.</p>
+          <div class="src">Falsa si la brecha ECI supera de forma sostenida los 8 meses.</div>
+        </div>
+        <div class="num-card reveal r-scale" data-step="4">
+          <div class="num-card-num">03</div>
+          <h3>El precio de lista de la frontera no baja</h3>
+          <p>El siguiente buque insignia de cualquier laboratorio grande no baja de 10 dólares por millón de tokens de entrada.</p>
+          <div class="src">Falsa en cuanto un modelo de frontera se lance por debajo de esa cifra sin tarifa promocional.</div>
+        </div>
+      </div>
+    </div>
+    <div class="footer"><div class="left"></div><div>Tesis de frontera · sep 2026 · <span class="num">16</span></div></div>
+  </section>
+
+  <!-- ══════════ 17 · Cierre ══════════ -->
+  <section class="grad" data-label="17 Cierre" data-steps="1" data-current-step="1">
+    <div class="pad">
+      <div class="eyebrow">La invitación</div>
+      <div style="margin:auto 0">
+        <h1 class="cover-md">Dejen de mirar el tamaño del clúster</h1>
+        <div class="subtitle">Miren el coste marginal del token de razonamiento. Ahí es donde se decide quién tiene frontera propia y quién la alquila</div>
+      </div>
+      <div class="cover-meta">Fuentes primarias: epoch.ai · arxiv.org/abs/2211.04325 · anthropic.com · darioamodei.com · dwarkesh.com · futurumgroup.com</div>
+    </div>
+    <div class="footer">
+      <div class="left"></div>
+      <div>Tesis de frontera · sep 2026 · <span class="num">17</span></div>
+    </div>
+  </section>
+
+</deck-stage>
+
+<!-- Viewer chrome: progress bar (top) + fullscreen button (top-right) -->
+<div id="progress-bar"></div>
+<button id="fs-btn" type="button" aria-label="Toggle fullscreen" title="Fullscreen">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M3 9V5a2 2 0 0 1 2-2h4M21 9V5a2 2 0 0 0-2-2h-4M21 15v4a2 2 0 0 1-2 2h-4M3 15v4a2 2 0 0 0 2 2h4"/>
+  </svg>
+</button>
+
+<!-- ============================================================
+     <deck-stage> custom element — fixed-aspect canvas with
+     keyboard nav, tap zones, slide overlay, print pagination.
+     Inlined IIFE — no external dependencies.
+     ============================================================ -->
+<script>
+  (() => {
+    const DESIGN_W_DEFAULT = 1920;
+    const DESIGN_H_DEFAULT = 1080;
+    const OVERLAY_HIDE_MS = 1800;
+    const VALIDATE_ATTR = 'no_overflowing_text,no_overlapping_text,slide_sized_text';
+    const pad2 = (n) => String(n).padStart(2, '0');
+
+    const stylesheet = `
+      :host {
+        position: fixed; inset: 0; display: block; background: #000; color: #fff;
+        font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, sans-serif;
+        overflow: hidden;
+      }
+      .stage { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
+      .canvas { position: relative; transform-origin: center center; flex-shrink: 0; background: var(--cs-cream); will-change: transform; }
+      ::slotted(*) {
+        position: absolute !important; inset: 0 !important;
+        width: 100% !important; height: 100% !important;
+        box-sizing: border-box !important; overflow: hidden;
+        opacity: 0; pointer-events: none; visibility: hidden;
+      }
+      ::slotted([data-deck-active]) { opacity: 1; pointer-events: auto; visibility: visible; }
+      .tapzones { position: fixed; inset: 0; display: flex; z-index: 2147482000; pointer-events: none; }
+      .tapzone { flex: 1; pointer-events: auto; -webkit-tap-highlight-color: transparent; }
+      @media (hover: hover) and (pointer: fine) { .tapzones { display: none; } }
+      .overlay {
+        position: fixed; left: 50%; bottom: 22px;
+        transform: translate(-50%, 6px) scale(0.92); filter: blur(6px);
+        display: flex; align-items: center; gap: 4px; padding: 4px;
+        background: #000; color: #fff; border-radius: 999px;
+        font-size: 12px; font-feature-settings: "tnum" 1; letter-spacing: 0.01em;
+        opacity: 0; pointer-events: none;
+        transition: opacity 260ms ease, transform 260ms cubic-bezier(.2,.8,.2,1), filter 260ms ease;
+        transform-origin: center bottom; z-index: 2147483000; user-select: none;
+      }
+      .overlay[data-visible] { opacity: 1; pointer-events: auto; transform: translate(-50%, 0) scale(1); filter: blur(0); }
+      .btn {
+        appearance: none; background: transparent; border: 0; margin: 0; padding: 0;
+        color: rgba(255,255,255,0.72); font: inherit; cursor: default;
+        display: inline-flex; align-items: center; justify-content: center;
+        height: 28px; min-width: 28px; border-radius: 999px;
+        transition: background 140ms ease, color 140ms ease;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .btn:hover { background: rgba(255,255,255,0.12); color: #fff; }
+      .btn:active { background: rgba(255,255,255,0.18); }
+      .btn:focus { outline: none; }
+      .btn:focus-visible { outline: none; box-shadow: 0 0 0 2px rgba(255,255,255,0.9); }
+      .btn svg { width: 14px; height: 14px; display: block; }
+      .btn.reset { font-size: 11px; font-weight: 500; padding: 0 10px 0 12px; gap: 6px; }
+      .btn.reset .kbd {
+        display: inline-flex; align-items: center; justify-content: center;
+        min-width: 16px; height: 16px; padding: 0 4px;
+        font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+        font-size: 10px; line-height: 1; color: rgba(255,255,255,0.88);
+        background: rgba(255,255,255,0.12); border-radius: 4px;
+      }
+      .count {
+        font-variant-numeric: tabular-nums; color: #fff; font-weight: 500;
+        padding: 0 8px; min-width: 42px; text-align: center; font-size: 12px;
+      }
+      .count .sep { color: rgba(255,255,255,0.45); margin: 0 3px; font-weight: 400; }
+      .count .total { color: rgba(255,255,255,0.55); }
+      .divider { width: 1px; height: 14px; background: rgba(255,255,255,0.18); margin: 0 2px; }
+      @media print {
+        :host { position: static; inset: auto; background: none; overflow: visible; color: inherit; }
+        .stage { position: static; display: block; }
+        .canvas { transform: none !important; width: auto !important; height: auto !important; background: none; will-change: auto; }
+        ::slotted(*) {
+          position: relative !important; inset: auto !important;
+          width: var(--deck-design-w) !important; height: var(--deck-design-h) !important;
+          box-sizing: border-box !important;
+          opacity: 1 !important; visibility: visible !important; pointer-events: auto;
+          break-after: page; page-break-after: always; break-inside: avoid; overflow: hidden;
+        }
+        ::slotted(*:last-child) { break-after: auto; page-break-after: auto; }
+        .overlay, .tapzones { display: none !important; }
+      }
+    `;
+
+    class DeckStage extends HTMLElement {
+      static get observedAttributes() { return ['width', 'height', 'noscale']; }
+
+      constructor() {
+        super();
+        this._root = this.attachShadow({ mode: 'open' });
+        this._index = 0;
+        this._slides = [];
+        this._notes = [];
+        this._hideTimer = null;
+        this._onKey = this._onKey.bind(this);
+        this._onResize = this._onResize.bind(this);
+        this._onSlotChange = this._onSlotChange.bind(this);
+        this._onMouseMove = this._onMouseMove.bind(this);
+        this._onTapBack = this._onTapBack.bind(this);
+        this._onTapForward = this._onTapForward.bind(this);
+      }
+
+      get designWidth() { return parseInt(this.getAttribute('width'), 10) || DESIGN_W_DEFAULT; }
+      get designHeight() { return parseInt(this.getAttribute('height'), 10) || DESIGN_H_DEFAULT; }
+
+      connectedCallback() {
+        this._render();
+        this._loadNotes();
+        this._syncPrintPageRule();
+        window.addEventListener('keydown', this._onKey);
+        window.addEventListener('resize', this._onResize);
+        window.addEventListener('mousemove', this._onMouseMove, { passive: true });
+      }
+      disconnectedCallback() {
+        window.removeEventListener('keydown', this._onKey);
+        window.removeEventListener('resize', this._onResize);
+        window.removeEventListener('mousemove', this._onMouseMove);
+        if (this._hideTimer) clearTimeout(this._hideTimer);
+      }
+      attributeChangedCallback() {
+        if (this._canvas) {
+          this._canvas.style.width = this.designWidth + 'px';
+          this._canvas.style.height = this.designHeight + 'px';
+          this._canvas.style.setProperty('--deck-design-w', this.designWidth + 'px');
+          this._canvas.style.setProperty('--deck-design-h', this.designHeight + 'px');
+          this._fit();
+          this._syncPrintPageRule();
+        }
+      }
+
+      _render() {
+        const style = document.createElement('style');
+        style.textContent = stylesheet;
+        const stage = document.createElement('div');
+        stage.className = 'stage';
+        const canvas = document.createElement('div');
+        canvas.className = 'canvas';
+        canvas.style.width = this.designWidth + 'px';
+        canvas.style.height = this.designHeight + 'px';
+        canvas.style.setProperty('--deck-design-w', this.designWidth + 'px');
+        canvas.style.setProperty('--deck-design-h', this.designHeight + 'px');
+        const slot = document.createElement('slot');
+        slot.addEventListener('slotchange', this._onSlotChange);
+        canvas.appendChild(slot);
+        stage.appendChild(canvas);
+        const tapzones = document.createElement('div');
+        tapzones.className = 'tapzones export-hidden';
+        tapzones.setAttribute('aria-hidden', 'true');
+        const tzBack = document.createElement('div'); tzBack.className = 'tapzone tapzone--back';
+        const tzMid = document.createElement('div'); tzMid.className = 'tapzone tapzone--mid'; tzMid.style.pointerEvents = 'none';
+        const tzFwd = document.createElement('div'); tzFwd.className = 'tapzone tapzone--fwd';
+        tzBack.addEventListener('click', this._onTapBack);
+        tzFwd.addEventListener('click', this._onTapForward);
+        tapzones.append(tzBack, tzMid, tzFwd);
+        const overlay = document.createElement('div');
+        overlay.className = 'overlay export-hidden';
+        overlay.setAttribute('role', 'toolbar');
+        overlay.setAttribute('aria-label', 'Deck controls');
+        overlay.innerHTML =
+          '<button class="btn prev" type="button" aria-label="Previous slide" title="Previous (←)">' +
+            '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3L5 8l5 5"/></svg>' +
+          '</button>' +
+          '<span class="count" aria-live="polite"><span class="current">1</span><span class="sep">/</span><span class="total">1</span></span>' +
+          '<button class="btn next" type="button" aria-label="Next slide" title="Next (→)">' +
+            '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3l5 5-5 5"/></svg>' +
+          '</button>' +
+          '<span class="divider"></span>' +
+          '<button class="btn reset" type="button" aria-label="Reset to first slide" title="Reset (R)">Reset<span class="kbd">R</span></button>';
+        overlay.querySelector('.prev').addEventListener('click', () => this._go(this._index - 1, 'click'));
+        overlay.querySelector('.next').addEventListener('click', () => this._go(this._index + 1, 'click'));
+        overlay.querySelector('.reset').addEventListener('click', () => this._go(0, 'click'));
+        this._root.append(style, stage, tapzones, overlay);
+        this._canvas = canvas;
+        this._slot = slot;
+        this._overlay = overlay;
+        this._countEl = overlay.querySelector('.current');
+        this._totalEl = overlay.querySelector('.total');
+      }
+
+      _syncPrintPageRule() {
+        const id = 'deck-stage-print-page';
+        let tag = document.getElementById(id);
+        if (!tag) { tag = document.createElement('style'); tag.id = id; document.head.appendChild(tag); }
+        tag.textContent =
+          '@page { size: ' + this.designWidth + 'px ' + this.designHeight + 'px; margin: 0; } ' +
+          '@media print { html, body { margin: 0 !important; padding: 0 !important; background: none !important; overflow: visible !important; height: auto !important; } * { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }';
+      }
+
+      _onSlotChange() {
+        this._collectSlides();
+        this._restoreIndex();
+        this._applyIndex({ showOverlay: false, broadcast: true, reason: 'init' });
+        this._fit();
+      }
+
+      _collectSlides() {
+        const assigned = this._slot.assignedElements({ flatten: true });
+        this._slides = assigned.filter((el) => {
+          const tag = el.tagName;
+          return tag !== 'TEMPLATE' && tag !== 'SCRIPT' && tag !== 'STYLE';
+        });
+        this._slides.forEach((slide, i) => {
+          const n = i + 1;
+          let label = slide.getAttribute('data-label');
+          if (!label) {
+            const existing = slide.getAttribute('data-screen-label');
+            if (existing) label = existing.replace(/^\s*\d+\s*/, '').trim() || existing;
+          }
+          if (!label) {
+            const h = slide.querySelector('h1, h2, h3, [data-title]');
+            if (h) label = (h.textContent || '').trim().slice(0, 40);
+          }
+          if (!label) label = 'Slide';
+          slide.setAttribute('data-screen-label', `${pad2(n)} ${label}`);
+          if (!slide.hasAttribute('data-om-validate')) slide.setAttribute('data-om-validate', VALIDATE_ATTR);
+          slide.setAttribute('data-deck-slide', String(i));
+        });
+        if (this._totalEl) this._totalEl.textContent = String(this._slides.length || 1);
+        if (this._index >= this._slides.length) this._index = Math.max(0, this._slides.length - 1);
+      }
+
+      _loadNotes() {
+        const tag = document.getElementById('speaker-notes');
+        if (!tag) { this._notes = []; return; }
+        try {
+          const parsed = JSON.parse(tag.textContent || '[]');
+          if (Array.isArray(parsed)) this._notes = parsed;
+        } catch (e) { this._notes = []; }
+      }
+
+      _restoreIndex() {
+        const h = (location.hash || '').match(/^#(\d+)$/);
+        if (h) {
+          const n = parseInt(h[1], 10) - 1;
+          if (n >= 0 && n < this._slides.length) this._index = n;
+        }
+      }
+
+      _applyIndex({ showOverlay = true, broadcast = true, reason = 'init' } = {}) {
+        if (!this._slides.length) return;
+        const prev = this._prevIndex == null ? -1 : this._prevIndex;
+        const curr = this._index;
+        try { history.replaceState(null, '', '#' + (curr + 1)); } catch (e) {}
+        this._slides.forEach((s, i) => {
+          if (i === curr) s.setAttribute('data-deck-active', '');
+          else s.removeAttribute('data-deck-active');
+        });
+        if (this._countEl) this._countEl.textContent = String(curr + 1);
+        if (broadcast) {
+          try { window.postMessage({ slideIndexChanged: curr }, '*'); } catch (e) {}
+          this.dispatchEvent(new CustomEvent('slidechange', {
+            detail: {
+              index: curr, previousIndex: prev,
+              total: this._slides.length,
+              slide: this._slides[curr] || null,
+              previousSlide: prev >= 0 ? (this._slides[prev] || null) : null,
+              reason: reason,
+            },
+            bubbles: true, composed: true,
+          }));
+        }
+        this._prevIndex = curr;
+        if (showOverlay) this._flashOverlay();
+      }
+
+      _flashOverlay() {
+        if (!this._overlay) return;
+        this._overlay.setAttribute('data-visible', '');
+        if (this._hideTimer) clearTimeout(this._hideTimer);
+        this._hideTimer = setTimeout(() => { this._overlay.removeAttribute('data-visible'); }, OVERLAY_HIDE_MS);
+      }
+
+      _fit() {
+        if (!this._canvas) return;
+        if (this.hasAttribute('noscale')) { this._canvas.style.transform = 'none'; return; }
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+        const s = Math.min(vw / this.designWidth, vh / this.designHeight);
+        this._canvas.style.transform = `scale(${s})`;
+      }
+
+      _onResize() { this._fit(); }
+      _onMouseMove() { this._flashOverlay(); }
+      _onTapBack(e) { e.preventDefault(); this._go(this._index - 1, 'tap'); }
+      _onTapForward(e) { e.preventDefault(); this._go(this._index + 1, 'tap'); }
+
+      _onKey(e) {
+        const t = e.target;
+        if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
+        if (e.metaKey || e.ctrlKey || e.altKey) return;
+        const key = e.key;
+        let handled = true;
+        if (key === 'ArrowRight' || key === 'PageDown' || key === ' ' || key === 'Spacebar') this._go(this._index + 1, 'keyboard');
+        else if (key === 'ArrowLeft' || key === 'PageUp') this._go(this._index - 1, 'keyboard');
+        else if (key === 'Home') this._go(0, 'keyboard');
+        else if (key === 'End') this._go(this._slides.length - 1, 'keyboard');
+        else if (key === 'r' || key === 'R') this._go(0, 'keyboard');
+        else if (/^[0-9]$/.test(key)) {
+          const n = key === '0' ? 9 : parseInt(key, 10) - 1;
+          if (n < this._slides.length) this._go(n, 'keyboard');
+        } else handled = false;
+        if (handled) { e.preventDefault(); }
+      }
+
+      _go(i, reason = 'api') {
+        if (!this._slides.length) return;
+        const clamped = Math.max(0, Math.min(this._slides.length - 1, i));
+        if (clamped === this._index) { return; }
+        this._index = clamped;
+        this._applyIndex({ showOverlay: false, broadcast: true, reason });
+      }
+
+      get index() { return this._index; }
+      get length() { return this._slides.length; }
+      goTo(i) { this._go(i, 'api'); }
+      next() { this._go(this._index + 1, 'api'); }
+      prev() { this._go(this._index - 1, 'api'); }
+      reset() { this._go(0, 'api'); }
+    }
+
+    if (!customElements.get('deck-stage')) customElements.define('deck-stage', DeckStage);
+  })();
+</script>
+
+<!-- ============================================================
+     Runtime: lucide icons + step controller + viewer chrome
+     ============================================================ -->
+<script>
+  if (window.lucide) lucide.createIcons();
+
+  const stage = document.querySelector('deck-stage');
+
+  /* Mirror data-deck-active → data-active="true" on the section so CSS
+     animations and `.is-on` reveals can scope on it. */
+  function syncActive() {
+    const slides = stage.querySelectorAll(':scope > section');
+    slides.forEach((s) => {
+      if (s.hasAttribute('data-deck-active')) s.setAttribute('data-active', 'true');
+      else s.removeAttribute('data-active');
+    });
+  }
+
+  /* Formato compartido del contador: lo usan la animacion y el estado final
+     de impresion, para que el PDF muestre exactamente la misma cifra. */
+  function counterParts(el) {
+    const target = parseInt(el.dataset.counter, 10);
+    const unitNode = el.querySelector('.unit');
+    const unitHTML = unitNode ? unitNode.outerHTML : '';
+    const formatVal = (v) => {
+      if (target >= 100000) return (v / 1000).toFixed(0) + 'k';
+      if (target >= 1000)   return (v / 1000).toFixed(1) + 'k';
+      return Math.round(v).toString();
+    };
+    return { target, unitHTML, formatVal };
+  }
+
+  /* Counter animation — runs when [data-counter] reaches data-target-step.
+     Used by the counter+bars pattern (animations.md). */
+  function runCounter(el) {
+    if (el.dataset.played === '1') return;
+    el.dataset.played = '1';
+    const { target, unitHTML, formatVal } = counterParts(el);
+    const duration = 1400;
+    el.innerHTML = formatVal(0) + unitHTML;
+    const start = performance.now();
+    const tick = (now) => {
+      const t = Math.min(1, (now - start) / duration);
+      const eased = 1 - Math.pow(1 - t, 5);
+      el.innerHTML = formatVal(target * eased) + unitHTML;
+      if (t < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }
+
+  function resetCounters(slide) {
+    slide.querySelectorAll('[data-counter]').forEach((el) => {
+      el.dataset.played = '';
+      const unitNode = el.querySelector('.unit');
+      const unitHTML = unitNode ? unitNode.outerHTML : '';
+      el.innerHTML = '0' + unitHTML;
+    });
+  }
+
+  /* Apply current step: every .reveal whose data-step <= current gets .is-on. */
+  function applyStep(slide, step) {
+    slide.dataset.currentStep = String(step);
+    slide.querySelectorAll('.reveal').forEach((el) => {
+      const elStep = parseInt(el.dataset.step || '1', 10);
+      el.classList.toggle('is-on', elStep <= step);
+    });
+    slide.querySelectorAll('[data-counter]').forEach((el) => {
+      const target = parseInt(el.dataset.targetStep || '1', 10);
+      if (target <= step) runCounter(el);
+    });
+    const marker = slide.querySelector('.act-marker .step-num');
+    if (marker) marker.textContent = String(step);
+  }
+
+  /* Reset slide to step 0 (all reveals hidden), then advance to step 1
+     so the first reveal animates in on entry. */
+  function resetAndEnter(slide) {
+    if (!slide) return;
+    slide.querySelectorAll('.reveal').forEach((el) => el.classList.remove('is-on'));
+    resetCounters(slide);
+    slide.dataset.currentStep = '0';
+    requestAnimationFrame(() => requestAnimationFrame(() => applyStep(slide, 1)));
+  }
+
+  /* Capture-phase keydown — runs BEFORE deck-stage's own handler. Advances
+     in-slide steps until exhausted, then lets deck-stage advance the slide. */
+  window.addEventListener('keydown', (e) => {
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    const t = e.target;
+    if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
+    const slide = stage.querySelector(':scope > section[data-deck-active]');
+    if (!slide) return;
+    const total = parseInt(slide.dataset.steps || '1', 10);
+    const current = parseInt(slide.dataset.currentStep || '1', 10);
+    if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+      if (current < total) {
+        applyStep(slide, current + 1);
+        e.preventDefault();
+        e.stopImmediatePropagation();
+      }
+    } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+      if (current > 1) {
+        applyStep(slide, current - 1);
+        e.preventDefault();
+        e.stopImmediatePropagation();
+      }
+    }
+  }, { capture: true });
+
+  /* On slide change: sync data-active, re-enter the new slide, update progress bar */
+  stage.addEventListener('slidechange', (e) => {
+    requestAnimationFrame(() => {
+      syncActive();
+      resetAndEnter(e.detail.slide);
+    });
+    const pct = (e.detail.index + 1) / e.detail.total;
+    const bar = document.getElementById('progress-bar');
+    if (bar) bar.style.transform = 'scaleX(' + pct + ')';
+  });
+
+  /* Entrada inicial: deck-stage puede emitir su primer `slidechange` antes de
+     que este script registre el listener de arriba (define el custom element en
+     el bloque anterior). Sin esto, abrir el deck directo en una slide animada
+     — o deep-linkear con #N — la deja en blanco: los .reveal nunca reciben
+     .is-on. Sembramos el estado a mano una vez, ya con el DOM listo. */
+  function enterInitialSlide() {
+    const slide = stage.querySelector(':scope > section[data-deck-active]');
+    if (!slide) { requestAnimationFrame(enterInitialSlide); return; }
+    syncActive();
+    resetAndEnter(slide);
+    const total = stage.querySelectorAll(':scope > section').length || 1;
+    const idx = Array.prototype.indexOf.call(stage.querySelectorAll(':scope > section'), slide);
+    const bar = document.getElementById('progress-bar');
+    if (bar) bar.style.transform = 'scaleX(' + ((idx + 1) / total) + ')';
+  }
+  requestAnimationFrame(enterInitialSlide);
+
+  /* Antes de imprimir / exportar a PDF: llevar TODAS las slides a su estado
+     final, no solo la activa. El CSS de @media print ya revela los .reveal,
+     pero los contadores [data-counter] necesitan JS: su valor lo calcula
+     runCounter al llegar al paso objetivo, asi que sin esto un dato se
+     imprime como "0" en vez de su cifra real. */
+  function finalizeForPrint() {
+    stage.querySelectorAll(':scope > section').forEach((slide) => {
+      slide.querySelectorAll('.reveal').forEach((el) => el.classList.add('is-on'));
+      slide.querySelectorAll('[data-counter]').forEach((el) => {
+        const { target, unitHTML, formatVal } = counterParts(el);
+        el.dataset.played = '1';
+        el.innerHTML = formatVal(target) + unitHTML;
+      });
+      const marker = slide.querySelector('.act-marker .step-num');
+      if (marker) marker.textContent = slide.dataset.steps || '1';
+    });
+  }
+  window.addEventListener('beforeprint', finalizeForPrint);
+  if (window.matchMedia) {
+    const mq = window.matchMedia('print');
+    if (mq.addEventListener) mq.addEventListener('change', (e) => { if (e.matches) finalizeForPrint(); });
+  }
+
+  /* Fullscreen button — toggle, hide while fullscreen */
+  const fsBtn = document.getElementById('fs-btn');
+  if (fsBtn) {
+    fsBtn.addEventListener('click', () => {
+      if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(() => {});
+      else document.exitFullscreen();
+    });
+    document.addEventListener('fullscreenchange', () => {
+      if (document.fullscreenElement) fsBtn.setAttribute('data-fs', '1');
+      else fsBtn.removeAttribute('data-fs');
+    });
+  }
+</script>
+
+</body>
+</html>
