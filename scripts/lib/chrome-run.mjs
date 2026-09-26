@@ -17,13 +17,35 @@ import { injectBeforeBodyEnd } from './inject.mjs';
    Un rAF anidado en otro no llega a dispararse en Chrome headless sin GPU,
    y en Linux sin GPU (el CI) a veces ni el primero llega: el harness no
    corria nunca y el chequeo abortaba sin ningun problema real en el deck.
-   Lo que llegue primero arranca, una sola vez. Uso: __szStart(() => {...}) */
+   Lo que llegue primero arranca, una sola vez, y siempre despues de que
+   cargaron las fuentes web del deck. Uso: __szStart(() => {...}) */
 export const START = `
+  // Esperar las fuentes web antes de medir: con la fuente de respaldo (mas
+  // angosta) un titulo que en el deck ocupa dos lineas se mide en una, y
+  // el export y check-overflow trabajan con una geometria que nadie ve.
+  // document.fonts.ready solo no alcanza: resuelve de inmediato si la hoja
+  // de Google Fonts todavia no llego. Tope de 4 s para no colgar sin red.
+  const __szFonts = () => new Promise((resolve) => {
+    const cap = setTimeout(resolve, 4000);
+    const go = () => {
+      const fams = new Set();
+      document.querySelectorAll('body *').forEach((el) => {
+        const f = getComputedStyle(el).fontFamily.split(',')[0].trim().replace(/^["']|["']$/g, '');
+        if (f) fams.add(f);
+      });
+      Promise.all([...fams].map((f) => document.fonts.load('16px "' + f + '"').catch(() => null)))
+        .then(() => document.fonts.ready)
+        .then(() => { clearTimeout(cap); resolve(); }, () => { clearTimeout(cap); resolve(); });
+    };
+    if (document.readyState === 'complete') go(); else window.addEventListener('load', go, { once: true });
+  });
   const __szStart = (fn) => {
     let done = false;
     const once = () => { if (!done) { done = true; fn(); } };
-    requestAnimationFrame(() => setTimeout(once, 0));
-    setTimeout(once, 250);
+    __szFonts().then(() => {
+      requestAnimationFrame(() => setTimeout(once, 0));
+      setTimeout(once, 250);
+    });
   };`;
 
 /* Sin transiciones ni animaciones: se mide el estado final, no un frame a

@@ -4,6 +4,14 @@ Historial de cambios al engine (`template.html`) y a los scripts de la skill. Ca
 
 Una sola versión gobierna todo el proyecto y vive en seis sitios que deben coincidir siempre: `package.json`, el `metadata.version` de `SKILL.md`, el marcador `slizdeck-engine-version` de `template.html`, la primera entrada de este archivo, y el `version` de `.claude-plugin/plugin.json` y `.claude-plugin/marketplace.json`. `node scripts/check-versions.mjs` lo verifica y falla si alguno se desalinea.
 
+## 2.3.1
+
+Salida de la QA con un deck real (Opus 5.5 frente a GPT-6, pack editorial con colores de Anthropic sobre fondo oscuro). El engine no cambia.
+
+- **Fix: el export a PPTX contaba como una sola línea los títulos de dos líneas con interlineado ajustado.** El medidor decidía "línea nueva" cuando un rect no se solapaba verticalmente con el anterior, pero con `line-height` 1.1 la caja de cada línea es más alta que la distancia entre líneas: se solapan. En el PPTX el título salía en una línea con `wrap` apagado y se desbordaba de su card. Ahora cuenta una línea nueva cuando la tapa baja más de media línea.
+- **Fix: con interlineado más ajustado que la letra (títulos de portada a `.98`) la caja de texto del PPTX quedaba demasiado arriba** y el título se montaba sobre el eyebrow. La caja ahora baja la diferencia entre interlineado y altura de la letra en vez de ignorarla.
+- **Los harness de Chrome esperan a que carguen las fuentes web del deck** antes de medir (`document.fonts.load` de cada familia en uso, después del `load`, con tope de 4 s). `document.fonts.ready` solo resolvía de inmediato si la hoja de Google Fonts todavía no había llegado, y `check-overflow` o el export podían medir con la fuente de respaldo.
+
 ## 2.3.0
 
 Auditoría completa de la skill: bugs, código muerto, inconsistencias y lo deprecado, fuera.

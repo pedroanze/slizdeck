@@ -70,11 +70,31 @@ const firstGradientColor = (bgImage) => {
 (async () => {
   // Temporizador de respaldo: en Chrome headless sin GPU (Linux del CI) a
   // veces el primer rAF no llega nunca.
+  // Esperar las fuentes web antes de medir: con la fuente de respaldo (mas
+  // angosta) un titulo que en el deck ocupa dos lineas se mide en una, y
+  // el export y check-overflow trabajan con una geometria que nadie ve.
+  // document.fonts.ready solo no alcanza: resuelve de inmediato si la hoja
+  // de Google Fonts todavia no llego. Tope de 4 s para no colgar sin red.
+  const __szFonts = () => new Promise((resolve) => {
+    const cap = setTimeout(resolve, 4000);
+    const go = () => {
+      const fams = new Set();
+      document.querySelectorAll('body *').forEach((el) => {
+        const f = getComputedStyle(el).fontFamily.split(',')[0].trim().replace(/^["']|["']$/g, '');
+        if (f) fams.add(f);
+      });
+      Promise.all([...fams].map((f) => document.fonts.load('16px "' + f + '"').catch(() => null)))
+        .then(() => document.fonts.ready)
+        .then(() => { clearTimeout(cap); resolve(); }, () => { clearTimeout(cap); resolve(); });
+    };
+    if (document.readyState === 'complete') go(); else window.addEventListener('load', go, { once: true });
+  });
+  await __szFonts();
   await new Promise((r) => { requestAnimationFrame(() => setTimeout(r, 0)); setTimeout(r, 250); });
   finalize();
   await sleep(200);
   finalize();               // resetAndEnter() del deck puede haber corrido en medio
-  try { await document.fonts.ready; } catch (e) {}
+  try { await __szFonts(); } catch (e) {}
   await sleep(50);
 
   const stage = document.querySelector('deck-stage');
@@ -263,12 +283,16 @@ const firstGradientColor = (bgImage) => {
         for (const cr of ib.getClientRects()) pushBox(ib, ics, rel(cr), op);
       }
 
-      // Lineas: rects que no se solapan verticalmente con la linea anterior.
+      // Lineas: una linea nueva cuando la tapa del rect baja mas de media
+      // linea respecto de la anterior. No por solape vertical: con un
+      // interlineado ajustado (titulos a 1.1) la caja de cada linea es mas
+      // alta que la distancia entre lineas, se solapan, y un titulo de dos
+      // lineas se contaba como una (y en el PPTX salia desbordado).
+      const lhc = (() => { const c = getComputedStyle(container); const f = px(c.fontSize); return c.lineHeight === 'normal' ? f * 1.2 : px(c.lineHeight); })();
       rects.sort((a, b) => a.y - b.y);
-      let lines = 0, lineBottom = -Infinity;
+      let lines = 0, lastTop = -Infinity;
       for (const r of rects) {
-        if (r.y >= lineBottom - 1) { lines++; lineBottom = r.y + r.h; }
-        else lineBottom = Math.max(lineBottom, r.y + r.h);
+        if (r.y - lastTop > Math.min(r.h, lhc || r.h) * 0.5) { lines++; lastTop = r.y; }
       }
       const u = {
         x: Math.min(...rects.map((r) => r.x)), y: Math.min(...rects.map((r) => r.y)),
