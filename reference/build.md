@@ -4,7 +4,7 @@ Se activa cuando `assets` ya resolvió cada ítem del wireframe (o el usuario pi
 
 ## 1. Nivel de animación
 
-Proponer un nivel (NONE/LIGHT/HEAVY, tabla y defaults en `reference/deck-schema.md`) y pedir confirmación. Reglas fijas: cover y transition siempre estáticas; nunca HEAVY en decks de más de 18 slides salvo pedido explícito.
+Proponer un nivel (NONE/LIGHT/HEAVY, tabla y defaults en `reference/deck-schema.md`) y pedir confirmación. Reglas fijas: cover y transition siempre estáticas; HEAVY es ideal en decks de menos de 10 slides, entre 10 y 18 solo con pedido explícito, y nunca en más de 18 (ni con pedido explícito) — la política completa está en `reference/deck-schema.md`.
 
 **Variar la entrada según el elemento.** Revelar todo el deck con el mismo `fade-up` es lo que hace que un deck animado se sienta mecánico. El template trae variantes que se combinan con `.reveal`: `r-rise` para títulos, `r-scale` para cifras, `r-blur` para imágenes y citas, `r-left` para listas y pasos, `r-wipe` para barras y reglas, `r-mask` para remates, `r-fade` para texto largo. Un contenedor con `.stagger` escalona sus hijos automáticamente sin escribir `--d` a mano.
 

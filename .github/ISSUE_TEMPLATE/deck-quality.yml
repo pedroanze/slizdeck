@@ -1,0 +1,23 @@
+name: Mi deck salió mal
+description: El deck generado se ve genérico, roto o no pasa el export
+labels: [calidad]
+body:
+  - type: textarea
+    id: brief
+    attributes:
+      label: Qué pediste
+      description: El pedido inicial, el pack elegido y el nivel de animación
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Qué salió mal
+      description: Slides concretas y qué esperabas en su lugar
+    validations:
+      required: true
+  - type: textarea
+    id: files
+    attributes:
+      label: Deck y capturas
+      description: Adjunta el .html (en un .zip) y, si puedes, los PNG de `node scripts/shoot.mjs deck.html`. Quita antes cualquier dato confidencial.

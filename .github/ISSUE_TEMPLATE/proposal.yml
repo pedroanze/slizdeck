@@ -1,0 +1,22 @@
+name: Propuesta de style pack, patrón o fase
+description: Un pack visual nuevo, un patrón de layout/animación, o una mejora del flujo
+labels: [propuesta]
+body:
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Tipo
+      options: [Style pack, Patrón de layout, Técnica de animación, Export, Otra]
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Qué problema resuelve
+      description: Qué tipo de deck o audiencia lo necesita, con referencias visuales si las hay
+    validations:
+      required: true
+  - type: textarea
+    id: how
+    attributes:
+      label: Cómo lo imaginas
