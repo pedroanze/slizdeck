@@ -83,7 +83,7 @@ Deck
   check-overflow <deck>     Desbordes y solapes de texto en Chrome
   check-contrast <deck>     Contraste medido por nodo en Chrome
   check-style-pack <pack|deck>
-  shoot <deck> [--slides=1,3] [--out=dir]
+  shoot <deck> [--slides=1,3] [--out=dir] [--clean]
   doctor <deck>             Fixes del engine que le faltan a un deck viejo
   renumber <deck>
   apply-pack <pack> <deck> [salida] [--font=<id>]   (pack: nombre o ruta)

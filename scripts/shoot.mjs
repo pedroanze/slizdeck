@@ -41,7 +41,7 @@ const file = args.find((a) => !a.startsWith('--'));
 const getFlag = (name) => args.find((a) => a.startsWith(`--${name}=`))?.split('=').slice(1).join('=');
 
 if (!file) {
-  console.error('uso: node scripts/shoot.mjs <deck.html> [--slides=1,3-5] [--out=<dir>]');
+  console.error('uso: node scripts/shoot.mjs <deck.html> [--slides=1,3-5] [--out=<dir>] [--clean]');
   process.exit(1);
 }
 if (!existsSync(file)) {
@@ -104,8 +104,12 @@ mkdirSync(outDir, { recursive: true });
 
 // El harness lleva la slide activa a su estado final. Dispara `beforeprint`
 // en vez de reimplementar la logica: es el mismo camino que el export a PDF.
+// --clean oculta la UI del reproductor (barra de progreso, boton de
+// fullscreen): para capturas que van a un README o a una presentacion, no
+// para la revision de la fase audit, donde conviene ver el deck tal cual.
+const clean = args.includes('--clean');
 const harness = `
-<style>*, *::before, *::after { transition: none !important; animation: none !important; }</style>
+<style>*, *::before, *::after { transition: none !important; animation: none !important; }${clean ? ' #progress-bar, #fs-btn { display: none !important; }' : ''}</style>
 <script>
 window.addEventListener('DOMContentLoaded', () => {
   // Un solo rAF + setTimeout, no un rAF anidado en otro: en Chrome headless
