@@ -2,13 +2,15 @@
 /**
  * slizdeck · check-versions
  *
- * Una sola version gobierna el proyecto y vive en cuatro sitios. Este
+ * Una sola version gobierna el proyecto y vive en seis sitios. Este
  * script exige que coincidan.
  *
  *   package.json          "version"
  *   SKILL.md              metadata.version (frontmatter)
  *   template.html         marcador slizdeck-engine-version
  *   CHANGELOG.md          primera entrada "## X.Y.Z"
+ *   .claude-plugin/plugin.json       "version" (lo que ve /plugin)
+ *   .claude-plugin/marketplace.json  "version" de la entrada slizdeck
  *
  * Existe porque los cuatro ya se habian desalineado en silencio
  * (package.json y SKILL.md en 1.0.0 mientras el engine y el changelog
@@ -52,6 +54,16 @@ const sources = [
     what: 'primera entrada "## X.Y.Z"',
     value: () => new RegExp(`^## ${SEMVER}`, 'm').exec(read('CHANGELOG.md'))?.[1],
   },
+  {
+    file: '.claude-plugin/plugin.json',
+    what: 'campo "version"',
+    value: () => JSON.parse(read('.claude-plugin/plugin.json')).version,
+  },
+  {
+    file: '.claude-plugin/marketplace.json',
+    what: '"version" del plugin slizdeck',
+    value: () => JSON.parse(read('.claude-plugin/marketplace.json')).plugins.find((p) => p.name === 'slizdeck')?.version,
+  },
 ];
 
 const found = sources.map((s) => {
@@ -79,9 +91,9 @@ if (missing.length) {
 if (values.length > 1) {
   fail = true;
   console.log(`\n✗ las versiones no coinciden: ${values.join(' vs ')}`);
-  console.log('  Al subir version hay que tocar los cuatro sitios de arriba, no solo el CHANGELOG.');
+  console.log(`  Al subir version hay que tocar los ${sources.length} sitios de arriba, no solo el CHANGELOG.`);
 } else if (!missing.length) {
-  console.log(`\n✓ los cuatro sitios coinciden en ${values[0]}`);
+  console.log(`\n✓ los ${sources.length} sitios coinciden en ${values[0]}`);
 }
 
 // En un push de tag, el tag manda: no publicar vX.Y.Z desde un repo que dice otra cosa.

@@ -1,9 +1,8 @@
 {
   "name": "slizdeck",
-  "version": "1.4.2",
+  "version": "2.0.0",
   "description": "Agent Skill que genera decks de slides HTML animados desde tu design system",
   "license": "MIT",
-  "private": true,
   "type": "module",
   "homepage": "https://github.com/pedroanze/slizdeck#readme",
   "repository": {
@@ -18,9 +17,36 @@
     "claude-code",
     "slides",
     "pitch-deck",
-    "html-presentation"
+    "html-presentation",
+    "claude-code-plugin",
+    "codex",
+    "gemini-cli",
+    "opencode"
   ],
   "author": "@pedroanze",
+  "bin": {
+    "slizdeck": "bin/slizdeck.mjs"
+  },
+  "files": [
+    "SKILL.md",
+    "template.html",
+    "styles/",
+    "reference/",
+    "scripts/",
+    "bin/",
+    "hooks/",
+    ".claude-plugin/",
+    "CHANGELOG.md",
+    "DESIGN.md",
+    "design.json",
+    "NOTICE.md",
+    "README.en.md",
+    "examples/demo-deck.html",
+    "examples/pitch-showcase.html"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "check-versions": "node scripts/check-versions.mjs",
     "smoke": "node scripts/smoke-test.mjs",

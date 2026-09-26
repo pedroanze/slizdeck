@@ -17,11 +17,11 @@ Hacia dónde va slizdeck. Es un plan vivo, medido en días de trabajo: se ajusta
 
 ## 2.0 · Instalación en un comando — días 2 a 3
 
-- [ ] `npx slizdeck install` detecta los agentes instalados y deja la skill lista, con dependencias
-- [ ] CLI único para todos los scripts, desde cualquier carpeta: `npx slizdeck audit|shoot|export|doctor …`
-- [ ] Plugin de Claude Code: `/plugin marketplace add pedroanze/slizdeck`, con el hook de verificación incluido
-- [ ] Compatible con `npx skills add pedroanze/slizdeck`
-- [ ] Publicación automática a npm al etiquetar una versión
+- [x] `npx slizdeck install` detecta los agentes instalados y deja la skill lista, con dependencias
+- [x] CLI único para todos los scripts, desde cualquier carpeta: `npx slizdeck audit|shoot|export|doctor …`
+- [x] Plugin de Claude Code: `/plugin marketplace add pedroanze/slizdeck`, con el hook de verificación incluido
+- [x] Compatible con `npx skills add pedroanze/slizdeck`
+- [x] Publicación automática a npm al etiquetar una versión
 - [ ] Probado de verdad en Codex, Gemini CLI y OpenCode
 
 ## 2.1 · Exports — días 4 a 5

@@ -11,7 +11,8 @@
  * exista.
  */
 
-import { existsSync } from 'node:fs';
+import { existsSync, realpathSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
 
 const CANDIDATES_BY_PLATFORM = {
@@ -84,7 +85,16 @@ export function findChrome() {
 // También sirve como CLI: `node scripts/lib/find-chrome.mjs` imprime la ruta
 // resuelta, útil para componer comandos de una línea sin hardcodear la ruta
 // (ver reference/export.md, README.md).
-if (import.meta.url === `file://${process.argv[1]}`) {
+// Se compara por ruta real y no por string: `file://${argv[1]}` fallaba con
+// espacios en la ruta (el URL los codifica) y al invocarlo por un symlink.
+const invokedDirectly = (() => {
+  try {
+    return realpathSync(fileURLToPath(import.meta.url)) === realpathSync(process.argv[1] || '');
+  } catch {
+    return false;
+  }
+})();
+if (invokedDirectly) {
   try {
     console.log(findChrome());
   } catch (err) {

@@ -37,7 +37,24 @@ Ask for something like *"make me an 8-slide pitch deck about my startup"* and th
 
 ## Install
 
-Clone the repo straight into your tool's skills folder:
+One command, for every agent you have installed (Claude Code, Codex, Gemini CLI, OpenCode):
+
+```bash
+npx slizdeck install
+```
+
+It detects which agents are on your machine, copies the skill to `<agent>/skills/slizdeck` and installs the export dependencies. Options: `--agent claude,codex` (or `all`), `--project` to install into the current folder only, `--no-deps` to skip `npm install`. `npx slizdeck where` shows where it went; `npx slizdeck env` checks Node, Chrome and dependencies.
+
+**As a Claude Code plugin**, with the automatic verification hook included:
+
+```
+/plugin marketplace add pedroanze/slizdeck
+/plugin install slizdeck@slizdeck
+```
+
+**With [skills.sh](https://skills.sh)**: `npx skills add pedroanze/slizdeck`.
+
+**Manually, with git**, cloning into your tool's skills folder:
 
 ```bash
 # Claude Code
@@ -53,25 +70,23 @@ git clone https://github.com/pedroanze/slizdeck ~/.codex/skills/slizdeck
 git clone https://github.com/pedroanze/slizdeck ~/.opencode/skills/slizdeck
 ```
 
-The first time you export to PPTX, install dependencies in the skill root:
-
-```bash
-npm install
-```
+Installed with git, the first PPTX export needs `npm install` in the skill folder; the script prints the exact command if dependencies are missing.
 
 **Requirements:** Node 20+. The validators that measure in a real browser (`check-reveal.mjs`, `check-overflow.mjs`, `check-contrast.mjs`, `shoot.mjs`, `smoke-test.mjs`) also need Google Chrome or Chromium, auto-detected or set with `CHROME_PATH`.
 
-A one-command install (`npx slizdeck install`) and a Claude Code plugin are next on the [roadmap](ROADMAP.md).
+What's next is on the [roadmap](ROADMAP.md) (Spanish).
 
 ## Update and uninstall
 
 ```bash
-cd ~/.claude/skills/slizdeck && git pull
+npx slizdeck update                           # installed with npx
+/plugin update slizdeck@slizdeck              # installed as a plugin
+cd ~/.claude/skills/slizdeck && git pull      # installed with git
 ```
 
 After updating, `node scripts/doctor.mjs deck.html` tells you whether a deck generated with an older engine version is missing a known fix (it warns, it doesn't repair).
 
-To uninstall, `rm -rf ~/.claude/skills/slizdeck`. The only thing slizdeck can leave outside that folder is the optional hook from `reference/hooks.md`: if you installed it, remove its `hooks.PostToolUse` block from the project's `.claude/settings.local.json`.
+To uninstall: `npx slizdeck uninstall`, `/plugin uninstall slizdeck@slizdeck`, or `rm -rf ~/.claude/skills/slizdeck` if you cloned it. The only thing slizdeck can leave outside that folder is the optional hook from `reference/hooks.md`: if you installed it, remove its `hooks.PostToolUse` block from the project's `.claude/settings.local.json`.
 
 ## Design
 

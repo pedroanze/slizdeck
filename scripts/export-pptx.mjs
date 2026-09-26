@@ -28,8 +28,23 @@
  * de agregar soporte, no un post-proceso sobre el .pptx ya generado.
  */
 
-import { parse } from 'node-html-parser';
-import PptxGenJS from 'pptxgenjs';
+// Las dos dependencias de la skill solo las usa este script. Se cargan con
+// import() para que una instalacion sin `npm install` falle con un mensaje
+// que dice que hacer, no con un ERR_MODULE_NOT_FOUND crudo.
+import { fileURLToPath } from 'node:url';
+
+let parse, PptxGenJS;
+try {
+  ({ parse } = await import('node-html-parser'));
+  ({ default: PptxGenJS } = await import('pptxgenjs'));
+} catch (e) {
+  if (e.code !== 'ERR_MODULE_NOT_FOUND') throw e;
+  const root = fileURLToPath(new URL('..', import.meta.url));
+  console.error('✗ faltan las dependencias del export a PPTX (node-html-parser, pptxgenjs).');
+  console.error(`  Instálalas con: npm install --prefix "${root}"`);
+  console.error('  (o reinstala la skill con: npx slizdeck install)');
+  process.exit(1);
+}
 import { readFileSync, existsSync } from 'node:fs';
 import { basename, extname } from 'node:path';
 

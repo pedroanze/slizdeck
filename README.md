@@ -37,7 +37,24 @@ Le pides algo como *"hazme un pitch deck de 8 slides sobre mi startup"* y la ski
 
 ## Instalación
 
-Clona el repo directo en la carpeta de skills de tu herramienta:
+Un comando, para todos los agentes que tengas instalados (Claude Code, Codex, Gemini CLI, OpenCode):
+
+```bash
+npx slizdeck install
+```
+
+Detecta qué agentes hay en tu máquina, copia la skill a `<agente>/skills/slizdeck` y deja instaladas las dependencias del export. Opciones: `--agent claude,codex` (o `all`) para elegir, `--project` para instalarla solo en la carpeta actual, `--no-deps` para saltar el `npm install`. `npx slizdeck where` muestra dónde quedó y `npx slizdeck env` verifica Node, Chrome y dependencias.
+
+**Como plugin de Claude Code**, con el hook de verificación automática ya incluido:
+
+```
+/plugin marketplace add pedroanze/slizdeck
+/plugin install slizdeck@slizdeck
+```
+
+**Con [skills.sh](https://skills.sh)**: `npx skills add pedroanze/slizdeck`.
+
+**A mano, con git**, clonando el repo en la carpeta de skills de tu herramienta:
 
 ```bash
 # Claude Code
@@ -60,23 +77,21 @@ git clone https://github.com/pedroanze/slizdeck ~/proyectos/slizdeck
 ln -s ~/proyectos/slizdeck ~/.claude/skills/slizdeck
 ```
 
-La primera vez que se necesite exportar a PPTX, instalar dependencias en la raíz de la skill:
-
-```bash
-npm install
-```
+Instalada con git, la primera vez que se exporte a PPTX hay que instalar las dependencias en la carpeta de la skill (`npm install`); el script avisa con el comando exacto si faltan.
 
 **Requisitos:** Node 20+ para todo. Los validadores que miden en navegador real (`check-reveal.mjs`, `check-overflow.mjs`, `smoke-test.mjs`) necesitan además Google Chrome o Chromium instalado — se detecta solo, o se le indica la ruta con la variable de entorno `CHROME_PATH`.
 
 ## Actualizar y desinstalar
 
 ```bash
-cd ~/.claude/skills/slizdeck && git pull      # actualizar
+npx slizdeck update                           # instalada con npx
+/plugin update slizdeck@slizdeck              # instalada como plugin (o autoUpdate)
+cd ~/.claude/skills/slizdeck && git pull      # instalada con git
 ```
 
 Después de actualizar, `node scripts/doctor.mjs deck.html` dice si un deck generado con una versión anterior del engine se quedó sin algún fix conocido (avisa, no repara).
 
-Para desinstalar basta con `rm -rf ~/.claude/skills/slizdeck`. Lo único que slizdeck puede dejar fuera de esa carpeta es el hook opcional de `reference/hooks.md`: si lo instalaste, hay que quitar su bloque `hooks.PostToolUse` del `.claude/settings.local.json` del proyecto donde lo agregaste.
+Para desinstalar: `npx slizdeck uninstall`, `/plugin uninstall slizdeck@slizdeck`, o `rm -rf ~/.claude/skills/slizdeck` si la clonaste. Lo único que slizdeck puede dejar fuera de esa carpeta es el hook opcional de `reference/hooks.md`: si lo instalaste, hay que quitar su bloque `hooks.PostToolUse` del `.claude/settings.local.json` del proyecto donde lo agregaste.
 
 ## Estructura
 
@@ -105,6 +120,8 @@ Para desinstalar basta con `rm -rf ~/.claude/skills/slizdeck`. Lo único que sli
 | `reference/icons.md` | Librería de íconos SVG. |
 | `DESIGN.md` · `design.json` | El contrato del sistema visual (roles de color, escala tipográfica, movimiento) en prosa y su espejo estructurado, en formato [DESIGN.md](https://github.com/google-labs-code/design.md). |
 | `styles/` | Cinco style packs (terminal, paper-white, committed, instrument, editorial) + su índice. |
+| `bin/slizdeck.mjs` | CLI: instalador multi-agente (`install`/`update`/`uninstall`/`where`/`env`) y atajo a todos los scripts desde cualquier carpeta (`slizdeck audit deck.html`, `slizdeck export pptx deck.html`). |
+| `.claude-plugin/` · `hooks/hooks.json` | Manifiestos del plugin y marketplace de Claude Code, y el hook de verificación que viaja con el plugin. |
 | `scripts/apply-style-pack.mjs` | Aplica un pack a un deck fusionando tokens (y su alternativa tipográfica, con `--font=<id>`). |
 | `scripts/check-style-pack.mjs` | Valida contrastes y avisa de clichés visuales de IA. |
 | `scripts/audit.mjs` | Valida un deck ya generado: contraste, balance HTML, reglas de voz, assets pendientes. |
@@ -117,7 +134,7 @@ Para desinstalar basta con `rm -rf ~/.claude/skills/slizdeck`. Lo único que sli
 | `scripts/export-pptx.mjs` | Exporta un deck a `.pptx` editable (texto y formas nativas, no imágenes). |
 | `scripts/make-offline.mjs` | Incrusta las fuentes como `data:` URI para presentar sin depender de red. |
 | `scripts/check-docs.mjs` | Verifica que la documentación siga alineada con el repo: scripts y referencias listados, links que resuelven, DESIGN.md ≡ design.json. |
-| `scripts/check-versions.mjs` | Verifica que la versión coincida en los cuatro sitios donde se declara (`package.json`, `SKILL.md`, `template.html`, `CHANGELOG.md`). |
+| `scripts/check-versions.mjs` | Verifica que la versión coincida en los seis sitios donde se declara (`package.json`, `SKILL.md`, `template.html`, `CHANGELOG.md`, `.claude-plugin/plugin.json` y `marketplace.json`). |
 | `scripts/renumber.mjs` | Recalcula `data-label` y `<span class="num">` de todas las slides en orden de documento — usar después de insertar una slide en medio del deck. |
 | `tests/validators.test.js` | Suite `node:test` (cero deps): comprueba que los validadores distingan un deck bueno de uno roto. `npm test`. |
 | `scripts/smoke-test.mjs` | Test de regresión: ejercita cada pack con cada alternativa tipográfica. |

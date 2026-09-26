@@ -26,7 +26,7 @@ Para quien necesite el deck en PowerPoint o Google Slides:
 node scripts/export-pptx.mjs deck.html deck.pptx
 ```
 
-Reconstruye cada slide con cajas de texto y formas nativas (no imágenes), leyendo los design tokens del propio HTML. La primera vez requiere `npm install` en la raíz de la skill.
+Reconstruye cada slide con cajas de texto y formas nativas (no imágenes), leyendo los design tokens del propio HTML. Si las dependencias no están instaladas, el script lo avisa e imprime el `npm install --prefix …` exacto a correr (una sola vez).
 
 Advertir al usuario de las degradaciones inherentes al formato, que no son fallos del export:
 - **Sin animaciones**: PPTX no reproduce el sistema de reveals; se exporta el estado final.

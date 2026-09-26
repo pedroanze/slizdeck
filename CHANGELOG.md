@@ -2,7 +2,21 @@
 
 Historial de cambios al engine (`template.html`) y a los scripts de la skill. Cada entrada de versión corresponde al comentario `slizdeck-engine-version` embebido al principio de todo deck generado — `scripts/doctor.mjs <deck.html>` lo lee para avisar si un deck viejo se generó antes de un fix relevante.
 
-Una sola versión gobierna todo el proyecto y vive en cuatro sitios que deben coincidir siempre: `package.json`, el `metadata.version` de `SKILL.md`, el marcador `slizdeck-engine-version` de `template.html`, y la primera entrada de este archivo. `node scripts/check-versions.mjs` lo verifica y falla si alguno se desalinea.
+Una sola versión gobierna todo el proyecto y vive en seis sitios que deben coincidir siempre: `package.json`, el `metadata.version` de `SKILL.md`, el marcador `slizdeck-engine-version` de `template.html`, la primera entrada de este archivo, y el `version` de `.claude-plugin/plugin.json` y `.claude-plugin/marketplace.json`. `node scripts/check-versions.mjs` lo verifica y falla si alguno se desalinea.
+
+## 2.0.0
+
+Instalación en un comando. El engine (`template.html`) no cambia de comportamiento: sube de major porque cambia cómo se instala y cómo se invocan los scripts.
+
+- **Nuevo: `npx slizdeck install`** (`bin/slizdeck.mjs`). Detecta Claude Code, Codex, Gemini CLI y OpenCode, copia la skill a `<agente>/skills/slizdeck` y deja instaladas las dependencias del export. `--agent`, `--project`, `--no-deps`, `--force`. `update`, `uninstall` y `where` completan el ciclo; no pisan ni borran un clon de git, un symlink o una carpeta que no instaló el CLI sin `--force`.
+- **Nuevo: CLI único para los scripts**, desde cualquier carpeta: `slizdeck audit|check|shoot|doctor|renumber|apply-pack|export pptx|export offline|…`. `apply-pack` y `check-style-pack` aceptan el pack por nombre. `slizdeck check` corre los cuatro validadores seguidos. `slizdeck new deck.html --pack=terminal` copia el template y aplica el pack. `slizdeck env` verifica Node, Chrome y dependencias.
+- **Nuevo: plugin y marketplace de Claude Code** (`.claude-plugin/`). `/plugin marketplace add pedroanze/slizdeck` + `/plugin install slizdeck@slizdeck`. El hook de `verify-hook.mjs` viaja en `hooks/hooks.json` con `${CLAUDE_PLUGIN_ROOT}`: ya no hay que editar `settings.json` a mano.
+- **Paquete npm publicable**: `package.json` deja de ser `private`, declara `bin`, `engines` (Node 20+) y una lista blanca `files` (sin los ejemplos pesados de `examples/test-0*`).
+- **Publicación automática**: `.github/workflows/release.yml` publica a npm (con provenance) y crea el Release al hacer push de un tag `vX.Y.Z`.
+- **Cambio en la documentación: los scripts se corren desde la carpeta del proyecto**, con la ruta de la skill delante (`node <skill>/scripts/audit.mjs deck.html`), ya no con `cd` a la raíz de la skill. Ver `SKILL.md` → "Dónde se corre cada cosa".
+- **Fix: `export-pptx.mjs` sin `npm install` fallaba con un `ERR_MODULE_NOT_FOUND` crudo.** Ahora carga las dependencias con `import()` y, si faltan, imprime el `npm install --prefix …` exacto y sale con código 1.
+- **Fix: `node scripts/lib/find-chrome.mjs` no imprimía nada si la ruta tenía espacios o se invocaba por symlink** (comparaba `import.meta.url` contra `file://${argv[1]}` como string). Ahora compara rutas reales.
+- **`check-versions.mjs` verifica seis sitios** (suma `plugin.json` y `marketplace.json`), y **`check-docs.mjs`** exige que `bin/` esté documentado y revisa también los links de `README.en.md` y `ROADMAP.md`.
 
 ## 1.4.2
 

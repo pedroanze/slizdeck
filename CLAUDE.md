@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this repo is
 
-Slizdeck is an **Agent Skill** (not an app): `SKILL.md` at the root is the entry point an agent loads, and the repo is meant to be cloned/symlinked straight into `~/.claude/skills/slizdeck`. It generates standalone animated HTML slide decks (1920×1080 `<deck-stage>` canvas) from a design system, exportable to PDF (browser print) and editable PPTX. Forked from `marcogalluccio/claude-slides` (see `NOTICE.md`).
+Slizdeck is an **Agent Skill** (not an app): `SKILL.md` at the root is the entry point an agent loads. The same repo is also an npm package (`npx slizdeck install`, CLI in `bin/slizdeck.mjs`) and a Claude Code plugin + marketplace (`.claude-plugin/`, hook in `hooks/hooks.json`); a plain `git clone` into `~/.claude/skills/slizdeck` must keep working too. It generates standalone animated HTML slide decks (1920×1080 `<deck-stage>` canvas) from a design system, exportable to PDF (browser print) and editable PPTX. Forked from `marcogalluccio/claude-slides` (see `NOTICE.md`).
 
 The "product" is mostly prose instructions (`SKILL.md`, `reference/*.md`, `styles/*.md`) plus a deck engine (`template.html`) and a set of zero-build Node validators/exporters in `scripts/`.
 
@@ -18,6 +18,8 @@ npm run check               # check-versions + check-docs + npm test (the local 
 npm test                    # node --test tests/*.test.js (no Chrome needed)
 node --test --test-name-pattern="<substring>" tests/validators.test.js   # single test
 node scripts/smoke-test.mjs # every style pack × font alternative, renders in Chrome
+node bin/slizdeck.mjs help  # CLI: install/update/uninstall/where/env + wrappers for every script
+claude plugin validate .    # plugin + marketplace manifests
 ```
 
 Validating a deck (all scripts are run from the repo root, taking a path to the deck):
@@ -53,7 +55,7 @@ sed -i '' 's/Slizdeck · \[DECK NAME\]/Test Deck/' /tmp/d-final.html
 
 ## Invariants enforced by tooling
 
-- **Version lives in four places that must match:** `package.json`, `SKILL.md` `metadata.version`, the `slizdeck-engine-version` comment at the top of `template.html`, and the first `## x.y.z` entry of `CHANGELOG.md`. Verify with `node scripts/check-versions.mjs`. Bump when a change is something existing decks may need to reapply or changes a user-facing script's behavior; not for typos.
+- **Version lives in six places that must match:** `package.json`, `SKILL.md` `metadata.version`, the `slizdeck-engine-version` comment at the top of `template.html`, the first `## x.y.z` entry of `CHANGELOG.md`, and `version` in `.claude-plugin/plugin.json` and in the slizdeck entry of `.claude-plugin/marketplace.json`. Verify with `node scripts/check-versions.mjs`. Bump when a change is something existing decks may need to reapply or changes a user-facing script's behavior; not for typos.
 - **`check-docs.mjs`:** every file in `scripts/` must be listed in both `SKILL.md` and `README.md` tables, every `reference/*.md` in `SKILL.md`; relative links must resolve; `DESIGN.md` must stay in sync with `design.json`. Adding a script/reference means updating those tables.
 - **Validators must never overclaim** (PRODUCT.md principle): if a script can't verify something it says so; a lossy export exits non-zero. `tests/validators.test.js` mutates `examples/pitch-showcase.html` with one defect per test and asserts the validator fails — add a case there when adding a detection.
 
@@ -63,4 +65,5 @@ sed -i '' 's/Slizdeck · \[DECK NAME\]/Test Deck/' /tmp/d-final.html
 - Commit messages: single imperative line in Spanish describing what and why, no `feat:`/`fix:` prefixes.
 - Don't modify `examples/demo-deck.html` — it's the unmodified upstream example (preserved per `NOTICE.md`) and is expected to fail contrast checks. `examples/pitch-showcase.html` is the reference deck that must pass everything.
 - New style packs: follow `styles/index.md` → "Añadir un pack nuevo", validate with `node scripts/check-style-pack.mjs styles/<pack>.md`, and add to the tables in `styles/index.md` and `README.md`.
-- Release: PR with version bump → merge → `git tag vX.Y.Z && git push --tags` (CI checks the tag matches) → GitHub Release.
+- Release: PR with version bump → merge → `git tag vX.Y.Z && git push --tags`; `.github/workflows/release.yml` runs the checks, publishes to npm and creates the GitHub Release.
+- Anything a script needs at runtime must be in both `files` (package.json) and `PAYLOAD` (bin/slizdeck.mjs), or it won't reach npm/`npx slizdeck install` users.
