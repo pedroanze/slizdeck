@@ -1,201 +1,151 @@
 <div align="center">
-  <img src="SlizDeck.png" alt="SlizDeck" width="280">
+  <img src="SlizDeck.png" alt="SlizDeck" width="240">
+
+  <p><strong>Pídele a tu agente un pitch deck. Recibe un deck animado, investigado y listo para presentar.</strong></p>
+
+  <p>
+    <a href="https://www.npmjs.com/package/slizdeck"><img src="https://img.shields.io/npm/v/slizdeck?color=0B5CFF&label=npm" alt="npm"></a>
+    <a href="https://github.com/pedroanze/slizdeck/actions/workflows/ci.yml"><img src="https://github.com/pedroanze/slizdeck/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+    <a href="LICENSE"><img src="https://img.shields.io/badge/licencia-MIT-lightgrey" alt="MIT"></a>
+  </p>
+
+  <p><a href="README.en.md">English</a> · <strong>Español</strong></p>
 </div>
 
-# Slizdeck
+<p align="center">
+  <img src="docs/img/pack-committed.jpg" alt="Portada de un deck con el pack committed" width="820">
+</p>
 
-[![CI](https://github.com/pedroanze/slizdeck/actions/workflows/ci.yml/badge.svg)](https://github.com/pedroanze/slizdeck/actions/workflows/ci.yml)
-
-[English](README.en.md) · **Español**
-
-Genera decks de slides **HTML animados** a partir de tu propio design system, con el contenido investigado en internet. Pensado para pitch decks de startup: minimalista, poco texto, mucha imagen y dato duro — también sirve para charlas, demos y recaps de evento.
-
-Es una [Agent Skill](https://agentskills.io), escrita contra el subconjunto portable del estándar abierto. Verificada en Claude Code; en Gemini CLI, Codex y OpenCode debería funcionar por el estándar, pero todavía no está probada ahí.
-
-## Qué produce
-
-- **Un archivo `.html` autónomo.** Sin build step, sin dependencias de toolchain. Lo abres en cualquier navegador y presentas: canvas 1920×1080, navegación por teclado (←/→/espacio), fullscreen, barra de progreso.
-- **Un PDF fiel y liviano** (`node scripts/export-pdf.mjs deck.html`, o impresión nativa del navegador con `Cmd/Ctrl+P`). El PDF exporta el **estado final** de cada slide: animaciones resueltas, contadores en su cifra real, sin el chrome del reproductor.
-- **Un PPTX editable** (`node scripts/export-pptx.mjs deck.html`): cada texto y cada forma en la posición real que tiene en el deck, medida en Chrome. Texto y formas nativas de PowerPoint, imágenes reales, SVG como imagen con sus rótulos editables, speaker notes en el campo de notas. Se edita en PowerPoint o Google Slides.
-
-## Cómo usarlo
-
-Le pides algo como *"hazme un pitch deck de 8 slides sobre mi startup"* y la skill conduce el resto de la conversación. No es una sola cadena rígida: son **ocho fases**, cada una con su propio momento de activación. Las primeras seis arman un deck nuevo de punta a punta; `add` y `fix` se activan sueltas sobre un deck que ya existe, sin repetir las anteriores.
-
-| Fase | Se activa con | Qué hace | Referencia |
-|---|---|---|---|
-| **init** | El disparador inicial, o "cambia la paleta/el pack/la tipografía" | Elegir o cambiar pack visual, colores de marca, tipografía | [reference/init.md](reference/init.md) |
-| **brief** | Después de init, o "cambia el tema/tamaño/contenido" | Tema, público, tipo de deck, tamaño, research en internet, arco narrativo, wireframe aprobado por ti | [reference/brief.md](reference/brief.md) |
-| **assets** | Después de aprobar el wireframe, o "¿qué imágenes necesito?" | Checklist obligatorio y bloqueante de imágenes, logos y datos reales por slide — no se genera nada hasta resolver cada ítem | [reference/assets.md](reference/assets.md) |
-| **build** | Después de resolver assets | Nivel de animación y generación del HTML final | [reference/build.md](reference/build.md) |
-| **audit** | Antes de entregar, o "audita el deck" | Validación automática (`scripts/audit.mjs`): contraste, balance HTML, reglas de voz, assets pendientes | [reference/audit.md](reference/audit.md) |
-| **export** | "pásalo a PDF/PPTX", "dame las notas" | PDF nativo, PPTX editable, deck sin dependencia de red, speaker notes | [reference/export.md](reference/export.md) |
-| **add** | "agrega una slide sobre X", "mete 2 slides entre la 9 y la 10" | Agregar slides a un deck existente, renumerando todo automáticamente (`scripts/renumber.mjs`) — nunca deja huecos ni duplicados | [reference/add.md](reference/add.md) |
-| **fix** | "la slide 7 se ve genérica, mejórala" | Corregir o mejorar una o más slides puntuales sin tocar el resto del deck | [reference/fix.md](reference/fix.md) |
-
-**Ejemplo de una petición puntual**, sin recorrer todo el flujo: *"cambia el pack a terminal"* activa solo `init`; *"audita el deck que ya generé"* activa solo `audit`; *"agrégale una slide de FAQ al final"* activa solo `add`. La skill decide qué fase corresponde por lo que pediste, no por dónde vas en la conversación.
+Slizdeck es una [Agent Skill](https://agentskills.io) para **Claude Code, Codex, Gemini CLI y OpenCode**. Le pides *"hazme un pitch deck de 8 slides sobre mi startup"* y el agente investiga el tema, te propone la estructura, te pide las imágenes y datos que faltan, y genera el deck: poco texto, dato duro y un diseño que no parece hecho por IA.
 
 ## Instalación
-
-Un comando, para todos los agentes que tengas instalados (Claude Code, Codex, Gemini CLI, OpenCode):
 
 ```bash
 npx slizdeck install
 ```
 
-Detecta qué agentes hay en tu máquina, copia la skill a `<agente>/skills/slizdeck` y deja instaladas las dependencias del export. Opciones: `--agent claude,codex` (o `all`) para elegir, `--project` para instalarla solo en la carpeta actual, `--no-deps` para saltar el `npm install`. `npx slizdeck where` muestra dónde quedó y `npx slizdeck env` verifica Node, Chrome y dependencias.
+Detecta qué agentes tienes y deja la skill lista en todos. Eso es todo.
 
-**Como plugin de Claude Code**, con el hook de verificación automática ya incluido:
+<details>
+<summary>Otras formas de instalar</summary>
+
+**Plugin de Claude Code** (incluye la auditoría automática después de cada edición):
 
 ```
 /plugin marketplace add pedroanze/slizdeck
 /plugin install slizdeck@slizdeck
 ```
 
-**Con [skills.sh](https://skills.sh)**: `npx skills add pedroanze/slizdeck`.
-
-**A mano, con git**, clonando el repo en la carpeta de skills de tu herramienta:
+**[skills.sh](https://skills.sh)**:
 
 ```bash
-# Claude Code
+npx skills add pedroanze/slizdeck
+```
+
+**Solo en un agente o solo en este proyecto:**
+
+```bash
+npx slizdeck install --agent claude,codex
+npx slizdeck install --project
+```
+
+**Con git**, clonando en la carpeta de skills de tu agente:
+
+```bash
 git clone https://github.com/pedroanze/slizdeck ~/.claude/skills/slizdeck
-
-# Gemini CLI
-git clone https://github.com/pedroanze/slizdeck ~/.gemini/skills/slizdeck
-
-# Codex
-git clone https://github.com/pedroanze/slizdeck ~/.codex/skills/slizdeck
-
-# OpenCode
-git clone https://github.com/pedroanze/slizdeck ~/.opencode/skills/slizdeck
 ```
 
-Para trabajar en la skill sin duplicarla, clona donde prefieras y enlaza:
+</details>
+
+**Requisitos:** Node 20+ y Google Chrome (para exportar y para las validaciones visuales). `npx slizdeck env` revisa que esté todo.
+
+## Cómo se usa
+
+Háblale a tu agente como a un diseñador:
+
+> *"Hazme un pitch deck para inversores sobre Nimbus, una app de standups asíncronos"*
+> *"Prepara una charla de 15 minutos sobre el estado de los modelos de IA"*
+> *"Agrégale una slide de tracción después de la 4"*
+> *"La slide 7 se ve genérica, mejórala"*
+> *"Pásalo a PDF y a PowerPoint"*
+
+Para un deck nuevo, la skill sigue estos pasos y te consulta en cada uno antes de avanzar:
+
+1. **Estilo**: eliges uno de los cinco packs, o le das los colores de tu marca.
+2. **Brief**: tema, público y duración. El agente investiga en internet y te propone un wireframe slide por slide.
+3. **Assets**: te pide las imágenes, logos y cifras reales que faltan. Nada de datos inventados.
+4. **Build**: genera el deck con el nivel de animación que elijas.
+5. **Audit**: valida contraste, desbordes y textos antes de entregártelo, y mira cada slide renderizada.
+
+Después puedes pedir cambios puntuales ("cambia el pack a terminal", "arregla el texto de la 12") sin rehacer nada.
+
+## Qué recibes
+
+| | |
+|---|---|
+| **Un `.html` autónomo** | Lo abres en el navegador y presentas: 1920×1080, flechas del teclado, pantalla completa. Sin instalar nada. |
+| **PDF** | Una página por slide, liviano, con las animaciones resueltas. |
+| **PowerPoint editable** | Cada texto y cada forma en su lugar, editables en PowerPoint o Google Slides, con imágenes y notas del presentador. |
 
 ```bash
-git clone https://github.com/pedroanze/slizdeck ~/proyectos/slizdeck
-ln -s ~/proyectos/slizdeck ~/.claude/skills/slizdeck
+npx slizdeck export pdf deck.html
+npx slizdeck export pptx deck.html
 ```
 
-Instalada con git, la primera vez que se exporte a PPTX hay que instalar las dependencias en la carpeta de la skill (`npm install`); el script avisa con el comando exacto si faltan.
+## Cinco estilos
 
-**Requisitos:** Node 20+ para todo. Los validadores que miden en navegador real (`check-reveal.mjs`, `check-overflow.mjs`, `smoke-test.mjs`) necesitan además Google Chrome o Chromium instalado — se detecta solo, o se le indica la ruta con la variable de entorno `CHROME_PATH`.
+Cada pack es un mundo visual completo (paleta, tipografía y reglas de composición), validado contra contraste WCAG y contra los clichés visuales de las interfaces generadas por IA.
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/img/pack-terminal.jpg" alt="Pack terminal"><br><strong>terminal</strong>: casi negro, para infra, IA y demos técnicas en sala oscura.</td>
+    <td width="50%"><img src="docs/img/pack-paper-white.jpg" alt="Pack paper-white"><br><strong>paper-white</strong>: blanco literal; el contenido y las cifras cargan todo el peso.</td>
+  </tr>
+  <tr>
+    <td><img src="docs/img/pack-committed.jpg" alt="Pack committed"><br><strong>committed</strong>: color dominante, para el pitch que tiene que recordarse.</td>
+    <td><img src="docs/img/pack-instrument.jpg" alt="Pack instrument"><br><strong>instrument</strong>: neutro frío, para decks densos en métricas.</td>
+  </tr>
+  <tr>
+    <td><img src="docs/img/pack-editorial.jpg" alt="Pack editorial"><br><strong>editorial</strong>: serif y aire, para charlas con tesis.</td>
+    <td>¿Tu marca tiene sus propios colores? Dáselos al agente y los adapta al pack que elijas, validando el contraste.</td>
+  </tr>
+</table>
+
+## Hecho con slizdeck
+
+Slides de decks generados de punta a punta por la skill, sin tocar el resultado:
+
+<p align="center">
+  <img src="docs/img/ejemplo-grafica.jpg" alt="Slide con una gráfica de cómputo de entrenamiento" width="820">
+</p>
+<table>
+  <tr>
+    <td width="50%"><img src="docs/img/ejemplo-tabla.jpg" alt="Slide con una tabla comparativa de precios"></td>
+    <td width="50%"><img src="docs/img/ejemplo-diagrama.jpg" alt="Slide con un diagrama de flujo"></td>
+  </tr>
+</table>
+
+Los decks completos, con la bitácora de cada prueba, están en [`examples/`](examples/).
 
 ## Actualizar y desinstalar
 
 ```bash
-npx slizdeck update                           # instalada con npx
-/plugin update slizdeck@slizdeck              # instalada como plugin (o autoUpdate)
-cd ~/.claude/skills/slizdeck && git pull      # instalada con git
+npx slizdeck update        # o /plugin update slizdeck@slizdeck
+npx slizdeck uninstall
+npx slizdeck where         # dónde está instalada y en qué versión
 ```
 
-Después de actualizar, `node scripts/doctor.mjs deck.html` dice si un deck generado con una versión anterior del engine se quedó sin algún fix conocido (avisa, no repara).
+## Bueno saber
 
-Para desinstalar: `npx slizdeck uninstall`, `/plugin uninstall slizdeck@slizdeck`, o `rm -rf ~/.claude/skills/slizdeck` si la clonaste. Lo único que slizdeck puede dejar fuera de esa carpeta es el hook opcional de `reference/hooks.md`: si lo instalaste, hay que quitar su bloque `hooks.PostToolUse` del `.claude/settings.local.json` del proyecto donde lo agregaste.
+- **Probada a fondo en Claude Code.** En Codex, Gemini CLI y OpenCode se instala y debería funcionar por el estándar Agent Skills, pero todavía no se probó de punta a punta.
+- **El PowerPoint usa las fuentes del estilo.** Si quien lo abre no las tiene instaladas, verá una sustituta; para ese caso existe `npx slizdeck export pptx deck.html --safe-fonts`.
+- **El PowerPoint no lleva animaciones**: cada slide va en su estado final.
 
-## Estructura
+## Más
 
-| Archivo | Rol |
-|---|---|
-| `SKILL.md` | Punto de entrada: qué dispara la skill y la tabla de fases con su ruteo. |
-| `template.html` | Motor del deck: canvas `<deck-stage>`, navegación, sistema de reveals, tokens CSS. |
-| `reference/init.md` | Fase init — pack, colores de marca, tipografía. |
-| `reference/brief.md` | Fase brief — tema, público, tamaño, research, arco, wireframe. |
-| `reference/assets.md` | Fase assets — checklist bloqueante de imágenes/logos/datos. |
-| `reference/build.md` | Fase build — nivel de animación y generación del HTML. |
-| `reference/audit.md` | Fase audit — qué valida `scripts/audit.mjs` y qué queda a criterio del modelo. |
-| `reference/export.md` | Fase export — PDF, PPTX, deck sin red, speaker notes. |
-| `reference/add.md` | Fase add — agregar slides a un deck existente sin romper la numeración. |
-| `reference/fix.md` | Fase fix — corregir o mejorar una slide puntual sin romper el resto. |
-| `reference/hooks.md` | Hook opcional de Claude Code: audita un deck automáticamente después de cada edición. |
-| `CHANGELOG.md` | Historial de versiones del engine (`template.html`) — lo que lee `scripts/doctor.mjs`. |
-| `CONTRIBUTING.md` | Cómo agregar un style pack/patrón nuevo, correr los tests locales, convención de commits. |
-| `.github/workflows/ci.yml` | CI en cada push/PR: `check-versions.mjs`, el smoke-test de packs, y la validación completa (`audit`/`check-reveal`/`check-overflow`/`doctor`) sobre un deck generado al vuelo y sobre `examples/pitch-showcase.html`. |
-| `reference/design-tokens-schema.md` | Esquema del design system y su mapeo a variables CSS. |
-| `reference/design-guidelines.md` | Principios visuales y lista de anti-clichés. |
-| `reference/deck-schema.md` | Formato del wireframe, arcos narrativos, niveles de animación. |
-| `reference/components.md` | Catálogo de patrones de layout. |
-| `reference/media-and-data.md` | Patrones de imagen, métricas, barras y pantalla de inicio (y qué de esto sobrevive al export a PPTX). |
-| `reference/animations.md` | Recetas de animación CSS y sus gotchas — solo para nivel HEAVY. |
-| `reference/icons.md` | Librería de íconos SVG. |
-| `DESIGN.md` · `design.json` | El contrato del sistema visual (roles de color, escala tipográfica, movimiento) en prosa y su espejo estructurado, en formato [DESIGN.md](https://github.com/google-labs-code/design.md). |
-| `styles/` | Cinco style packs (terminal, paper-white, committed, instrument, editorial) + su índice. |
-| `bin/slizdeck.mjs` | CLI: instalador multi-agente (`install`/`update`/`uninstall`/`where`/`env`) y atajo a todos los scripts desde cualquier carpeta (`slizdeck audit deck.html`, `slizdeck export pptx deck.html`). |
-| `.claude-plugin/` · `hooks/hooks.json` | Manifiestos del plugin y marketplace de Claude Code, y el hook de verificación que viaja con el plugin. |
-| `scripts/apply-style-pack.mjs` | Aplica un pack a un deck fusionando tokens (y su alternativa tipográfica, con `--font=<id>`). |
-| `scripts/check-style-pack.mjs` | Valida contrastes y avisa de clichés visuales de IA. |
-| `scripts/audit.mjs` | Valida un deck ya generado: contraste, balance HTML, reglas de voz, assets pendientes. |
-| `scripts/check-reveal.mjs` | Verifica en Chrome headless que la cascada CSS de `.reveal` resuelva bien al revelarse (`.is-on` gana contra cualquier `r-*`) — atrapa bugs de orden de cascada invisibles en el HTML estático. |
-| `scripts/shoot.mjs` | Renderiza cada slide a PNG (estado final) para revisar el deck mirándolo, no leyendo el HTML. |
-| `scripts/check-contrast.mjs` | Mide en Chrome headless el contraste de cada texto contra su fondo real; los textos sobre gradiente los reporta como no medidos. |
-| `scripts/check-overflow.mjs` | Verifica en Chrome headless que ningún texto desborde el canvas 1920×1080 ni se trunque en una línea que no cabe. |
-| `scripts/doctor.mjs` | Compara la versión de engine embebida en un deck contra `CHANGELOG.md` y avisa (sin reparar) si le falta algún fix conocido. |
-| `scripts/verify-hook.mjs` | Hook opcional de Claude Code que corre `audit.mjs` automáticamente después de editar un deck — ver `reference/hooks.md`. |
-| `scripts/export-pptx.mjs` | Exporta un deck a `.pptx` editable por geometría: mide cada slide en Chrome (`scripts/lib/measure-deck.mjs`) y reconstruye texto, formas, imágenes y SVG en su posición real. `--safe-fonts`, `--slides=`, `--legacy`. |
-| `scripts/export-pdf.mjs` | Exporta un deck a PDF con Chrome headless (una página por slide, estado final), sin el grano de los degradados que infla el archivo; verifica el número de páginas. `--grain` lo conserva. |
-| `scripts/make-offline.mjs` | Incrusta las fuentes como `data:` URI para presentar sin depender de red. |
-| `scripts/check-docs.mjs` | Verifica que la documentación siga alineada con el repo: scripts y referencias listados, links que resuelven, DESIGN.md ≡ design.json. |
-| `scripts/check-versions.mjs` | Verifica que la versión coincida en los seis sitios donde se declara (`package.json`, `SKILL.md`, `template.html`, `CHANGELOG.md`, `.claude-plugin/plugin.json` y `marketplace.json`). |
-| `scripts/renumber.mjs` | Recalcula `data-label` y `<span class="num">` de todas las slides en orden de documento — usar después de insertar una slide en medio del deck. |
-| `tests/validators.test.js` | Suite `node:test` (cero deps): comprueba que los validadores distingan un deck bueno de uno roto. `npm test`. |
-| `scripts/smoke-test.mjs` | Test de regresión: ejercita cada pack con cada alternativa tipográfica. |
-| `examples/demo-deck.html` | Deck de ejemplo heredado del fork original, sin modificar (ver `NOTICE.md`). |
-| `examples/pitch-showcase.html` | Deck de ejemplo propio de slizdeck (7 slides, pack Paper White) — pasa limpio `audit.mjs` + `check-style-pack.mjs` + `check-reveal.mjs`, referencia de la calidad actual del output. |
+- [Roadmap](ROADMAP.md): lo que viene.
+- [Contribuir](CONTRIBUTING.md): cómo está armado el repo, cómo agregar un estilo o un patrón, tests.
+- [Changelog](CHANGELOG.md).
+- ¿Un deck salió mal o tienes una idea? [Abre un issue](https://github.com/pedroanze/slizdeck/issues/new/choose).
 
-## Diseño
-
-Slizdeck trae **cinco style packs**, cada uno un mundo visual completo (paleta, tipografía y reglas de composición), derivados del entorno visual real de la audiencia — documentación técnica, terminales, paneles de datos, prensa — y no de "minimalista" en abstracto. Cada pack trae además **2 alternativas tipográficas curadas** sobre su default.
-
-| Pack | Fondo | Tipografía | Para qué |
-|---|---|---|---|
-| `terminal` | Casi negro | Archivo + JetBrains Mono | Infra, AI, demos técnicas. Sala oscura con proyector. |
-| `paper-white` | Blanco literal | Schibsted Grotesk | Cuando el contenido y las cifras deben cargar todo el peso. |
-| `committed` | Cobalto dominante | Bricolage Grotesque + Manrope | El pitch que necesita recordarse. Keynotes, lanzamientos. |
-| `instrument` | Neutro frío | Public Sans + Martian Mono | Decks densos en métricas: tracción, unit economics. |
-| `editorial` | Blanco puro | Young Serif + Chivo | Charlas con tesis, donde el texto respira. |
-
-Ninguno usa las tipografías ni las combinaciones de color que delatan una interfaz generada por IA, y todos pasan un validador de contrastes:
-
-```bash
-node scripts/check-style-pack.mjs styles/terminal.md
-```
-
-Comprueba los contrastes WCAG, que primario y acento sean distinguibles entre sí, y avisa si la paleta cae en una zona atractora conocida o si la tipografía está en la lista de *training-data defaults*. Sirve igual para un pack propio armado con los colores de tu marca, o para un deck ya generado (`node scripts/audit.mjs deck.html` lo incluye automáticamente).
-
-Las reglas de composición están en `reference/design-guidelines.md`. Ojo con el alcance: de esa guía, `check-style-pack.mjs` solo verifica automáticamente los contrastes, las fuentes sobreusadas y las zonas de paleta atractoras. El resto (bullets, iconografía de stock, cards anidadas, variedad de layout) queda a criterio del modelo que genera el deck.
-
-## Verificar cambios visuales
-
-Sin abrir el navegador a mano:
-
-```bash
-# Exportar a PDF
-"$(node scripts/lib/find-chrome.mjs)" \
-  --headless --disable-gpu --no-pdf-header-footer \
-  --print-to-pdf="deck.pdf" --virtual-time-budget=5000 \
-  "file://$PWD/tu-deck.html"
-
-# Ver cada página como imagen
-pdftoppm -png -r 72 deck.pdf pagina
-```
-
-## Limitaciones conocidas
-
-- **PPTX: lo que no viaja** (el script lo reporta siempre; sale con código 1 si se pierde texto): texto generado por CSS (`content: "…"` en `::before`/`::after`, que no existe en el DOM), decoraciones CSS en pseudo-elementos, y degradados de cajas, que se aplanan a su primer color. Los fondos de slide con degradado o grano sí viajan, como imagen de fondo.
-- **PPTX: degradaciones inherentes al formato**: sin animaciones (se exporta el estado final); una tabla HTML sale como cajas de texto alineadas, no como tabla nativa de PowerPoint; los SVG van como imagen (sus `<text>` sí quedan editables).
-- **PPTX: fuentes.** El `.pptx` nombra las fuentes del pack (Schibsted Grotesk, Public Sans…). Quien lo abra sin tenerlas instaladas ve una sustituta y el texto puede cambiar de ancho; para ese caso, `--safe-fonts` usa Arial/Georgia/Consolas.
-- **Los cuatro scripts que renderizan en Chrome headless (`check-contrast.mjs`, `check-overflow.mjs`, `check-reveal.mjs`, `shoot.mjs`) usaban un rAF anidado dentro de otro para esperar a que el layout se asiente.** En Chrome headless sin GPU (`--disable-gpu`, el modo en el que corren todos), un segundo `requestAnimationFrame` encadenado no llega a dispararse la gran mayoría de las veces (medido en esta máquina: ~90% de las corridas se quedan colgadas esperándolo, sin ningún error) — el harness nunca llegaba a marcar `.is-on`, y la slide se medía o capturaba en su estado inicial (oculto). Corregido reemplazando el segundo `rAF` por un `setTimeout(0)`, que no depende del compositor. `check-reveal.mjs` y `check-overflow.mjs` además reintentan automáticamente hasta 2 veces la invocación completa de Chrome, como segunda red de seguridad ante una contención de recursos real (otro proceso pesado compitiendo en la máquina), no como parche del bug de arriba.
-- **`check-overflow.mjs` mide el solape de texto por la caja real del texto (`Range`), no por la del elemento contenedor** — un `<div>` block ocupa todo el ancho de la slide aunque su texto sean 80px en una esquina, y comparar por bounding box daba falsos positivos en cada slide antes de este fix (v1.4.0). Un solape intencional (ej. un badge sobre una esquina) se marca con `data-overlap-ok` en el contenedor para excluirlo.
-- **`examples/demo-deck.html` no pasa `check-style-pack.mjs`.** Es el ejemplo heredado del fork original (ver `NOTICE.md`), preservado sin modificar — no usa el sistema de style packs de slizdeck, así que su paleta original no pasa la validación de contraste que sí aplica a un deck generado con esta skill. `examples/pitch-showcase.html` es el ejemplo que sí usa el sistema de packs actual y pasa todo limpio.
-- **`npm install` reporta 2 vulnerabilidades `high`** en `image-size`, una dependencia transitiva de `pptxgenjs` (DoS parseando imágenes malformadas). No hay fix sin downgrade breaking del export. El riesgo real acá es bajo: las imágenes que viajan al `.pptx` ya llegan rasterizadas por Chrome, y el export solo procesa decks del propio usuario. Las deps además solo hacen falta para exportar a PPTX.
-- **Documentación 100% en español**, por decisión de alcance (audiencia hispanohablante), no por traducción pendiente.
-
-## Roadmap
-
-Lo que viene (patrones de datos, modo presentador, editor visual) está en [ROADMAP.md](ROADMAP.md).
-
-## Créditos y licencia
-
-Fork/adaptación de [`claude-slides`](https://github.com/marcogalluccio/claude-slides) de Marco Galluccio (MIT). El motor `<deck-stage>` y los catálogos de componentes/animaciones/íconos vienen de ahí; ver `NOTICE.md` para el detalle de qué se heredó y qué se reescribió.
-
-MIT — ver `LICENSE`.
+Fork/adaptación de [`claude-slides`](https://github.com/marcogalluccio/claude-slides) de Marco Galluccio (MIT), ver [`NOTICE.md`](NOTICE.md). Licencia MIT.

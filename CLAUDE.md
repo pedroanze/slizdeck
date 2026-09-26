@@ -58,7 +58,7 @@ sed -i '' 's/Slizdeck · \[DECK NAME\]/Test Deck/' /tmp/d-final.html
 ## Invariants enforced by tooling
 
 - **Version lives in six places that must match:** `package.json`, `SKILL.md` `metadata.version`, the `slizdeck-engine-version` comment at the top of `template.html`, the first `## x.y.z` entry of `CHANGELOG.md`, and `version` in `.claude-plugin/plugin.json` and in the slizdeck entry of `.claude-plugin/marketplace.json`. Verify with `node scripts/check-versions.mjs`. Bump when a change is something existing decks may need to reapply or changes a user-facing script's behavior; not for typos.
-- **`check-docs.mjs`:** every file in `scripts/` must be listed in both `SKILL.md` and `README.md` tables, every `reference/*.md` in `SKILL.md`; relative links must resolve; `DESIGN.md` must stay in sync with `design.json`. Adding a script/reference means updating those tables.
+- **`check-docs.mjs`:** every file in `scripts/` and `bin/` must be listed in both `SKILL.md` and `CONTRIBUTING.md` ("Cómo está armado el repo") tables; `README.md` is user-facing only (install, usage, screenshots in `docs/img/`), every `reference/*.md` in `SKILL.md`; relative links must resolve; `DESIGN.md` must stay in sync with `design.json`. Adding a script/reference means updating those tables.
 - **Validators must never overclaim** (PRODUCT.md principle): if a script can't verify something it says so; a lossy export exits non-zero. `tests/validators.test.js` mutates `examples/pitch-showcase.html` with one defect per test and asserts the validator fails — add a case there when adding a detection.
 
 ## Conventions

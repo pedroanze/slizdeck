@@ -7,7 +7,7 @@
  * rompen, hacen que un modelo siguiendo la doc haga algo imposible.
  *
  *   1. Todo script de scripts/*.mjs aparece en la tabla de SKILL.md y en
- *      la de README.md (y al reves: nada listado ahi que no exista).
+ *      la de CONTRIBUTING.md (y al reves: nada listado ahi que no exista).
  *   2. Todo reference/*.md aparece en la tabla de SKILL.md.
  *   3. Los links relativos de los .md resuelven a un archivo real.
  *   4. Los colores clave de DESIGN.md coinciden con design.json — el
@@ -39,7 +39,10 @@ const ok = (msg) => console.log(`  ✓ ${msg}`);
 /* 1 + 2. Cobertura de scripts y referencias en las tablas ─────────────── */
 
 const skill = read('SKILL.md');
-const readme = read('README.md');
+// La lista tecnica de archivos vive en CONTRIBUTING.md ("Como esta armado
+// el repo"); el README es para quien instala la skill, no para quien la
+// mantiene.
+const readme = read('CONTRIBUTING.md');
 
 const scripts = readdirSync(path.join(ROOT, 'scripts'))
   .filter((f) => f.endsWith('.mjs'));
@@ -50,10 +53,10 @@ const faltanSkill = scripts.filter((f) => !skill.includes(`scripts/${f}`));
 const faltanReadme = scripts.filter((f) => !readme.includes(`scripts/${f}`));
 const bins = readdirSync(path.join(ROOT, 'bin')).filter((f) => f.endsWith('.mjs'));
 const binsFaltan = bins.filter((f) => !skill.includes(`bin/${f}`) || !readme.includes(`bin/${f}`));
-if (binsFaltan.length) bad('ejecutables de bin/ sin documentar en SKILL.md y README.md', binsFaltan.join(', '));
+if (binsFaltan.length) bad('ejecutables de bin/ sin documentar en SKILL.md y CONTRIBUTING.md', binsFaltan.join(', '));
 if (faltanSkill.length) bad('scripts sin documentar en SKILL.md', faltanSkill.join(', '));
-if (faltanReadme.length) bad('scripts sin documentar en README.md', faltanReadme.join(', '));
-if (!faltanSkill.length && !faltanReadme.length) ok(`los ${scripts.length} scripts estan en SKILL.md y README.md`);
+if (faltanReadme.length) bad('scripts sin documentar en CONTRIBUTING.md', faltanReadme.join(', '));
+if (!faltanSkill.length && !faltanReadme.length) ok(`los ${scripts.length} scripts estan en SKILL.md y CONTRIBUTING.md`);
 
 const refsFaltan = refs.filter((f) => !skill.includes(`reference/${f}`));
 if (refsFaltan.length) bad('archivos de reference/ sin documentar en SKILL.md', refsFaltan.join(', '));
