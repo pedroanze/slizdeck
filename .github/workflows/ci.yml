@@ -20,8 +20,6 @@ jobs:
         run: npm ci
 
       - name: Coherencia de versiones (los 6 sitios)
-        env:
-          GITHUB_REF_NAME: ${{ github.ref_name }}
         run: node scripts/check-versions.mjs
 
       - name: Instalar Chrome
@@ -30,6 +28,9 @@ jobs:
         with:
           chrome-version: stable
 
+      - name: CHROME_PATH para todos los pasos
+        run: echo "CHROME_PATH=${{ steps.setup-chrome.outputs.chrome-path }}" >> "$GITHUB_ENV"
+
       - name: Coherencia docs ↔ repo
         run: node scripts/check-docs.mjs
 
@@ -37,37 +38,15 @@ jobs:
         run: npm test
 
       - name: Regresión de style packs (smoke-test)
-        env:
-          CHROME_PATH: ${{ steps.setup-chrome.outputs.chrome-path }}
         run: node scripts/smoke-test.mjs
 
-      - name: Generar deck de humo para audit/check-reveal
+      - name: Deck nuevo desde el template (el camino de la fase build)
         run: |
-          cp template.html /tmp/ci-deck-raw.html
-          node scripts/apply-style-pack.mjs styles/paper-white.md /tmp/ci-deck-raw.html /tmp/ci-deck.html
-          node -e "
-            const fs = require('node:fs');
-            const p = '/tmp/ci-deck.html';
-            const html = fs.readFileSync(p, 'utf8').replace('Slizdeck · [DECK NAME]', 'CI Smoke Deck');
-            fs.writeFileSync(p, html);
-          "
-
-      - name: audit.mjs sobre el deck de humo
-        run: node scripts/audit.mjs /tmp/ci-deck.html
-
-      - name: check-reveal.mjs sobre el deck de humo
-        env:
-          CHROME_PATH: ${{ steps.setup-chrome.outputs.chrome-path }}
-        run: node scripts/check-reveal.mjs /tmp/ci-deck.html
-
-      - name: check-overflow.mjs sobre el deck de humo
-        env:
-          CHROME_PATH: ${{ steps.setup-chrome.outputs.chrome-path }}
-        run: node scripts/check-overflow.mjs /tmp/ci-deck.html
+          node bin/slizdeck.mjs new /tmp/ci-deck.html --pack=paper-white
+          sed -i 's/Slizdeck · \[DECK NAME\]/CI Smoke Deck/' /tmp/ci-deck.html
+          node bin/slizdeck.mjs check /tmp/ci-deck.html
 
       - name: Validar examples/pitch-showcase.html (el ejemplo propio)
-        env:
-          CHROME_PATH: ${{ steps.setup-chrome.outputs.chrome-path }}
         run: |
           node scripts/audit.mjs examples/pitch-showcase.html
           node scripts/check-contrast.mjs examples/pitch-showcase.html
@@ -77,8 +56,6 @@ jobs:
           node scripts/shoot.mjs examples/pitch-showcase.html --slides=1 --out=/tmp/ci-shots
 
       - name: Validar examples/datos-showcase.html (patrones de datos, en los 5 packs)
-        env:
-          CHROME_PATH: ${{ steps.setup-chrome.outputs.chrome-path }}
         run: |
           node scripts/audit.mjs examples/datos-showcase.html
           node scripts/check-reveal.mjs examples/datos-showcase.html
@@ -93,8 +70,6 @@ jobs:
           node scripts/score-deck.mjs examples/datos-showcase.html --no-chrome
 
       - name: Los validadores terminan aunque Chrome no entregue ningun frame
-        env:
-          CHROME_PATH: ${{ steps.setup-chrome.outputs.chrome-path }}
         run: |
           # En Linux sin GPU a veces el primer requestAnimationFrame no llega:
           # los harness tienen que arrancar igual (temporizador de respaldo).
@@ -105,8 +80,6 @@ jobs:
           node scripts/check-overflow.mjs /tmp/ci-noraf.html
 
       - name: export-pptx.mjs, export-pdf.mjs y make-offline.mjs (cobertura del export)
-        env:
-          CHROME_PATH: ${{ steps.setup-chrome.outputs.chrome-path }}
         run: |
           # Por geometria: los tres decks de prueba (que el exportador por
           # clases perdia 30/116/100 textos) tienen que exportar sin perdidas.
@@ -114,7 +87,6 @@ jobs:
             node scripts/export-pptx.mjs "$d" "/tmp/ci-$(basename "$d" .html).pptx"
             node scripts/export-pdf.mjs "$d" "/tmp/ci-$(basename "$d" .html).pdf"
           done
-          node scripts/export-pptx.mjs examples/pitch-showcase.html /tmp/ci-deck.pptx --legacy
           node scripts/export-pptx.mjs examples/pitch-showcase.html /tmp/ci-deck.pptx
           test -s /tmp/ci-deck.pptx || { echo "el .pptx salio vacio"; exit 1; }
           cp examples/pitch-showcase.html /tmp/ci-offline.html
@@ -128,8 +100,6 @@ jobs:
           diff -q examples/pitch-showcase.html /tmp/ci-renum.html || { echo "renumber modifico un deck que ya estaba en orden"; exit 1; }
 
       - name: Paquete npm e instalación con npx (tarball real)
-        env:
-          CHROME_PATH: ${{ steps.setup-chrome.outputs.chrome-path }}
         run: |
           # npm pack imprime el nombre del tarball en la ultima linea. Guardarlo
           # en una variable: un glob pegado a --package= no lo expande la shell.
@@ -144,8 +114,3 @@ jobs:
           node "$SLIZDECK_HOME/.claude/skills/slizdeck/scripts/export-pptx.mjs" \
             "$SLIZDECK_HOME/.claude/skills/slizdeck/examples/pitch-showcase.html" /tmp/ci-npx.pptx
 
-      - name: audit.mjs sobre el ejemplo heredado (no bloqueante)
-        if: always()
-        run: |
-          node scripts/audit.mjs examples/demo-deck.html || \
-            echo "::warning::examples/demo-deck.html falla contraste por diseño — es el ejemplo heredado del fork original, ver NOTICE.md. No bloquea el CI."

@@ -24,7 +24,7 @@
  * Y avisa de las zonas atractoras de IA que impeccable nombra.
  */
 
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 
 const hex2rgb = (h) => {
   h = h.replace('#', '').trim();
@@ -76,6 +76,7 @@ const CHECKS = [
 function main() {
   const file = process.argv[2];
   if (!file) { console.error('uso: node scripts/check-style-pack.mjs <pack.md|deck.html>'); process.exit(1); }
+  if (!existsSync(file)) { console.error(`no existe el archivo: ${file}`); process.exit(1); }
   const t = readTokens(readFileSync(file, 'utf8'));
   const required = ['primary', 'accent', 'cream', 'body'];
   const missing = required.filter((k) => !asHex(t[k]));

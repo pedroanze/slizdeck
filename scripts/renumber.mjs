@@ -23,11 +23,16 @@
  * provisional `0X` se saltaba en silencio dejando un hueco en la numeracion.
  */
 
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 
 const file = process.argv[2];
 if (!file) {
   console.error('uso: node scripts/renumber.mjs <deck.html>');
+  process.exit(1);
+}
+
+if (!existsSync(file)) {
+  console.error(`no existe el archivo: ${file}`);
   process.exit(1);
 }
 

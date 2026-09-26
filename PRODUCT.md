@@ -26,7 +26,7 @@ Cada deck se genera dentro de la carpeta de un proyecto específico (no dentro d
 
 ## Capabilities and Constraints
 
-- Salida: un archivo `.html` por deck (canvas 1920×1080, navegación por teclado, fullscreen, barra de progreso), exportable a PDF vía impresión nativa del navegador.
+- Salida: un archivo `.html` por deck (canvas 1920×1080, navegación por teclado, fullscreen, barra de progreso), con modo presentador, exportable a PDF liviano (`scripts/export-pdf.mjs`) y a PPTX editable.
 - Export a PPTX propio (`scripts/export-pptx.mjs`), por geometría: mide cada slide en Chrome y reconstruye texto y formas nativas de PowerPoint en su posición real, con imágenes reales y speaker notes. Lo que no viaja (texto generado por CSS) se reporta, no se pierde en silencio. Export a PDF liviano (`scripts/export-pdf.mjs`).
 - Cinco style packs calibrados (terminal, paper-white, committed, instrument, editorial), cada uno con 2 alternativas tipográficas, validados contra contraste WCAG y clichés visuales de IA.
 - Versionado de engine: cada deck lleva embebida la versión de `template.html`; `scripts/doctor.mjs` detecta drift contra `CHANGELOG.md` en decks generados meses atrás.
@@ -39,7 +39,7 @@ El design system se define por deck (por proyecto/marca del usuario), no es fijo
 
 ## Evidence on Hand
 
-Sin testimonios ni casos de estudio de terceros todavía. La evidencia disponible es la del propio repo: `examples/pitch-showcase.html` como referencia end-to-end del sistema de packs, y la batería de validación en CI (smoke-test de 5 packs × 3 tipografías, audit, reveal, overflow, doctor). No inventar métricas de adopción ni testimonios.
+Sin testimonios ni casos de estudio de terceros todavía. La evidencia disponible es la del propio repo: los decks de referencia (`examples/pitch-showcase.html`, `examples/datos-showcase.html`), tres decks generados de punta a punta por la skill (`examples/test-0*`), la batería de validación en CI, y la línea base de los evals (`evals/results/`, 65/100 con los decks de prueba). No inventar métricas de adopción ni testimonios.
 
 ## Product Principles
 

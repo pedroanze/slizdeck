@@ -41,7 +41,7 @@ Los tres últimos son **avisos**: no hacen fallar el script, pero cada uno se re
 
 Un fallo (✗) hay que corregirlo antes de entregar. Un aviso (⚠) se reporta al usuario pero no bloquea — típicamente son los assets pendientes o casos donde el script no tiene suficiente contexto para decidir (ej. un deck sin ninguna slide de contenido numerada).
 
-`check-reveal.mjs` es un chequeo aparte, en Chrome headless: `audit.mjs` solo mira el HTML estático, así que nunca puede detectar bugs de la cascada CSS que solo aparecen cuando un `.reveal` se revela de verdad en el navegador (por ejemplo, `.reveal.is-on` perdiendo contra `.reveal.r-left`/`.r-rise`/`.r-scale`/`.r-blur` por orden de declaración — mismo nivel de especificidad, gana el que está después en el archivo). Un fallo acá también hay que corregirlo antes de entregar: es exactamente la clase de bug que se ve a ojo navegando el deck en vivo pero nunca aparece en el PDF exportado (`@media print` fuerza los transforms/filters a `none` con `!important` y lo tapa).
+`check-reveal.mjs` es un chequeo aparte, en Chrome headless: `audit.mjs` solo mira el HTML estático, así que nunca puede detectar bugs de la cascada CSS que solo aparecen cuando un `.reveal` se revela de verdad en el navegador (por ejemplo, `.reveal.is-on` perdiendo contra `.reveal.r-left`/`.r-rise`/`.r-scale`/`.r-blur` por orden de declaración — mismo nivel de especificidad, gana el que está después en el archivo). Un fallo aquí también se corrige antes de entregar: se ve navegando el deck en vivo aunque el PDF salga bien.
 
 **Si el script marca un falso positivo** (por ejemplo, un título de dos líneas donde cada línea es su propia oración con punto, como remate retórico deliberado) es un hallazgo **a decidir**, no lo silencies editando el regex a ciegas: decírselo al usuario y que confirme si es una excepción válida para ese deck en concreto.
 
@@ -74,7 +74,7 @@ node scripts/shoot.mjs deck.html --slides=3,7-9
 
 Renderiza cada slide a un PNG 1920×1080 en su estado final (reveals aplicados, contadores en su cifra real). **Después hay que abrir esas imágenes y mirarlas** — leerlas como imagen, no solo comprobar que el archivo existe.
 
-Es el único paso del flujo que puede juzgar lo que ninguna regex ni ninguna medición puntual alcanza: si la jerarquía se lee de un vistazo, si tres slides seguidas comparten la misma composición, si una imagen pelea con el título, si el peso de color está desbalanceado, si la slide respira o está toda apelotonada en el tercio superior. Es exactamente la lista de "lo que el script no puede revisar" de más abajo, que hasta ahora se revisaba de memoria sobre el HTML.
+Es el único paso del flujo que puede juzgar lo que ninguna regex ni ninguna medición puntual alcanza: si la jerarquía se lee de un vistazo, si tres slides seguidas comparten la misma composición, si una imagen pelea con el título, si el peso de color está desbalanceado, si la slide respira o está toda apelotonada en el tercio superior. Es la lista de "lo que el script no puede revisar" de más abajo.
 
 **Una sola ronda, acotada.** Generar el deck completo → una tanda de capturas → mirarlas todas y anotar → un batch de correcciones → como mucho una segunda vuelta. Un loop abierto de screenshot-y-retoque consume el presupuesto del usuario sin converger; si a la segunda ronda algo sigue sin cerrar, se le reporta a él en vez de seguir iterando.
 

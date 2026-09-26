@@ -42,7 +42,7 @@ async function readStdin() {
 function looksLikeDeck(filePath) {
   if (!filePath.endsWith('.html')) return false;
   const base = path.basename(filePath);
-  if (base === 'template.html' || base === 'demo-deck.html') return false;
+  if (base === 'template.html') return false;
   let content;
   try {
     content = readFileSync(filePath, 'utf8');
@@ -84,7 +84,7 @@ async function main() {
   let auditOutput = '';
   let auditFailed = false;
   try {
-    execFileSync('node', [AUDIT_SCRIPT, filePath], { stdio: 'pipe' });
+    execFileSync(process.execPath, [AUDIT_SCRIPT, filePath], { stdio: 'pipe' });
   } catch (err) {
     auditFailed = true;
     auditOutput = (err.stdout ? err.stdout.toString() : '') + (err.stderr ? err.stderr.toString() : '');

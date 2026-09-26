@@ -16,12 +16,34 @@
  * bloque entero los borra y el deck pierde el padding sin ningun error
  * visible hasta que se renderiza.
  *
+ * Cambiar de un pack a otro no deja restos: cada token que ALGUN pack
+ * declara y este no, vuelve al valor por default del template (o se quita,
+ * si el template no lo tiene, como --cs-accent-on). Sin esto, pasar de
+ * committed a terminal dejaba --cs-accent-ink en el marino de committed,
+ * ilegible sobre el fondo negro de terminal.
+ *
  * --font=<id> aplica una de las alternativas tipograficas del pack (seccion
  * "Alternativas tipograficas", bloques `### Alt: <id> — <label>`) en vez de
  * la tipografia por defecto. Sin el flag se usa siempre el default del pack.
  */
 
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, readdirSync } from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const TOKEN_RE = /(--cs-[a-z0-9-]+)\s*:\s*([^;]+);/g;
+
+/* Defaults del template y tokens que declara algun pack (los "del pack"). */
+function packOwnedDefaults() {
+  const tpl = /:root\s*\{([\s\S]*?)\n\s*\}/.exec(readFileSync(path.join(ROOT, 'template.html'), 'utf8'))?.[1] || '';
+  const defaults = new Map([...tpl.matchAll(TOKEN_RE)].map((m) => [m[1], m[2].trim()]));
+  const owned = new Set();
+  for (const f of readdirSync(path.join(ROOT, 'styles')).filter((x) => x.endsWith('.md') && x !== 'index.md')) {
+    for (const m of readFileSync(path.join(ROOT, 'styles', f), 'utf8').matchAll(TOKEN_RE)) owned.add(m[1]);
+  }
+  return { defaults, owned };
+}
 
 const readPack = (file) => {
   const md = readFileSync(file, 'utf8');
@@ -76,7 +98,20 @@ function main() {
   if (!root) { console.error(`${deckFile}: no tiene bloque :root`); process.exit(1); }
 
   let body = root[2];
-  const applied = [], added = [];
+  const applied = [], added = [], reset = [];
+  const { defaults, owned } = packOwnedDefaults();
+  for (const name of owned) {
+    if (pack.tokens.has(name)) continue;
+    const declRe = new RegExp(`\\n?[ \\t]*(${name})\\s*:\\s*([^;]+);`);
+    const cur = declRe.exec(body);
+    if (!cur) continue;
+    if (defaults.has(name)) {
+      if (cur[2].trim() !== defaults.get(name)) { body = body.replace(declRe, `\n    ${name}: ${defaults.get(name)};`); reset.push(name); }
+    } else {
+      body = body.replace(declRe, '');
+      reset.push(name);
+    }
+  }
   for (const [name, value] of pack.tokens) {
     const declRe = new RegExp(`(${name}\\s*:\\s*)([^;]+)(;)`);
     if (declRe.test(body)) {
@@ -101,7 +136,7 @@ function main() {
 
   writeFileSync(out, deck);
   console.log(`✓ ${pack.name} aplicado a ${out}`);
-  console.log(`  ${applied.length} tokens sustituidos${added.length ? `, ${added.length} anadidos (${added.join(', ')})` : ''}`);
+  console.log(`  ${applied.length} tokens sustituidos${added.length ? `, ${added.length} anadidos (${added.join(', ')})` : ''}${reset.length ? `, ${reset.length} de otro pack devueltos al default (${reset.join(', ')})` : ''}`);
   console.log(`  Google Fonts: ${fontsSwapped ? 'sustituido' : pack.fontsUrl ? 'NO se encontro el <link> a sustituir' : 'el pack no declara ninguno'}`);
   const untouched = ['--cs-pad-x', '--cs-radius-lg', '--cs-shadow-2', '--cs-ease-std']
     .filter((t) => deck.includes(t));

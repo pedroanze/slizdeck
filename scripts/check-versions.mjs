@@ -12,7 +12,7 @@
  *   .claude-plugin/plugin.json       "version" (lo que ve /plugin)
  *   .claude-plugin/marketplace.json  "version" de la entrada slizdeck
  *
- * Existe porque los cuatro ya se habian desalineado en silencio
+ * Existe porque ya se habian desalineado en silencio
  * (package.json y SKILL.md en 1.0.0 mientras el engine y el changelog
  * iban en 1.1.0) y nada lo detectaba. Es justo el tipo de desfase que
  * rompe scripts/doctor.mjs, que compara la version embebida en un deck

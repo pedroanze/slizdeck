@@ -61,7 +61,7 @@ export function findChrome() {
   if (process.env.CHROME_PATH) {
     if (!existsSync(process.env.CHROME_PATH)) {
       throw new Error(
-        `CHROME_PATH="${process.env.CHROME_PATH}" está seteada pero ese archivo no existe. Corregí la variable o quitala para usar la detección automática.`,
+        `CHROME_PATH="${process.env.CHROME_PATH}" está definida pero ese archivo no existe. Corrige la variable o quítala para usar la detección automática.`,
       );
     }
     return process.env.CHROME_PATH;
@@ -77,8 +77,8 @@ export function findChrome() {
 
   throw new Error(
     `No se encontró Chrome/Chromium instalado en las rutas típicas de ${process.platform}. ` +
-    'Instalá Google Chrome, o si ya está instalado en una ruta no estándar, ' +
-    'seteá la variable de entorno CHROME_PATH con la ruta completa al ejecutable.',
+    'Instala Google Chrome o, si ya está instalado en una ruta no estándar, ' +
+    'define la variable de entorno CHROME_PATH con la ruta completa al ejecutable.',
   );
 }
 

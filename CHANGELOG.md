@@ -4,6 +4,39 @@ Historial de cambios al engine (`template.html`) y a los scripts de la skill. Ca
 
 Una sola versión gobierna todo el proyecto y vive en seis sitios que deben coincidir siempre: `package.json`, el `metadata.version` de `SKILL.md`, el marcador `slizdeck-engine-version` de `template.html`, la primera entrada de este archivo, y el `version` de `.claude-plugin/plugin.json` y `.claude-plugin/marketplace.json`. `node scripts/check-versions.mjs` lo verifica y falla si alguno se desalinea.
 
+## 2.3.0
+
+Auditoría completa de la skill: bugs, código muerto, inconsistencias y lo deprecado, fuera.
+
+**Engine (`template.html`)**
+- **Fix: el PDF y el PPTX descolocaban los reveals centrados** (`translate(-50%)`): el `@media print` forzaba `transform: none !important`. Ya no: `finalizeForPrint` pone `.is-on` y alcanza.
+- **Fix: al imprimir, las slides llegan a su último paso** (`data-current-step`), así los patrones que dependen del paso actual (pulsos, magic-move) salen en su estado final. Y después de un Cmd+P la slide en vivo vuelve al paso en que estaba (antes quedaba todo revelado).
+- **Fix: con movimiento reducido, `r-wipe` y `r-mask` se veían antes de su paso** (ocultan con `clip-path`, que el modo reducido anulaba). Ahora pasan a fundido; y el modo reducido ya no fuerza `transform: none`.
+- **Fix: la clase global `.hl` se aplicaba a `tr.hl`, `td.hl` y `li.hl`** de los patrones de datos (el hito resaltado del timeline salía entero en negrita). Queda solo para texto en línea. `.hl-accent` usa `--cs-accent-ink`.
+- **Fix: rAF anidados en el cambio de slide y en la entrada inicial**, prohibidos por las propias reglas del repo: ahora esperan un frame con temporizador de respaldo.
+- **Fix: badges de estado con colores fijos** (`badge-red` quedaba a 1,9:1 en `terminal`): se mezclan con el color de texto del pack.
+- **Fix: reabrir el modo presentador tras recargar el deck acumulaba estilos y atajos.**
+- **Nuevo token `--cs-on-primary`**: texto sobre un bloque de color primario o `--cs-grad-linear` (blanco; `terminal`, de primario ámbar, lo oscurece). **Nuevo `svg.ic`**: estilo de los íconos de `icons.md` (antes el doc decía que existía y no existía).
+- **Fuera:** `.sweep`, Lucide (loader, `createIcons`), los atributos `data-om-validate` / `data-screen-label` / `export-hidden` y el `postMessage` heredados del engine original (nada los leía), y los tokens sin uso `--cs-shadow-1`, `--cs-shadow-3`, `--cs-fg-3`. El ejemplo del template trae notas en `<aside class="notes">`.
+
+**Scripts**
+- **Fix: `apply-style-pack` dejaba tokens del pack anterior** al cambiar de pack (pasar de `committed` a `terminal` dejaba el `--cs-accent-ink` marino sobre el fondo negro). Ahora los tokens de pack que el nuevo no declara vuelven al default del template.
+- **Fix: `check-contrast` se saltaba en silencio los colores `color-mix()` y `oklch()`** (solo parseaba `rgba()`): un título casi invisible en `color-mix` pasaba con ✓. Ahora normaliza cualquier color pintando un pixel.
+- **Fix: `check-overflow` medía los solapes a mitad de la transición** del reveal: ahora sin transiciones.
+- **Fix: los reintentos de Chrome no reintentaban**: un timeout de Chrome salía como stack trace. Ahora cuenta como intento fallido y termina con el diagnóstico.
+- **Fix: `export-pptx --slides=99` generaba un PPTX vacío y reportaba ✓**; `smoke-test --pack=<typo>` daba "0/0 OK". Los dos fallan con un mensaje.
+- **Fix: una captura o un PDF viejo podían pasar por nuevos** (`shoot`, `export-pdf` no borraban la salida anterior). **Fix: archivo inexistente** daba stack trace en seis scripts. **Fix: `make-offline`** no encontraba el `<link>` de fuentes si `href` no era el primer atributo, y en ese caso se saltaba el aviso de recursos remotos.
+- **Fuera el exportador PPTX por clases** (`--legacy`, prometido por una versión en 2.1) y su dependencia `node-html-parser`.
+- **Código compartido en `scripts/lib/`**: `chrome-run.mjs` (arranque del harness, reintentos, diagnóstico: antes copiado en tres validadores) y `deck-html.mjs` (conteo de slides, `--slides`, palabras por slide: antes copiado en cinco scripts). `check-docs` exige en `SKILL.md` solo los scripts que usa el agente.
+
+**Documentación**
+- `SKILL.md` más corto: la tabla de archivos lista solo lo que usa el agente; las herramientas de mantenimiento quedan en `CONTRIBUTING.md` (reescrito).
+- `reference/design-tokens-schema.md` pasa a ser la referencia de los tokens `--cs-*` y de cómo inyectar colores de marca: documentaba un `design-tokens.json` que nada leía ni escribía.
+- Corregido lo que ya no era cierto: contadores (decimales, formato), PDF por script, notas en `<aside>`, nivel MEDIUM, ruta del hook, lista completa de fuentes prohibidas, regla del gradiente (manda el pack), `--cs-accent-ink` en la inyección de marca.
+- Catálogos: colores fijos (`#fff`, `rgba(0,0,0,…)`, `#2563EB`) pasados a tokens para que funcionen en packs oscuros; el velo de la imagen a sangre es un `<div>` (el `::after` no viajaba al PPTX); fuera `counter-bars` (lo cubren `.sz-chart` y `data-counter`); los íconos Lucide de los snippets pasan a SVG en línea.
+- **Fuera `examples/demo-deck.html`**, el ejemplo heredado del fork que no pasaba las validaciones. `pitch-showcase.html` se rehízo sobre el engine actual, con notas en cada slide. Las bitácoras de `examples/test-0*` (600 a 1.100 líneas de la corrida 1.4.0, todo ya corregido) quedan en un resumen; la versión completa, en el historial de git.
+- README más corto y sin la imagen de portada.
+
 ## 2.2.0
 
 Diseño, animación y datos. Cambia el engine: un deck generado antes de 2.2 no trae los patrones de datos ni el modo presentador (`doctor.mjs` lo avisa).

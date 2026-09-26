@@ -8,7 +8,7 @@ Catálogo de técnicas de animación para decks de slizdeck (`template.html`). C
 
 ## Índice
 
-Solo para nivel HEAVY (ver `deck-schema.md`). **Leer únicamente la técnica que vas a usar** — cada una trae sus propios gotchas al final de su sección, y son lo que evita el bug, no la receta.
+El modelo de steps, el stagger y los contadores sirven para todos los niveles animados; el resto son técnicas SVG para HEAVY (ver `deck-schema.md`). **Leer únicamente la técnica que vas a usar** — cada una trae sus propios gotchas al final de su sección, y son lo que evita el bug, no la receta.
 
 - Foundation — el modelo de steps
 - Reveal stagger — varios elementos, mismo step, delay creciente
@@ -30,12 +30,12 @@ Solo para nivel HEAVY (ver `deck-schema.md`). **Leer únicamente la técnica que
 
 Toda la infraestructura está en `template.html`. Solo hay que entender 4 cosas:
 
-1. **En la `<section>`** poné `data-steps="N"` (total de steps) + `data-current-step="0"` (init).
-2. **En los elementos** que querés revelar poné `class="reveal" data-step="K"` (K = step en el que aparecen).
+1. **En la `<section>`** pon `data-steps="N"` (total de steps) + `data-current-step="0"` (init).
+2. **En los elementos** que quieres revelar pon `class="reveal" data-step="K"` (K = step en el que aparecen).
 3. **El step controller** (ya está en el template) intercepta `→`/`←`/`Espacio` ANTES que deck-stage. Avanza el step interno si puede, si no lo deja pasar y deck-stage cambia de slide.
 4. **Al entrar a la slide**, `resetAndEnter` saca todos los `.is-on`, y vuelve a poner `.is-on` en `data-step <= 1` → el primer reveal se anima al entrar.
 
-**Slide estática**: NO pongas `.reveal`, seteá `data-steps="1" data-current-step="1"`.
+**Slide estática**: NO pongas `.reveal`, define `data-steps="1" data-current-step="1"`.
 
 **Slide mínima animada:**
 
@@ -55,21 +55,23 @@ Toda la infraestructura está en `template.html`. Solo hay que entender 4 cosas:
 
 ## Reveal stagger — varios elementos, mismo step, delay creciente
 
-Para hacer aparecer varias cards una después de otra en el mismo step, usá `style="--d:Nms"`:
+Para que varias cards aparezcan una tras otra en el mismo step, envolverlas en un contenedor `.stagger`: el template escalona solo a sus hijos `.reveal` (90ms entre cada uno, hasta 12 hijos).
 
 ```html
-<div class="card reveal" data-step="2">First, no delay</div>
-<div class="card reveal" data-step="2" style="--d:120ms">Second</div>
-<div class="card reveal" data-step="2" style="--d:240ms">Third</div>
+<div class="grid stagger">
+  <div class="card reveal" data-step="2">Primera</div>
+  <div class="card reveal" data-step="2">Segunda</div>
+  <div class="card reveal" data-step="2">Tercera</div>
+</div>
 ```
 
-`--d` ya lo lee `.reveal { transition-delay: var(--d, 0ms); }` en el template.
+Para un ritmo distinto, `style="--d:Nms"` en cada elemento fija su retraso a mano (`.reveal` lo lee como `transition-delay`).
 
 ---
 
 ## Counter ticking — número que sube hasta un target
 
-Built-in en el template (`runCounter`). Marcá un elemento con:
+Built-in en el template (`runCounter`). Marcar un elemento con:
 
 ```html
 <span class="big-number"
@@ -79,13 +81,13 @@ Built-in en el template (`runCounter`). Marcá un elemento con:
 
 `data-counter` = target final. `data-target-step` = step en el que arranca. Easing ease-out-quint, duración 1400ms. El `.unit` opcional (ej. "k", "%", "€") se preserva durante el tick.
 
-Por debajo de 1000 el número es entero (`123`), entre 1k y 100k formatea como `2.4k`, por encima de 100k como `240k`.
+Respeta los decimales que trae (`data-counter="57.5"` → `57,5` en un deck en español) y formatea según el `lang` del deck: separador de miles desde cinco cifras (`125.000`, un año queda `2026`). `data-decimals="N"` fija los decimales; `data-format="compact"` abrevia (`2,4 M`). Ver `media-and-data.md` → "Métrica grande".
 
 ---
 
 ## SVG path drawing — la flecha que se dibuja
 
-Patrón base de todas las flechas animadas. El path se "dibuja" arrastrando `stroke-dashoffset` de `1` a `0`. Usá `pathLength="1"` para normalizar sin importar la longitud geométrica real.
+Patrón base de todas las flechas animadas. El path se "dibuja" arrastrando `stroke-dashoffset` de `1` a `0`. Usa `pathLength="1"` para normalizar sin importar la longitud geométrica real.
 
 ```html
 <svg class="my-svg" viewBox="0 0 1680 600" preserveAspectRatio="none">
@@ -138,33 +140,33 @@ L 840 460 C 840 510 950 490 1010 490
        fin del segmento vertical
 ```
 
-Si en cambio ponés `C 880 460 950 490 1010 490`, el control1 NO es vertical respecto al segmento anterior → corner seco.
+Si en cambio pones `C 880 460 950 490 1010 490`, el control1 NO es vertical respecto al segmento anterior → corner seco.
 
 ---
 
 ## SVG marker — punta de flecha
 
-Definí un `<marker>` en el `<defs>` y aplicalo vía `marker-end`:
+Define un `<marker>` en el `<defs>` y aplícalo vía `marker-end`:
 
 ```html
 <svg ...>
   <defs>
     <marker id="my-tip" viewBox="0 0 10 10" refX="9" refY="5"
             markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-      <path d="M0,0 L10,5 L0,10 z" fill="#2563EB"/>
+      <path d="M0,0 L10,5 L0,10 z" style="fill: var(--cs-primary)"/>
     </marker>
   </defs>
   <path ... marker-end="url(#my-tip)"/>
 </svg>
 ```
 
-`refX="9"` → la punta del marker queda 1 unidad más allá del punto final del path. Si querés que la punta caiga exactamente sobre el target, terminá el path un poco antes.
+`refX="9"` → la punta del marker queda 1 unidad más allá del punto final del path. Si quieres que la punta caiga exactamente sobre el target, terminá el path un poco antes.
 
 ---
 
 ## Pulso disparado por el step actual
 
-Para que un elemento pulse solo cuando la slide está en el step X, usá el selector `data-current-step`:
+Para que un elemento pulse solo cuando la slide está en el step X, usa el selector `data-current-step`:
 
 ```css
 @keyframes myPulse {
@@ -195,7 +197,7 @@ Arquitectura: 1 trunk + N branches, cada uno un `<path>` separado:
 <svg class="flow-svg" viewBox="0 0 1680 600" preserveAspectRatio="none">
   <defs>
     <marker id="flow-tip" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-      <path d="M0,0 L10,5 L0,10 z" fill="#2563EB"/>
+      <path d="M0,0 L10,5 L0,10 z" style="fill: var(--cs-primary)"/>
     </marker>
   </defs>
   <!-- Trunk: prompt → top-of-stack → bottom-of-stack → junction -->
@@ -223,7 +225,7 @@ Arquitectura: 1 trunk + N branches, cada uno un `<path>` separado:
 .flow-branch.reveal { transition: stroke-dashoffset 800ms cubic-bezier(0.65, 0.05, 0.36, 1), opacity 200ms ease; }
 ```
 
-**Truco de z-index:** si el trunk pasa "por detrás" de elementos (ej. a través de pills blancas centrales), poné el SVG en `z-index: 1` y los elementos en `z-index: 2`. El path se dibuja pero queda oculto por los fondos blancos de las pills — aparece visualmente solo en los tramos entre una pill y otra.
+**Truco de z-index:** si el trunk pasa "por detrás" de elementos (ej. a través de pills blancas centrales), pon el SVG en `z-index: 1` y los elementos en `z-index: 2`. El path se dibuja pero queda oculto por los fondos blancos de las pills — aparece visualmente solo en los tramos entre una pill y otra.
 
 ---
 
@@ -235,7 +237,7 @@ Versión compacta del wrap arrow para "1 input → N outputs". Pensado para "1 i
 <svg class="conn" viewBox="0 0 600 70" preserveAspectRatio="none">
   <defs>
     <marker id="conn-tip" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-      <path d="M0,0 L10,5 L0,10 z" fill="#2563EB"/>
+      <path d="M0,0 L10,5 L0,10 z" style="fill: var(--cs-primary)"/>
     </marker>
   </defs>
   <!-- Trunk: input bottom → junction (vertical short) -->
@@ -290,7 +292,7 @@ Card centrada que aparece sobre la slide con backdrop blur. Se usa para momentos
   position: absolute;
   left: 50%; top: 50%;
   transform: translate(-50%, -50%) scale(0.94);
-  background: #fff;
+  background: var(--cs-surface);
   border: 1px solid var(--cs-border);
   border-radius: 26px;
   padding: 56px 80px;
@@ -340,8 +342,8 @@ Paquetes que viajan a lo largo de un path infinitamente, sin JS. Pensado para di
 
   <!-- Packet 1: arranca a los 0s, dura 5s, en loop -->
   <g class="eco-packet">
-    <rect x="-30" y="-12" width="60" height="24" rx="4" fill="#2563EB"/>
-    <text x="0" y="4" text-anchor="middle" fill="#fff" font-size="11">Q3 margin</text>
+    <rect x="-30" y="-12" width="60" height="24" rx="4" style="fill: var(--cs-primary)"/>
+    <text x="0" y="4" text-anchor="middle" style="fill: var(--cs-on-primary)" font-size="11">Q3 margin</text>
     <animateMotion dur="5s" begin="0s" repeatCount="indefinite">
       <mpath href="#feeds-path"/>
     </animateMotion>
@@ -421,21 +423,21 @@ Archivos dispersos que son "absorbidos" por un agent (translate + scale + fade a
   position: absolute;
   left: 50%; top: 50%;
   width: 80px; height: 100px;
-  background: #fff;
+  background: var(--cs-surface);
   border-radius: 8px;
   /* CRITICAL: 4-function transform list, idéntica en TODOS los estados */
-  transform: translate(-50%, -50%) translate(var(--x, 0px), var(--y, 0px)) var(--rot, none) scale(1);
+  transform: translate(-50%, -50%) translate(var(--x, 0px), var(--y, 0px)) var(--rot, rotate(0deg)) scale(1);
   transition: opacity 520ms, transform 520ms;
 }
 /* override del default de .reveal — preserva el 4-function transform aún apagado */
 .file-tile.reveal {
   opacity: 0;
-  transform: translate(-50%, -50%) translate(var(--x, 0px), var(--y, 0px)) var(--rot, none) scale(1);
+  transform: translate(-50%, -50%) translate(var(--x, 0px), var(--y, 0px)) var(--rot, rotate(0deg)) scale(1);
 }
 .file-tile.reveal.is-on {
   opacity: 1;
   /* same transform list */
-  transform: translate(-50%, -50%) translate(var(--x, 0px), var(--y, 0px)) var(--rot, none) scale(1);
+  transform: translate(-50%, -50%) translate(var(--x, 0px), var(--y, 0px)) var(--rot, rotate(0deg)) scale(1);
 }
 /* Step 4: los archivos vuelan hacia la derecha + se achican */
 section[data-active="true"][data-current-step="4"] .file-tile.reveal.is-on {
@@ -443,7 +445,7 @@ section[data-active="true"][data-current-step="4"] .file-tile.reveal.is-on {
   transform:
     translate(-50%, -50%)
     translate(calc(var(--x, 0px) + 280px), calc(var(--y, 0px) - 30px))
-    var(--rot, none)
+    var(--rot, rotate(0deg))
     scale(0.4);
   transition: opacity 800ms, transform 800ms;
   transition-delay: var(--fly-d, 0ms);
@@ -463,42 +465,17 @@ section[data-active="true"][data-current-step="4"] .file-tile.reveal.is-on {
 Sin `animation-fill-mode: backwards`, el elemento queda visible-estático durante el delay porque el keyframe todavía no arrancó. `backwards` aplica el keyframe `0%` (típicamente opacity 0) durante el delay.
 
 **Specificity wars con `.reveal.is-on { transform: none }`.**
-Esta regla del template PISA los transforms de centrado (`translate(-50%, -50%)`, `translateX(-50%)`). Para preservarlos usá especificidad más alta:
+Esta regla del template PISA los transforms de centrado (`translate(-50%, -50%)`, `translateX(-50%)`). Para preservarlos usa especificidad más alta:
 ```css
 .my-centered.reveal.is-on { transform: translate(-50%, -50%); }
 ```
 
 **Transform function list distinta entre estados → falla la matrix decomposition.**
-Si los estados de la transición tienen distinta cantidad de transform functions, el navegador intenta hacer matrix decomposition y suele fallar. Normalizá la lista: mismas funciones, mismo orden, en todos los estados.
+Si los estados de la transición tienen distinta cantidad de transform functions, el navegador intenta hacer matrix decomposition y suele fallar. Normaliza la lista: mismas funciones, mismo orden, en todos los estados.
 
-**Cascada de sed en la renumeración de slides.**
-NO uses `sed -e 's/19/18/' -e 's/18/17/' ...` para renumerar slides N → N-1. Cada pasada también degrada el número recién reemplazado. Usá Python con un counter secuencial:
-```python
-import re
-counter = [0]
-def replace(_):
-    counter[0] += 1
-    return f'<span class="num">{counter[0]:02d}</span>'
-re.sub(r'<span class="num">\d+</span>', replace, content)
-```
-(En la práctica, esto ya lo resuelve `scripts/renumber.mjs` — ver `reference/add.md`.)
+**Renumerar slides: siempre con `scripts/renumber.mjs`** (ver `reference/add.md`), nunca con reemplazos de texto encadenados: cada pasada degrada el número recién reemplazado.
 
 **Transform en el SVG por culpa de `.reveal`.**
-El default `.reveal { transform: translateY(16px); }` desplaza todo el SVG path 16px hacia abajo. En cualquier elemento SVG con `.reveal`, hacé override: `transform: none !important;`.
+El default `.reveal { transform: translateY(16px); }` desplaza todo el SVG path 16px hacia abajo. En cualquier elemento SVG con `.reveal`, haz override: `transform: none !important;`.
 
-**`createIcons()` de Lucide no se relanza sobre elementos nuevos.**
-`lucide.createIcons()` se llama una sola vez al cargar. Si agregás un `<i data-lucide="X">` a mitad de documento (ej. después del render inicial, o copiando un componente de `components.md`), Lucide no lo reemplaza automáticamente por SVG — el ícono queda invisible.
-
-Workaround recomendado: usá **SVG inline** en vez de Lucide para íconos "fijos" en el deck (logo de marca, íconos sociales, decoraciones). Lucide está bien para un icon-set decidido en el momento del authoring inicial; para cualquier cosa agregada después, inline.
-
-```html
-<!-- ❌ riesgo de no renderizarse si se agrega después del load -->
-<i data-lucide="linkedin"></i>
-
-<!-- ✅ inline, siempre visible -->
-<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-  <path d="..."/>
-</svg>
-```
-
-O, si de verdad hace falta Lucide después del load, relanzalo a mano: `lucide.createIcons();` después de insertar el elemento.
+**Íconos: siempre SVG inline** de `reference/icons.md`. El template no carga ninguna librería de íconos.

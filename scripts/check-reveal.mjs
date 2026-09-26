@@ -39,26 +39,11 @@
  * sincronos. Por eso, si el chequeo no termina, primero se reporta si el
  * deck tiene scripts externos: esa es la causa mucho mas probable que un
  * problema de Chrome en la maquina.
- *
- * Reintenta hasta 2 veces si Chrome headless no llega a terminar (arranque
- * en frio, contencion de recursos — confirmado no relacionado con el deck
- * evaluado). NO reintenta si el harness si termino y encontro violaciones:
- * eso es un resultado real y deterministico, nunca se oculta.
  */
 
-import { readFileSync, writeFileSync, rmSync } from 'node:fs';
-import { execFileSync } from 'node:child_process';
-import path from 'node:path';
-import { findChrome } from './lib/find-chrome.mjs';
-import { injectBeforeBodyEnd } from './lib/inject.mjs';
+import { readFileSync, existsSync } from 'node:fs';
+import { START, NO_MOTION, runHarness } from './lib/chrome-run.mjs';
 
-let CHROME;
-try {
-  CHROME = findChrome();
-} catch (err) {
-  console.error(err.message);
-  process.exit(1);
-}
 
 const file = process.argv[2];
 if (!file) {
@@ -66,27 +51,18 @@ if (!file) {
   process.exit(1);
 }
 
+if (!existsSync(file)) {
+  console.error(`no existe el archivo: ${file}`);
+  process.exit(1);
+}
+
 const html = readFileSync(file, 'utf8');
 
 const harness = `
-<style>*, *::before, *::after { transition: none !important; }</style>
+${NO_MOTION}
 <script>
 window.addEventListener('DOMContentLoaded', () => {
-  // Un solo rAF + setTimeout, no un rAF anidado en otro: en Chrome headless
-  // con --disable-gpu el segundo rAF de una cadena no llega a dispararse la
-  // mayoria de las veces (medido: 9 de 10 corridas se cuelgan esperandolo,
-  // sin ningun error). El harness nunca llegaba a marcar .is-on, y el
-  // resultado dependia de la suerte de esa corrida en particular.
-  // rAF + setTimeout como siempre, pero con un temporizador de respaldo:
-  // en Chrome headless sin GPU (Linux del CI) a veces ni el primer rAF
-  // llega, y el harness no corria nunca: "Chrome no termino a tiempo" sin
-  // ningun error real. Lo que llegue primero arranca, una sola vez.
-  const __szStart = (fn) => {
-    let done = false;
-    const once = () => { if (!done) { done = true; fn(); } };
-    requestAnimationFrame(() => setTimeout(once, 0));
-    setTimeout(once, 250);
-  };
+${START}
   __szStart(() => {
     document.querySelectorAll('.reveal').forEach((el) => el.classList.add('is-on'));
     const violations = [];
@@ -112,49 +88,7 @@ window.addEventListener('DOMContentLoaded', () => {
 </script>
 `;
 
-const withHarness = injectBeforeBodyEnd(html, harness);
-// Al lado del deck real, no en os.tmpdir(): ver el comentario equivalente
-// en check-overflow.mjs — rutas relativas a assets locales se rompen si el
-// harness se copia a otra carpeta.
-const tmp = path.join(path.dirname(path.resolve(file)), `.slizdeck-check-reveal-${Date.now()}.html`);
-writeFileSync(tmp, withHarness);
-
-const MAX_ATTEMPTS = 2;
-let m = null;
-try {
-  for (let attempt = 1; attempt <= MAX_ATTEMPTS && !m; attempt++) {
-    const dom = execFileSync(
-      CHROME,
-      ['--headless', '--disable-gpu', '--no-sandbox', '--dump-dom', '--virtual-time-budget=12000', `file://${tmp}`],
-      { stdio: 'pipe', timeout: 30000 },
-    ).toString();
-    m = /<title>DONE::(.*?)<\/title>/s.exec(dom);
-    if (!m && attempt < MAX_ATTEMPTS) {
-      console.error(`(intento ${attempt}/${MAX_ATTEMPTS}: Chrome headless no termino a tiempo, reintentando...)`);
-    }
-  }
-} finally {
-  rmSync(tmp, { force: true });
-}
-
-if (!m) {
-  console.error(`No se pudo leer el resultado tras ${MAX_ATTEMPTS} intentos — Chrome headless no termino.`);
-  const externos = [...html.replace(/<!--[\s\S]*?-->/g, (c) => ' '.repeat(c.length)).matchAll(/<script\b[^>]*\bsrc=["'](https?:\/\/[^"']+)["']/gi)].map((x) => x[1]);
-  if (externos.length) {
-    console.error(`\n  Causa mas probable: el deck carga ${externos.length} script(s) externo(s) bloqueante(s):`);
-    for (const u of externos) console.error(`    ${u}`);
-    console.error('  DOMContentLoaded espera a los scripts sincronos, asi que si esa URL no responde el chequeo nunca termina.');
-    console.error('  Fix: comentar o quitar ese <script src> del deck (template.html lo trae comentado por default).');
-  } else {
-    console.error('  El deck no tiene scripts externos, asi que probablemente sea la maquina: revisar que Chrome headless funcione aca.');
-  }
-  process.exit(1);
-}
-
-const unescape = (s) => s
-  .replace(/&quot;/g, '"').replace(/&#39;/g, "'")
-  .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
-const violations = JSON.parse(unescape(m[1]));
+const violations = runHarness(file, html, harness, { tag: 'check-reveal' });
 
 console.log(`\n${file}\n`);
 if (!violations.length) {

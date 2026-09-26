@@ -4,8 +4,8 @@
  *
  * Ejercita la matriz completa de packs x tipografia (default + cada
  * alternativa) contra el template real: aplica el pack, valida contraste,
- * comprueba balance de HTML, renderiza en Chrome headless y confirma que
- * la fuente declarada realmente llego al DOM (no cayo a system-ui).
+ * comprueba balance de HTML y renderiza en Chrome headless (captura por
+ * variante, para revisar a ojo).
  *
  * Existe porque los scripts de validacion existentes (check-style-pack,
  * apply-style-pack) se probaron manualmente caso por caso durante su
@@ -23,7 +23,7 @@
  * CHROME_PATH con la ruta completa al ejecutable.
  */
 
-import { readFileSync, writeFileSync, mkdirSync, rmSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, rmSync, existsSync, readdirSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -38,8 +38,13 @@ const args = process.argv.slice(2);
 const onlyPack = args.find((a) => a.startsWith('--pack='))?.slice('--pack='.length);
 const noRender = args.includes('--no-render');
 
-const PACKS = ['terminal', 'paper-white', 'committed', 'instrument', 'editorial']
-  .filter((p) => !onlyPack || p === onlyPack);
+// Los packs salen de styles/, no de una lista escrita a mano.
+const ALL_PACKS = readdirSync(path.join(ROOT, 'styles')).filter((f) => f.endsWith('.md') && f !== 'index.md').map((f) => f.slice(0, -3));
+const PACKS = ALL_PACKS.filter((p) => !onlyPack || p === onlyPack);
+if (!PACKS.length) {
+  console.error(`--pack: no existe "${onlyPack}". Packs: ${ALL_PACKS.join(', ')}`);
+  process.exit(1);
+}
 
 function readPackAlts(packFile) {
   const md = readFileSync(packFile, 'utf8');
@@ -70,7 +75,7 @@ function chromePath() {
   return _chrome;
 }
 
-async function renderAndCheck(file) {
+function renderAndCheck(file) {
   const png = file.replace(/\.html$/, '.png');
   try {
     execFileSync(chromePath(), [
@@ -106,7 +111,7 @@ async function main() {
       const applyArgs = ['scripts/apply-style-pack.mjs', `styles/${pack}.md`, outFile];
       if (variant) applyArgs.push(`--font=${variant}`);
       try {
-        execFileSync('node', applyArgs, { cwd: ROOT, stdio: 'pipe' });
+        execFileSync(process.execPath, applyArgs, { cwd: ROOT, stdio: 'pipe' });
       } catch (e) {
         issues.push(`apply-style-pack fallo: ${e.stderr?.toString().trim() || e.message}`);
         results.push({ label, issues });
@@ -119,7 +124,7 @@ async function main() {
       issues.push(...balance);
 
       try {
-        execFileSync('node', ['scripts/check-style-pack.mjs', outFile], { cwd: ROOT, stdio: 'pipe' });
+        execFileSync(process.execPath, ['scripts/check-style-pack.mjs', outFile], { cwd: ROOT, stdio: 'pipe' });
       } catch (e) {
         issues.push(`check-style-pack fallo:\n${e.stdout?.toString().trim()}`);
       }
@@ -128,7 +133,7 @@ async function main() {
       if (!fonts.sans && !fonts.heading) issues.push('no se encontraron tokens de fuente en :root');
 
       if (!noRender) {
-        const renderIssue = await renderAndCheck(outFile, label);
+        const renderIssue = renderAndCheck(outFile);
         if (renderIssue) issues.push(renderIssue);
       }
 
@@ -150,7 +155,7 @@ async function main() {
       const issues = [];
       writeFileSync(outFile, readFileSync(showcase, 'utf8'));
       try {
-        execFileSync('node', ['scripts/apply-style-pack.mjs', `styles/${pack}.md`, outFile], { cwd: ROOT, stdio: 'pipe' });
+        execFileSync(process.execPath, ['scripts/apply-style-pack.mjs', `styles/${pack}.md`, outFile], { cwd: ROOT, stdio: 'pipe' });
       } catch (e) {
         issues.push(`apply-style-pack fallo: ${e.stderr?.toString().trim() || e.message}`);
         results.push({ label, issues });
@@ -168,7 +173,7 @@ async function main() {
         : [['audit.mjs', 'audit'], ['check-overflow.mjs', 'overflow/solape']];
       for (const [script, nombre] of bloqueantes) {
         try {
-          execFileSync('node', [`scripts/${script}`, outFile], { cwd: ROOT, stdio: 'pipe' });
+          execFileSync(process.execPath, [`scripts/${script}`, outFile], { cwd: ROOT, stdio: 'pipe' });
         } catch (e) {
           issues.push(`${nombre} fallo:\n${(e.stdout?.toString() || e.stderr?.toString() || '').trim()}`);
         }
@@ -176,7 +181,7 @@ async function main() {
       let nota = null;
       if (!noRender) {
         try {
-          execFileSync('node', ['scripts/check-contrast.mjs', outFile], { cwd: ROOT, stdio: 'pipe' });
+          execFileSync(process.execPath, ['scripts/check-contrast.mjs', outFile], { cwd: ROOT, stdio: 'pipe' });
         } catch (e) {
           const out = (e.stdout?.toString() || '').trim();
           const n = /✗ (\d+) texto/.exec(out)?.[1];

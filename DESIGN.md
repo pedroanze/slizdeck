@@ -9,6 +9,7 @@ colors:
   surface: "#FAFBFB"
   primary: "#16181A"
   accent: "#E23D1E"
+  accent-ink: "#E23D1E"
   stage-void: "#0A0B0C"
   status-green: "#15803D"
   status-red: "#B91C1C"
@@ -130,16 +131,18 @@ El sistema define **roles**, no colores. Cada pack los rellena con su propia pal
 | Ink atenuado | `--cs-muted` | Texto secundario y footer. Contraste ≥3.5:1. |
 | Primario | `--cs-primary` | Eyebrows, cifras, badges. El color que domina. |
 | Acento | `--cs-accent` | Un detalle por slide. Debe distinguirse del primario (≥1.7:1). |
+| Acento resaltado | `--cs-accent-ink` | El acento cuando resalta sobre el fondo (cifra clave de una gráfica, celda o hito `.hl`). ≥3:1 sobre el fondo; default, el propio acento. |
+| Sobre primario | `--cs-on-primary` | Texto sobre un bloque de color primario o `--cs-grad-linear`. |
 | Void | `--cs-void` | El fondo del navegador fuera del lienzo. No es parte de la slide. |
 
-Los colores de estado (`status-green`, `status-red`, `status-orange`) existen solo para badges semánticos y son iguales en todos los packs.
+Los colores de estado (`status-green`, `status-red`, `status-orange`) existen solo para badges semánticos; se mezclan con el color de texto del pack para leerse en fondos claros y oscuros.
 
 ### Named Rules
 **The One Accent Rule.** El acento aparece en como máximo un elemento por slide. Su escasez es lo que lo hace notar.
 
-**The Gradient-Is-A-Bookend Rule.** El gradiente vive solo en cover y cierre. Las slides intermedias son fondo plano, sin excepción.
+**The Gradient-Is-A-Bookend Rule.** El gradiente es para cover, cierre y separadores de capítulo; las slides de contenido van en fondo plano. Un pack puede pedir más (`committed` manda una de cada tres slides a gradiente): manda el pack.
 
-**The No-Slop-Palette Rule.** Nunca un gradiente azul/violeta ni cian-sobre-oscuro como default, ni las fuentes de la lista de *training-data defaults* (Inter, Roboto, Fraunces, Newsreader, IBM Plex, Space Grotesk, Geist, DM Sans, Plus Jakarta Sans, Instrument Sans). Verificado con `check-style-pack.mjs`.
+**The No-Slop-Palette Rule.** Nunca un gradiente azul/violeta ni cian-sobre-oscuro como default, ni las fuentes de la lista de *training-data defaults* (la lista completa está en `reference/init.md`). Verificado con `check-style-pack.mjs`.
 
 ## Typography
 
@@ -177,7 +180,7 @@ El movimiento es opt-in por pasos (`.reveal` + `data-step`), y **la entrada var�
 | `r-wipe` | Barras y reglas |
 | `r-mask` | Remates |
 
-Un contenedor con `.stagger` escalona sus hijos automáticamente. Las superficies con gradiente llevan grano (`--cs-grain`), sin `mix-blend-mode`: `overlay` es invisible sobre fondos oscuros.
+Un contenedor con `.stagger` escalona sus hijos automáticamente (hasta 12). Cuatro niveles por deck: NONE, LIGHT (pasos), MEDIUM (además, los datos se animan: gráficas que se dibujan, contadores, barras) y HEAVY (además, técnicas SVG de `animations.md`), ver `reference/deck-schema.md`. Entre slides, corte directo; `<deck-stage transition="fade">` es opt-in. Con `prefers-reduced-motion` solo transiciona la opacidad. Las superficies con gradiente llevan grano (`--cs-grain`), sin `mix-blend-mode`: `overlay` es invisible sobre fondos oscuros.
 
 Los tres tokens de gradiente (`--cs-grad-radial`, `--cs-grad-linear`, `--cs-grad-text`) interpolan en **OKLCH** (`linear-gradient(135deg in oklch, ...)`), no en RGB: dos colores de matiz distinto (ej. cobalto → navy) mezclados en RGB pasan por un punto medio grisáceo y apagado; en OKLCH el color se mantiene vivo en todo el recorrido. Requiere Chrome 111+/Safari 16.4+/Firefox 128+ — ya asumido por el resto del sistema (el pipeline de PDF usa Chrome headless). Un pack nuevo debe declarar sus gradientes con `in oklch` desde el inicio.
 
@@ -190,9 +193,7 @@ Canvas de diseño fijo en 1920×1080px (`<deck-stage>`), escalado uniformemente 
 Ambiental y sutil, nunca estructural. Las sombras dan a las cards una separación suave del fondo crema; no simulan botones "presionables" ni jerarquía dura entre capas. El sistema es mayormente plano — el peso visual viene del color y la tipografía, no de la profundidad.
 
 ### Shadow Vocabulary
-- **shadow-1** (`box-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 1px 1px rgba(0,0,0,0.03)`): separación mínima, casi imperceptible.
-- **shadow-2** (`box-shadow: 0 4px 12px rgba(0,0,0,0.06), 0 2px 4px rgba(0,0,0,0.04)`): la que usan las cards por default.
-- **shadow-3** (`box-shadow: 0 12px 32px rgba(0,0,0,0.08), 0 4px 10px rgba(0,0,0,0.05)`): reservada para elementos que necesiten destacar más (mockups, elementos flotantes en nivel de animación HEAVY).
+- **shadow-2** (`--cs-shadow-2`): la única sombra del sistema, la de las cards. Un pack puede anularla (`paper-white` la pone en `none` y separa por borde).
 
 ### Named Rules
 **The Ambient-Only Rule.** Las sombras separan, no dramatizan. Si una sombra se nota antes que el contenido, es demasiado fuerte.

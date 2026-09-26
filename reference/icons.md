@@ -2,7 +2,7 @@
 
 Todos los íconos usados en el framework. Estilo uniforme: outline, `stroke-width` 1.5-2, `fill: none`, monocromáticos (color vía CSS del parent).
 
-**Convención de uso:** cada ícono es un bloque `<svg viewBox="0 0 24 24">` (excepto notas específicas). Insertalo dentro de un container que define tamaño y color (ej. `.tool-mini-icon`, `.partner-icon`, `.docs-card-icon`). El CSS ya configurado en `template.html` aplica `stroke: currentColor`, `fill: none`, `stroke-linecap: round`, `stroke-linejoin: round`.
+**Convención de uso:** cada ícono es un `<svg viewBox="0 0 24 24">` al que se le agrega `class="ic"`: el template le da trazo del color del texto (`currentColor`), sin relleno, a 1em. El tamaño se ajusta con `font-size` o `width`/`height` del contenedor, y el color con `color`. Siempre SVG en línea: el template no carga ninguna librería de íconos.
 
 **Sustituibilidad:** cualquier ícono puede swap-and-replace entre containers compatibles (icon-circle gradient, icon-circle pink, plain stroke).
 
@@ -181,29 +181,6 @@ Todos los íconos usados en el framework. Estilo uniforme: outline, `stroke-widt
 
 ---
 
-## Tipos de container para íconos
-
-El CSS en `template.html` define varios containers que adaptan un ícono al estilo de la slide:
-
-### `.tool-mini-icon` (dentro de `.tool-mini`)
-Ícono al lado del nombre de una herramienta. Stroke primary/muted, 38-58px.
-
-### `.action-robot` (slide de transformación)
-Círculo gradient primary/secondary grande (90-150px). El ícono adentro va en stroke white.
-
-### `.partner-icon` (dentro de `.partner-card`)
-Círculo accent tenue (52-78px). Ícono stroke primary, tamaño interno 52%.
-
-### `.docs-card-icon` (dentro de `.docs-card`)
-Ícono standalone (sin círculo). Stroke muted, 36-56px.
-
-### `.source-icon` (dentro de `.source-card`)
-Círculo blanco. Ícono stroke primary, 34-50px.
-
-### `.cycle-svg .arrow-head` (SVG markers)
-Para las flechas dentro de diagramas SVG. `fill: var(--cs-primary)`.
-
----
 
 ## Agregar íconos nuevos
 

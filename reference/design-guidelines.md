@@ -7,7 +7,7 @@ Estas reglas gobiernan tanto el **contenido** (qué tanto texto, qué se muestra
 - **Una idea por slide.** Si necesitas "y" para describir de qué trata una slide, son dos slides.
 - **Título corto, sin punto final.** El título es el mensaje, no una oración completa. El cuerpo (si existe) lo explica en una frase, no un párrafo.
 - **Nada de párrafos largos en pantalla.** Si el contenido necesita más de 2-3 líneas cortas, es candidato a: (a) volverse una gráfica/número, (b) dividirse en varias slides, o (c) pasar a las speaker notes (el discurso completo va ahí, no en la slide).
-- **Números > adjetivos.** "3x más rápido" gana siempre a "mucho más rápido". Si hay un dato, se muestra como cifra grande (ver componente `[data-counter]` en `template.html`), no como texto corrido.
+- **Números > adjetivos.** "3x más rápido" gana siempre a "mucho más rápido". Si hay un dato, se muestra como cifra grande (`data-counter`), gráfica (`.sz-chart`) o tabla (`.sz-table`), nunca como texto corrido: ver `media-and-data.md`.
 - **Cada slide necesita un elemento visual.** Imagen, gráfica, ícono, mockup, diagrama o número grande — nunca una slide de solo texto/bullets. Si el contenido no tiene un visual natural, buscar uno (ícono de `icons.md`, patrón de `components.md`) antes de dejarla en texto puro.
 
 ## Color: un dominante, no un arcoíris
@@ -27,14 +27,14 @@ Directamente prohibido, sin importar qué tan "de diseño" parezca:
 - Bullets como única forma de presentar información — ver "Contenido" arriba.
 - Texto centrado en slides de contenido (solo cover y transition van centradas — ver "Layout" mas abajo en este mismo archivo).
 - Gradientes decorativos en elementos que no sean el fondo de cover/transition o `--cs-grad-text` en una palabra de énfasis.
-- **Fuentes y paletas sobreusadas en UI generada por IA**: ver la lista completa y las zonas atractoras en `reference/init.md` y `styles/index.md` (`check-style-pack.mjs` las detecta automáticamente). No hay un único default que evitarlas por sí solo — cada style pack ya está calibrado contra esta lista.
+- **Fuentes y paletas sobreusadas en UI generada por IA**: la lista de fuentes está en `reference/init.md` y `check-style-pack.mjs` detecta fuentes y zonas de paleta. Los cinco packs ya están calibrados contra ellas.
 - **Nunca anidar una card dentro de otra card** (`.card`/`.pq-card`/`.num-card` dentro de otra card). Si el contenido necesita agruparse dentro de una card, usar espaciado y tipografía para la jerarquía interna, no un segundo contenedor con su propio borde/sombra.
 
 De esta lista, `check-style-pack.mjs` solo verifica automáticamente **las fuentes sobreusadas y las zonas de paleta atractoras** (más los contrastes WCAG). Todo lo demás de esta sección (barras decorativas, iconografía de stock, bullets, texto centrado, gradientes decorativos, cards anidadas) **queda a criterio del modelo**: no hay validador que lo atrape, así que hay que revisarlo a ojo antes de dar el deck por cerrado.
 
 ## El acento no siempre sirve como color de texto
 
-Cada pack declara `--cs-accent-on`: el fondo sobre el que su acento está validado. Si dice `primary` (el lima de `committed` sobre cobalto), ese acento **no está comprobado contra el fondo claro de las slides intermedias** y usarlo ahí como color de texto puede quedar ilegible — el lima de committed sobre blanco da 1.31:1. En ese caso el acento va en elementos sobre el primario, o en cosas que no son texto: barras, badges, reglas, el relleno de un gráfico. `check-style-pack.mjs` lo avisa al validar el pack.
+Cada pack declara `--cs-accent-on`: el fondo sobre el que su acento está validado. Si dice `primary` (el lima de `committed` sobre cobalto), ese acento **no está comprobado contra el fondo claro de las slides intermedias** y usarlo ahí como color de texto puede quedar ilegible — el lima de committed sobre blanco da 1.31:1. Por eso existe `--cs-accent-ink`: la versión del acento que sí se lee sobre el fondo, y la que usan los resaltados de gráficas, tablas y timelines (`committed` declara su marino). `check-style-pack.mjs` exige 3:1 para ese token.
 
 ## Layout: variar, no repetir la misma composición
 
@@ -60,7 +60,7 @@ Cada pack declara `--cs-accent-on`: el fondo sobre el que su acento está valida
 | 80-120 caracteres | `.ts-title-sm` (64px) | 2-3 |
 | > 120 caracteres | — | No usar este patrón: acortar la frase o pasarla a una slide de contenido con cuerpo de texto (`h2.title` + `<p>`), nunca forzarla en `.ts-title` a cualquier tamaño. |
 
-Un separador de sección usa el mismo tamaño de `.ts-title` que una frase sola, pero sobre `class="grad"` (el mismo fondo invertido de cover/cierre) en vez de `--cs-cream` — la diferenciación es el fondo, no el texto. Un número de capítulo grande y tenue de fondo se probó primero y se descartó: a los tamaños de `.ts-title` los dígitos chocan visualmente contra las letras del título. `.grad .ts-title` y `.grad .ts-tagline` pasan a blanco automáticamente (ver `template.html`), igual que ya hace `.eyebrow`. Son narrativamente distintos de una frase sola de contenido (uno marca un capítulo, el otro remata una idea) y deben distinguirse a simple vista.
+Un separador de sección usa el mismo tamaño de `.ts-title` que una frase sola, pero sobre `class="grad"` (el mismo fondo invertido de cover/cierre) en vez de `--cs-cream` — la diferenciación es el fondo, no el texto. `.grad .ts-title` y `.grad .ts-tagline` pasan a blanco automáticamente (ver `template.html`), igual que ya hace `.eyebrow`. Son narrativamente distintos de una frase sola de contenido (uno marca un capítulo, el otro remata una idea) y deben distinguirse a simple vista.
 
 ## Énfasis dentro del texto
 
@@ -68,12 +68,9 @@ Para resaltar una palabra o frase sin cambiar el fondo a gradiente: `<span class
 
 **No sirve de nada dentro de un elemento que ya es bold del mismo color.** `.ts-title`/`.ts-title-md`/`.ts-title-sm` ya son `font-weight:600` en `--cs-black` — meter un `.hl` (700, `--cs-primary`) ahí es invisible si el pack usa negro puro como primario (el caso de cualquier sistema casi monocromo, como un pack de marca sin color de acento real). Antes de usarlo, comprobar que el texto base alrededor sea más liviano (`.ts-tagline`, `<p>` de cuerpo, `.subtitle`) o que `--cs-primary` sea un color realmente distinto de `--cs-black`/`--cs-body` — si no, no se va a ver y hay que descartarlo, no dejarlo puesto "por si acaso".
 
-## Divergencias conscientes frente a heurísticas genéricas de diseño web
+## Divergencias conscientes frente a guías de diseño web
 
-Las guías de diseño web más estrictas (pensadas para sitios/UI, no para slides) suelen prohibir sin excepción algunos patrones que acá se usan a propósito. Documentado para que se lean como una decisión, no como un punto ciego:
-
-- **El eyebrow arriba de un título** suele estar prohibido en una guía web ("ninguna razón de negocio lo justifica"), porque ahí suele ser decoración de marketing que no aporta nada que el título no diga ya. En una slide proyectada `.eyebrow` cumple una función real de orientación (qué sección del arco narrativo es esta), leída de un vistazo por alguien que puede haberse perdido dos minutos de la charla. Se mantiene.
-- **El texto en gradiente** suele estar prohibido igual ("el énfasis viene del peso o el tamaño, no del color"). En una web ese gradiente compite con el resto de la página por atención todo el tiempo que el visitante esté ahí; en una slide de transición `.grad-word`/`--cs-grad-text` aparece 5-10 segundos, una sola palabra, con el resto de la sala a oscuras — el contexto de uso es opuesto al que ese tipo de ban está pensado para prevenir (gradiente-como-decoración-de-fondo omnipresente). Se mantiene, pero solo en el uso ya acotado que describe `reference/components.md` (nunca como fondo grande, nunca más de una vez por slide).
-- **El techo tipográfico de una guía web típica ronda los 96px** para type de display. El `.ts-title` de portada/transición es 168px. La diferencia es de medio: esas reglas están calibradas para texto leído en una pantalla propia, de cerca, con zoom disponible; una slide se proyecta en una sala y se lee de lejos, sin zoom. El tamaño más grande no es capricho, es legibilidad a distancia. Se mantiene, con la salvedad de que `.ts-title-md`/`.ts-title-sm` (ver tabla arriba) ya existen precisamente para no abusar del tamaño máximo en textos que no son una portada.
-
-Lo que sí se adoptó sin reserva, por ser una mejora puramente mecánica sin tensión de medio: el foco de teclado visible en los controles del viewer (`template.html`, ver `CHANGELOG.md` 1.1.0).
+Tres cosas que una guía de UI web prohíbe y aquí se usan a propósito, porque una slide se proyecta en una sala y se lee de lejos durante segundos:
+- **Eyebrow sobre el título**: orienta a quien se perdió un tramo de la charla (qué parte del arco es esta).
+- **Texto en degradado**: solo una palabra (`.grad-word`), solo en cover/transición, nunca como fondo grande.
+- **Tipografía de 168px** en portadas y transiciones: legibilidad a distancia; `.ts-title-md`/`-sm` existen para no abusar del tamaño máximo.

@@ -15,7 +15,7 @@ SLIDE 03 · La solución · imagen-a-sangre + texto
    [Screenshot/mockup del producto + 1 frase de cómo resuelve el problema]
 ```
 
-Formato: `SLIDE NN · título corto · patrón de components.md` en la primera línea, descripción de una línea debajo. Para slides complejas o patrones nuevos, expandir a un ASCII layout de 15-20 líneas.
+Formato: `SLIDE NN · título corto · patrón` (de `components.md` o `media-and-data.md`: `sz-chart bar`, `sz-table`, `metrica`…) en la primera línea, descripción de una línea debajo. Para slides complejas o patrones nuevos, expandir a un ASCII layout de 15-20 líneas.
 
 ## Arcos narrativos por tipo de deck
 
@@ -43,15 +43,16 @@ Cada slide en `template.html` es un `<section>` con estas convenciones (ver ejem
 | `<div class="pad">` | Frame estándar con el padding del design system |
 | `<div class="pad center">` | Frame centrado (transitions) |
 | `<div class="footer">` | Logo + nombre/org + número de slide — presente siempre |
+| `<aside class="notes">` | Discurso del presentador para esa slide (no se ve; lo leen el modo presentador y el export a PPTX) — en todas las slides |
 
 ## Niveles de animación (elegir uno por deck, fase `build`, ver `reference/build.md`)
 
 | Nivel | Qué incluye | Cuándo |
 |---|---|---|
 | **NONE** | Todo estático, sin `.reveal` | Decks que se van a compartir async, sin presentador en vivo |
-| **LIGHT** | Reveal por pasos (`.reveal`, fade-in escalonado) en cards/elementos, sin animaciones SVG grandes | Default para pitch decks largos (10 slides o más) y para presentar en vivo sin sobrecargar |
+| **LIGHT** | Reveal por pasos (`.reveal`, fade-in escalonado) en cards/elementos, sin animaciones SVG grandes | Default para presentar en vivo cuando el deck no es denso en datos, de cualquier largo |
 | **MEDIUM** | LIGHT + los datos se animan al revelarse: gráficas `.sz-chart` que se dibujan, contadores `data-counter`, barras y proporciones que se llenan, timelines con `.stagger`. Opcional: fundido entre slides (`<deck-stage transition="fade">`) | Default cuando el deck es denso en datos (tracción, métricas, precios, benchmarks): el movimiento está al servicio de la cifra, no es decoración. Sirve para cualquier largo |
-| **HEAVY** | LIGHT + animaciones SVG "signature" de `animations.md` (dibujo de paths, popups, pulsos) | Ideal en decks cortos (menos de 10 slides) donde cada slide cuenta. Entre 10 y 18 slides solo con pedido explícito del usuario (no es default en ese rango). Máximo 1-2 slides HEAVY por deck, nunca todo el deck |
+| **HEAVY** | MEDIUM + animaciones SVG "signature" de `animations.md` (dibujo de paths, popups, pulsos) | Ideal en decks cortos (menos de 10 slides) donde cada slide cuenta. Entre 10 y 18 slides solo con pedido explícito del usuario (no es default en ese rango). Máximo 1-2 slides HEAVY por deck, nunca todo el deck |
 
 El fundido entre slides es opt-in y solo con pedido del usuario: el default del sistema es corte directo (regla de voz 10). Con `prefers-reduced-motion` los pasos se revelan con un fundido corto, sin desplazamientos.
 
