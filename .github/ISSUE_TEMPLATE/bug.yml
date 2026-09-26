@@ -1,0 +1,29 @@
+name: Bug en un script o en el engine
+description: Un script falla, miente o el template se comporta mal
+labels: [bug]
+body:
+  - type: input
+    id: version
+    attributes:
+      label: Versión de slizdeck
+      description: La de `package.json`, o la que imprime `node scripts/doctor.mjs deck.html`
+    validations:
+      required: true
+  - type: dropdown
+    id: agent
+    attributes:
+      label: Agente
+      options: [Claude Code, Codex, Gemini CLI, OpenCode, Otro]
+    validations:
+      required: true
+  - type: input
+    id: env
+    attributes:
+      label: SO, versión de Node y de Chrome
+  - type: textarea
+    id: what
+    attributes:
+      label: Qué pasó y qué esperabas
+      description: Incluye el comando exacto y su salida completa
+    validations:
+      required: true

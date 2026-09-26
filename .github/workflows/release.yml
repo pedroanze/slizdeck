@@ -1,0 +1,48 @@
+name: Release
+
+# Al hacer push de un tag vX.Y.Z: verifica, publica a npm y crea el Release.
+# Requiere el secret NPM_TOKEN (token "Automation" o granular con permiso
+# de publicar el paquete slizdeck).
+
+on:
+  push:
+    tags: ['v*.*.*']
+
+permissions:
+  contents: write   # crear el GitHub Release
+  id-token: write   # npm publish --provenance
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          registry-url: 'https://registry.npmjs.org'
+
+      - run: npm ci
+
+      - name: El tag coincide con los 6 sitios de versión
+        env:
+          GITHUB_REF_NAME: ${{ github.ref_name }}
+        run: node scripts/check-versions.mjs
+
+      - name: Docs y tests
+        run: node scripts/check-docs.mjs && npm test
+
+      - name: Publicar a npm
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --provenance --access public
+
+      - name: Crear el Release con la entrada del CHANGELOG
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          awk -v v="## $VERSION" '$0==v{on=1;next} /^## [0-9]/{if(on)exit} on' CHANGELOG.md > /tmp/notes.md
+          gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --notes-file /tmp/notes.md

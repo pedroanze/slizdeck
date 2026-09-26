@@ -19,8 +19,9 @@
  * de forma inesperada (JSON malformado, audit.mjs no existe), se queda en
  * silencio en vez de reventar la edición del usuario.
  *
- * No se auto-instala: reference/hooks.md documenta cómo agregarlo a mano en
- * .claude/settings.local.json del proyecto donde se está generando el deck.
+ * Instalada como plugin de Claude Code viene activo (hooks/hooks.json). Con
+ * npx o git no se auto-instala: reference/hooks.md documenta cómo agregarlo a
+ * mano en .claude/settings.local.json del proyecto donde se genera el deck.
  */
 
 import { readFileSync } from 'node:fs';

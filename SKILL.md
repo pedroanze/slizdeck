@@ -7,7 +7,7 @@ description: |
 license: MIT
 compatibility: Requiere un agente con capacidad de ejecutar comandos de shell (crear/copiar archivos, abrir el navegador) y búsqueda web. Probado en Claude Code; compatible con cualquier cliente del estándar Agent Skills (agentskills.io).
 metadata:
-  version: "1.4.2"
+  version: "2.0.0"
 allowed-tools: Bash, Read, Write, Edit, WebSearch, WebFetch
 # user-invocable / argument-hint son extensiones de Claude Code, no del
 # estandar portable de agentskills.io (que solo define name/description/
@@ -53,6 +53,7 @@ Fork/adaptación de [`claude-slides`](https://github.com/marcogalluccio/claude-s
 | `examples/pitch-showcase.html` | Deck de ejemplo propio de slizdeck (7 slides, pack Paper White), pasa limpio `audit.mjs`/`check-style-pack.mjs`/`check-reveal.mjs` — referencia end-to-end del sistema de packs actual. |
 | `styles/index.md` | Catálogo de style packs. **Lo único que hay que leer para elegir estilo.** |
 | `styles/<pack>.md` | Un mundo visual completo: tokens, tipografía y reglas de composición. |
+| `bin/slizdeck.mjs` | CLI: instalador multi-agente y atajo a todos los scripts, acepta packs por nombre — ver "Dónde se corre cada cosa". |
 | `scripts/apply-style-pack.mjs` | Aplica un pack a un deck fusionando tokens (no reemplaza el `:root`). |
 | `scripts/check-style-pack.mjs` | Valida contrastes, distinción primario/acento y clichés de IA. |
 | `scripts/audit.mjs` | Valida un deck generado: contraste, balance HTML, reglas de voz, assets pendientes. |
@@ -99,12 +100,18 @@ Al reconocer el disparador inicial: *"Te armo el deck. Antes, defino tu design s
 
 ## Dónde se corre cada cosa
 
-El deck vive en la carpeta del proyecto del usuario; los scripts viven en la skill. Todos los `node scripts/...` de esta documentación se corren **desde la raíz de la skill**, pasando la ruta (absoluta o relativa) al deck:
+El deck vive en la carpeta del proyecto del usuario; los scripts viven en la skill. Llamamos `<skill>` a la carpeta donde está este `SKILL.md` (según cómo se instaló: `~/.claude/skills/slizdeck`, la caché de un plugin de Claude Code, `~/.codex/skills/slizdeck`, etc.).
+
+**Todo se corre desde la carpeta del proyecto, sin `cd`.** Cada `node scripts/X.mjs` de esta documentación significa `node <skill>/scripts/X.mjs`, y cada `styles/<pack>.md` significa `<skill>/styles/<pack>.md`. Los scripts encuentran sus propios archivos solos; las rutas al deck se resuelven contra la carpeta actual:
 
 ```bash
-cd ~/.claude/skills/slizdeck        # o donde esté instalada
-node scripts/audit.mjs ~/proyectos/mi-startup/deck.html
+node <skill>/scripts/audit.mjs deck.html
+node <skill>/scripts/apply-style-pack.mjs <skill>/styles/terminal.md deck.html
 ```
+
+`<skill>/bin/slizdeck.mjs` es un atajo equivalente que además acepta packs por nombre (`node <skill>/bin/slizdeck.mjs apply-pack terminal deck.html`, `… check deck.html` corre los cuatro validadores). Usar siempre los scripts de `<skill>`, no `npx slizdeck`: `npx` baja la última versión publicada, que puede no coincidir con la skill instalada.
+
+Si `export-pptx.mjs` avisa que faltan dependencias, correr el `npm install --prefix …` exacto que imprime.
 
 ## Reglas de voz — aplicar siempre
 

@@ -19,7 +19,7 @@ node scripts/check-reveal.mjs deck.html
 node scripts/check-overflow.mjs deck.html
 ```
 
-Los cuatro se corren desde la raíz de la skill (ver `SKILL.md` → "Dónde se corre cada cosa"). Después viene el paso que ningún script puede hacer: **mirar el deck** (`shoot.mjs`, más abajo).
+Los cuatro se corren desde la carpeta del proyecto con la ruta de la skill delante (ver `SKILL.md` → "Dónde se corre cada cosa"). Después viene el paso que ningún script puede hacer: **mirar el deck** (`shoot.mjs`, más abajo).
 
 `audit.mjs` verifica automáticamente lo que **sí** se puede confirmar con una regex sobre el HTML final:
 

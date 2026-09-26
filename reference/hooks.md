@@ -14,6 +14,10 @@
 
 ## Cómo activarlo
 
+**Instalada como plugin de Claude Code** (`/plugin install slizdeck@slizdeck`): ya está activo, viene en `hooks/hooks.json` del plugin. No hay que hacer nada; se desactiva desactivando el plugin (`/plugin`).
+
+**Instalada con `npx slizdeck install` o con git**: agregarlo a mano como se explica abajo.
+
 Agregar este bloque a `.claude/settings.local.json` del proyecto donde se está generando el deck (no dentro del repo de la skill):
 
 ```json

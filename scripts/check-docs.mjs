@@ -48,6 +48,9 @@ const refs = readdirSync(path.join(ROOT, 'reference'))
 
 const faltanSkill = scripts.filter((f) => !skill.includes(`scripts/${f}`));
 const faltanReadme = scripts.filter((f) => !readme.includes(`scripts/${f}`));
+const bins = readdirSync(path.join(ROOT, 'bin')).filter((f) => f.endsWith('.mjs'));
+const binsFaltan = bins.filter((f) => !skill.includes(`bin/${f}`) || !readme.includes(`bin/${f}`));
+if (binsFaltan.length) bad('ejecutables de bin/ sin documentar en SKILL.md y README.md', binsFaltan.join(', '));
 if (faltanSkill.length) bad('scripts sin documentar en SKILL.md', faltanSkill.join(', '));
 if (faltanReadme.length) bad('scripts sin documentar en README.md', faltanReadme.join(', '));
 if (!faltanSkill.length && !faltanReadme.length) ok(`los ${scripts.length} scripts estan en SKILL.md y README.md`);
@@ -58,7 +61,7 @@ else ok(`los ${refs.length} archivos de reference/ estan en la tabla de SKILL.md
 
 /* 3. Links relativos que no resuelven ─────────────────────────────────── */
 
-const docs = ['SKILL.md', 'README.md', 'CONTRIBUTING.md', 'DESIGN.md', 'PRODUCT.md', 'CHANGELOG.md', 'NOTICE.md']
+const docs = ['SKILL.md', 'README.md', 'README.en.md', 'ROADMAP.md', 'CONTRIBUTING.md', 'DESIGN.md', 'PRODUCT.md', 'CHANGELOG.md', 'NOTICE.md']
   .concat(refs.map((f) => `reference/${f}`))
   .concat(readdirSync(path.join(ROOT, 'styles')).filter((f) => f.endsWith('.md')).map((f) => `styles/${f}`))
   .filter((f) => existsSync(path.join(ROOT, f)));

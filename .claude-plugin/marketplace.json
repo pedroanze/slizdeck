@@ -1,0 +1,16 @@
+{
+  "name": "slizdeck",
+  "description": "Marketplace oficial de slizdeck: decks de slides HTML animados para Claude Code",
+  "owner": {
+    "name": "Pedro Anze",
+    "url": "https://github.com/pedroanze"
+  },
+  "plugins": [
+    {
+      "name": "slizdeck",
+      "source": "./",
+      "version": "2.0.0",
+      "description": "Decks de slides HTML animados desde tu design system, exportables a PDF y PPTX editable"
+    }
+  ]
+}
