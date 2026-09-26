@@ -4,6 +4,18 @@ Historial de cambios al engine (`template.html`) y a los scripts de la skill. Ca
 
 Una sola versión gobierna todo el proyecto y vive en seis sitios que deben coincidir siempre: `package.json`, el `metadata.version` de `SKILL.md`, el marcador `slizdeck-engine-version` de `template.html`, la primera entrada de este archivo, y el `version` de `.claude-plugin/plugin.json` y `.claude-plugin/marketplace.json`. `node scripts/check-versions.mjs` lo verifica y falla si alguno se desalinea.
 
+## 2.1.0
+
+Exports. El engine (`template.html`) no cambia de comportamiento.
+
+- **Nuevo: export a PPTX por geometría** (`scripts/export-pptx.mjs`, reescrito sobre `scripts/lib/measure-deck.mjs`). En vez de reconocer un set cerrado de clases, renderiza cada slide en Chrome en su estado final, mide lo que el navegador dibujó y lo reconstruye en la misma posición: texto nativo con sus tramos de estilo, cajas con fondo/borde/radio como formas nativas, imágenes reales ya recortadas como en el deck (`object-fit`, `border-radius`, filtros), SVG como PNG a 2x con sus `<text>` editables encima (incluida la rotación), y los fondos con degradado o grano como captura JPEG compartida entre slides vía slide master. Sobre los tres decks de `examples/test-0*`, que el exportador anterior dejaba con 30, 116 y 100 textos perdidos: **0 perdidos**, y un patrón nuevo de `components.md` ya no necesita soporte en el script.
+- **Speaker notes al campo nativo de PowerPoint** (antes no viajaban).
+- **Fuentes del pack en el `.pptx`** en vez de Calibri/Cambria para todo. `--safe-fonts` vuelve a fuentes universales para abrirlo en una máquina sin las fuentes.
+- **Lo que no viaja se sigue reportando**: el texto generado por CSS (`::before`/`::after` con `content`) sale como export incompleto con código 1; decoraciones CSS y degradados de cajas aplanados, como aviso.
+- **Fix: pptxgenjs repetía `<a:pPr>` delante de cada tramo** de un párrafo con varios estilos (fuera del schema: PowerPoint puede pedir reparar el archivo). El export deja solo el primero. Nueva dependencia declarada: `jszip` (ya venía con pptxgenjs).
+- **`--legacy`** conserva el exportador anterior (`scripts/lib/export-pptx-legacy.mjs`) una versión, como red de seguridad. `--slides=` exporta solo algunas slides.
+- **Nuevo: `scripts/export-pdf.mjs`** (`slizdeck export pdf`). Una página por slide con Chrome headless, sin el grano rasterizado de los degradados (test-03: de 21 MB a 1,1 MB; `--grain` lo conserva) ni el marcador de pasos del reproductor. Verifica que haya tantas páginas como slides.
+
 ## 2.0.1
 
 Parche de la 2.0: la skill se instala liviana. El engine no cambia.

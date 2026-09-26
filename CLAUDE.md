@@ -13,7 +13,7 @@ The "product" is mostly prose instructions (`SKILL.md`, `reference/*.md`, `style
 Node 20+ (CI pins 20 — don't use Node 22-only features like `node --test` with `**` globs). Chrome-based scripts need Chrome/Chromium; auto-detected via `scripts/lib/find-chrome.mjs` or `CHROME_PATH`.
 
 ```bash
-npm install                 # deps only needed for export-pptx (pptxgenjs, node-html-parser)
+npm install                 # deps only needed for export-pptx (pptxgenjs, jszip; node-html-parser for --legacy)
 npm run check               # check-versions + check-docs + npm test (the local pre-PR gate)
 npm test                    # node --test tests/*.test.js (no Chrome needed)
 node --test --test-name-pattern="<substring>" tests/validators.test.js   # single test
@@ -31,7 +31,8 @@ node scripts/check-overflow.mjs deck.html  # Chrome: text overflow/truncation/ov
 node scripts/check-contrast.mjs deck.html  # Chrome: computed contrast per text node
 node scripts/shoot.mjs deck.html --slides=1 --out=/tmp/shots   # PNG per slide, final state
 node scripts/doctor.mjs deck.html          # engine version vs CHANGELOG fixes
-node scripts/export-pptx.mjs deck.html out.pptx   # exits 1 if any content was dropped
+node scripts/export-pptx.mjs deck.html out.pptx   # geometry export; exits 1 if any text was dropped
+node scripts/export-pdf.mjs deck.html out.pdf     # one page per slide, no grain; checks page count
 ```
 
 Smoke deck the way CI builds it (`audit.mjs` rejects the template's placeholder `<title>`):
@@ -49,7 +50,8 @@ sed -i '' 's/Slizdeck · \[DECK NAME\]/Test Deck/' /tmp/d-final.html
 - **`template.html` is the engine.** Every generated deck is a copy of it, so a change here is an engine change that affects all future decks and gets a CHANGELOG entry. It contains: design tokens as CSS variables in `:root` (`--cs-*`), the `<deck-stage>` custom element (fixed-aspect scaling, keyboard nav, progress bar, fullscreen), and the step/reveal controller. Each `<section>` is a slide with `data-label`, `data-steps="N"` and `data-current-step`; `.reveal[data-step=k]` elements get `.is-on` when the current step ≥ k. `@media print` + a `beforeprint` handler force every slide to its final state (reveals on, `data-counter` at final value) so PDF export is correct.
 - **Style packs (`styles/<pack>.md`)** declare tokens; `apply-style-pack.mjs` **merges** them into the deck's `:root` (never replace the whole `:root`, or structural tokens like padding/radii are lost). Only `:root` is merged, so anything color-dependent outside `:root` must reference tokens (`var(--cs-primary)`, `color-mix(...)`), never literals.
 - **Token semantics gotcha:** `--cs-black` means "primary text color" (light in dark packs) and `--cs-white` is literal white. Card/panel backgrounds must use `var(--cs-surface)`, never `#fff`/`--cs-white`, or dark packs render invisible text. `--cs-accent-on` declares which background the accent is validated against.
-- **`export-pptx.mjs` recognizes a closed set of class-based patterns** (`.eyebrow`, `h1.cover`, `h2.title`, `.card`, `.pq-card`, `[data-counter]`, `.stat-source`, `.glosa`, `.footer`, the media/data patterns…). Adding a layout pattern to `reference/components.md` or `reference/media-and-data.md` without adding extraction support means it silently drops from PPTX — the script now reports this and exits 1, and CI exports the showcase to catch it.
+- **`export-pptx.mjs` exports by geometry, not by class names.** `scripts/lib/measure-deck.mjs` injects a harness, brings every slide to its final state (same `beforeprint` finalization as print), and walks the DOM in paint order emitting: rects (bg/border/radius), text blocks (runs collected through inline descendants, box from `Range` rects), images and SVGs rasterized in-page via canvas (needs `--allow-file-access-from-files`), and SVG `<text>` as native text. Slides whose `<section>` has a background image/pseudo (gradient + grain) get a JPEG background screenshot, deduplicated through slide masters. The exporter then post-processes slide XML because pptxgenjs emits one `<a:pPr>` per run. New layout patterns need no exporter changes; only CSS-generated text (`::before/::after content`) is lost, and it's reported. `--legacy` keeps the old class-based exporter (`scripts/lib/export-pptx-legacy.mjs`) for one version.
+- **Visual check of a PPTX without PowerPoint:** `qlmanage -t -s 1600 -o <dir> file.pptx` renders slide 1 (macOS Quick Look ignores rotation and text alpha); export one slide at a time with `--slides=N` to inspect others.
 - **Headless Chrome scripts** (`check-contrast`, `check-overflow`, `check-reveal`, `shoot`) render the deck in place (not copied to tmp, so relative image paths resolve) and use `setTimeout(0)` instead of a nested `requestAnimationFrame` — nested rAF hangs in headless `--disable-gpu`. Keep both conventions.
 - **Skill flow:** `SKILL.md` routes requests to eight phases, each documented in its own `reference/<phase>.md` (init → brief → assets → build → audit → export, plus standalone `add` and `fix`). The other `reference/` files are catalogs used by those phases.
 

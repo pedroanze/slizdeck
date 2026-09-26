@@ -22,12 +22,12 @@ A diferencia de PowerPoint/Google Slides, Slidev o generadores de slides basados
 
 ## Operating Context
 
-Cada deck se genera dentro de la carpeta de un proyecto específico (no dentro de la skill); los scripts de validación y export se corren desde la raíz de la skill. Flujo típico: ocho fases (`init` → `brief` → `assets` → `build` → `audit` → `export`, más `add` y `fix` sueltas sobre un deck existente). El presentador usa navegación por teclado (←/→/space) en vivo, frente a audiencia de inversores o asistentes a una conferencia.
+Cada deck se genera dentro de la carpeta de un proyecto específico (no dentro de la skill); los scripts de validación y export se corren desde la carpeta del proyecto, con la ruta de la skill delante. Flujo típico: ocho fases (`init` → `brief` → `assets` → `build` → `audit` → `export`, más `add` y `fix` sueltas sobre un deck existente). El presentador usa navegación por teclado (←/→/space) en vivo, frente a audiencia de inversores o asistentes a una conferencia.
 
 ## Capabilities and Constraints
 
 - Salida: un archivo `.html` por deck (canvas 1920×1080, navegación por teclado, fullscreen, barra de progreso), exportable a PDF vía impresión nativa del navegador.
-- Export a PPTX propio (`scripts/export-pptx.mjs`): texto y formas nativas de PowerPoint, cero imágenes incrustadas. Reconoce un set cerrado de patrones de layout; lo que queda fuera se reporta como aviso al exportar, no se pierde en silencio.
+- Export a PPTX propio (`scripts/export-pptx.mjs`), por geometría: mide cada slide en Chrome y reconstruye texto y formas nativas de PowerPoint en su posición real, con imágenes reales y speaker notes. Lo que no viaja (texto generado por CSS) se reporta, no se pierde en silencio. Export a PDF liviano (`scripts/export-pdf.mjs`).
 - Cinco style packs calibrados (terminal, paper-white, committed, instrument, editorial), cada uno con 2 alternativas tipográficas, validados contra contraste WCAG y clichés visuales de IA.
 - Versionado de engine: cada deck lleva embebida la versión de `template.html`; `scripts/doctor.mjs` detecta drift contra `CHANGELOG.md` en decks generados meses atrás.
 - Fork/adaptación de `claude-slides` (MIT) — debe conservar el aviso de licencia (`LICENSE`, `NOTICE.md`).

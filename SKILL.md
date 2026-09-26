@@ -7,7 +7,7 @@ description: |
 license: MIT
 compatibility: Requiere un agente con capacidad de ejecutar comandos de shell (crear/copiar archivos, abrir el navegador) y búsqueda web. Probado en Claude Code; compatible con cualquier cliente del estándar Agent Skills (agentskills.io).
 metadata:
-  version: "2.0.1"
+  version: "2.1.0"
 allowed-tools: Bash, Read, Write, Edit, WebSearch, WebFetch
 # user-invocable / argument-hint son extensiones de Claude Code, no del
 # estandar portable de agentskills.io (que solo define name/description/
@@ -63,7 +63,8 @@ Fork/adaptación de [`claude-slides`](https://github.com/marcogalluccio/claude-s
 | `scripts/check-overflow.mjs` | Detecta texto que desborda el canvas 1920×1080 o se trunca en una línea que no cabe (`white-space: nowrap` con contenido más ancho que su caja) — mide con Chrome headless, con los `data-counter` forzados a su valor final. |
 | `scripts/doctor.mjs` | Compara la versión de engine embebida en un deck contra `CHANGELOG.md` y avisa (sin reparar) si le falta algún fix conocido — ver `reference/audit.md`. |
 | `scripts/verify-hook.mjs` | Hook opcional de Claude Code: corre `audit.mjs` automáticamente después de editar un deck — ver `reference/hooks.md`. |
-| `scripts/export-pptx.mjs` | Exporta un deck HTML a `.pptx` editable (texto y formas nativas). |
+| `scripts/export-pptx.mjs` | Exporta un deck HTML a `.pptx` editable por geometría: cada texto, forma, imagen y SVG en su posición real medida en Chrome, con speaker notes. |
+| `scripts/export-pdf.mjs` | Exporta un deck a PDF liviano (una página por slide, estado final, sin el grano rasterizado) y verifica el número de páginas. |
 | `scripts/make-offline.mjs` | Incrusta las fuentes como `data:` URI para presentar sin red. |
 | `scripts/check-docs.mjs` | Canario de drift docs↔repo: cobertura de scripts/referencias en las tablas, links relativos, DESIGN.md vs design.json, fuentes de los packs. |
 | `scripts/smoke-test.mjs` | Regresión de los 5 packs × 3 alternativas tipográficas, renderizando cada variante en Chrome headless. |

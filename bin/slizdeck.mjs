@@ -59,6 +59,7 @@ const SCRIPTS = {
   renumber: 'renumber.mjs',
   'apply-pack': 'apply-style-pack.mjs',
   'export-pptx': 'export-pptx.mjs',
+  'export-pdf': 'export-pdf.mjs',
   'make-offline': 'make-offline.mjs',
   'smoke-test': 'smoke-test.mjs',
 };
@@ -86,7 +87,8 @@ Deck
   doctor <deck>             Fixes del engine que le faltan a un deck viejo
   renumber <deck>
   apply-pack <pack> <deck> [salida] [--font=<id>]   (pack: nombre o ruta)
-  export pptx <deck> [salida.pptx]
+  export pptx <deck> [salida.pptx] [--safe-fonts] [--slides=1,3-5] [--legacy]
+  export pdf <deck> [salida.pdf] [--grain]
   export offline <deck> [salida.html]
   smoke-test
 
@@ -343,8 +345,8 @@ async function main() {
     }
     case 'export': {
       const [format, ...rest] = args;
-      const file = { pptx: 'export-pptx.mjs', offline: 'make-offline.mjs' }[format];
-      if (!file) fail('uso: slizdeck export pptx|offline <deck.html> [salida]');
+      const file = { pptx: 'export-pptx.mjs', pdf: 'export-pdf.mjs', offline: 'make-offline.mjs' }[format];
+      if (!file) fail('uso: slizdeck export pptx|pdf|offline <deck.html> [salida]');
       process.exitCode = runScript(file, rest);
       return;
     }
