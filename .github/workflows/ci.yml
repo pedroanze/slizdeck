@@ -92,13 +92,15 @@ jobs:
 
       - name: Paquete npm e instalación con npx (tarball real)
         run: |
-          npm pack --pack-destination /tmp
-          SIZE=$(stat -c %s /tmp/slizdeck-*.tgz)
+          # npm pack imprime el nombre del tarball en la ultima linea. Guardarlo
+          # en una variable: un glob pegado a --package= no lo expande la shell.
+          TGZ="/tmp/$(npm pack --pack-destination /tmp | tail -1)"
+          SIZE=$(stat -c %s "$TGZ")
           echo "tarball: $SIZE bytes"
           test "$SIZE" -lt 1000000 || { echo "el paquete pesa mas de 1 MB: revisar 'files' en package.json"; exit 1; }
           export SLIZDECK_HOME=$(mktemp -d)
           cd "$SLIZDECK_HOME"
-          npx -y --package=/tmp/slizdeck-*.tgz slizdeck install --agent all
+          npx -y --package="$TGZ" slizdeck install --agent all
           for a in claude codex gemini opencode; do test -f "$SLIZDECK_HOME/.$a/skills/slizdeck/SKILL.md"; done
           node "$SLIZDECK_HOME/.claude/skills/slizdeck/scripts/export-pptx.mjs" \
             "$SLIZDECK_HOME/.claude/skills/slizdeck/examples/pitch-showcase.html" /tmp/ci-npx.pptx
