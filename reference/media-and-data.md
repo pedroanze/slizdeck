@@ -1,5 +1,7 @@
 # Imágenes, métricas y gráficos
 
+Índice: [imágenes](#imagen-a-sangre-completa) · [métricas](#métrica-grande) · [barras y proporción](#barras-comparativas) · [pantalla de inicio](#pantalla-de-inicio) · **[datos: gráficas, tabla y timeline](#datos-gráficas-tabla-y-timeline)**
+
 Patrones listos para las slides que llevan algo más que texto. Todo en CSS y SVG inline: **ninguno requiere librería externa ni build step**, y todos sobreviven al export a PDF.
 
 Copiar el CSS al bloque de la slide y el HTML dentro del `.pad`.
@@ -109,7 +111,7 @@ Para el dato que carga la slide. Usa el contador animado del template: el númer
 </div>
 ```
 
-`data-counter` acepta enteros. Por encima de 1000 se abrevia solo (`1.2k`), por encima de 100000 también (`120k`).
+`data-counter` acepta decimales y respeta los que trae (`data-counter="57.5"` → `57,5` en un deck en español). Formatea según el `lang` del `<html>`: separador de miles desde cinco cifras (`125.000`, pero un año queda `2026`). Opciones: `data-decimals="1"` fija los decimales, `data-format="compact"` abrevia (`2,4 M`, `120 k`). La unidad va en `<span class="unit">` y no se anima.
 
 ---
 
@@ -225,3 +227,78 @@ La que se proyecta **antes** de empezar, mientras la sala se llena. No es la por
 ```
 
 Esta slide **no lleva número de footer**: no cuenta como parte de la charla.
+
+---
+
+## Datos: gráficas, tabla y timeline
+
+Tres patrones de primera clase: su CSS ya viene en `template.html` (clases `sz-*`), así que **no hay que copiar estilos**, solo el HTML. Usan los tokens del pack elegido y se exportan a PDF y PPTX sin nada extra. Usarlos en lugar de armar tablas o gráficas a mano: las tres pruebas de `examples/test-0*` inventaron cada una su propia versión, y ninguna se reutilizaba ni se exportaba bien.
+
+### Gráfica (`.sz-chart`)
+
+Declarativa: el deck trae **los datos en JSON** y el runtime del template dibuja el SVG con el tamaño real de la figura (ejes, grilla, etiquetas, formato de números según el idioma del deck). Nunca calcular coordenadas a mano.
+
+```html
+<figure class="sz-chart reveal" data-step="2" style="height:600px">
+  <script type="application/json">
+    {
+      "type": "bar",
+      "labels": ["T1 25", "T2 25", "T3 25", "T4 25", "T1 26", "T2 26"],
+      "series": [{ "name": "ARR", "values": [0.8, 1.1, 1.5, 1.9, 2.6, 3.4] }],
+      "prefix": "$", "unit": " M",
+      "highlight": "last"
+    }
+  </script>
+</figure>
+```
+
+| Campo | Valores | Para qué |
+|---|---|---|
+| `type` | `bar` · `hbar` · `line` · `area` | `bar` para comparar periodos, `hbar` para rankings con etiquetas largas, `line`/`area` para tendencias y series temporales |
+| `labels` | lista de textos | Eje de categorías (periodos, nombres). Con más de 12 se muestran salteadas |
+| `series` | `[{ "name", "values" }]` | Una o varias series. Con varias: leyenda en barras, nombre al final de cada línea |
+| `highlight` | índice, `"last"`, `"max"`, `"min"` | El punto o barra que carga el mensaje, en el color de acento del pack. Uno solo |
+| `prefix` / `unit` | texto | `"$"`, `" M"`, `"%"`: se aplican a ejes y etiquetas |
+| `decimals` | número | Fija los decimales; si no, cada cifra usa los que trae en el JSON |
+| `scale` | `"log"` | Para órdenes de magnitud (cómputo, costos que caen 100x): ejes en `10²⁵`, etiquetas en notación científica |
+| `min` / `max` | número | Fija el rango del eje de valores |
+| `title` | texto | Descripción para lectores de pantalla |
+
+**Animación:** si la figura (o un contenedor) es `.reveal`, al revelarse las barras crecen escalonadas, las líneas se dibujan y las etiquetas aparecen al final. Fuera de un `.reveal` se dibuja en su estado final. Es el nivel MEDIUM de `deck-schema.md`.
+
+**Tamaño:** el alto va en `style` (default 520px); el ancho es el del contenedor. Si se cambia el tamaño de la figura, el runtime la vuelve a dibujar al recargar.
+
+**Reglas:** una gráfica por slide, con el título de la slide diciendo la conclusión ("ARR se triplicó en un año"), no el tema ("Evolución del ARR"). Sin leyenda si hay una sola serie. Las cifras de terceros llevan `.stat-source` debajo.
+
+**En PPTX:** por default va como imagen fiel, con los rótulos y ejes como texto editable encima. `--charts=native` la arma como gráfica nativa de PowerPoint con los datos editables (experimental: Keynote y Quick Look no las dibujan).
+
+### Tabla (`table.sz-table`)
+
+```html
+<table class="sz-table reveal" data-step="2">
+  <thead><tr><th>Modelo</th><th class="num">Input $/Mtok</th><th class="num">Output $/Mtok</th><th>Pesos</th></tr></thead>
+  <tbody>
+    <tr><td class="lead">GPT-6 Astra<span class="sub">OpenAI</span></td><td class="num">10.00</td><td class="num">50.00</td><td>Cerrados</td></tr>
+    <tr class="hl"><td class="lead">DeepSeek V4-Pro<span class="sub">DeepSeek</span></td><td class="num">0.435</td><td class="num hl">0.87</td><td>Abiertos</td></tr>
+  </tbody>
+</table>
+```
+
+- `th.num` / `td.num`: cifras alineadas a la derecha, en mono con cifras tabulares.
+- `td.lead` con `<span class="sub">`: nombre en negrita y una línea secundaria.
+- `tr.hl`: la fila que importa, con fondo suave. `td.hl`: la celda que importa, en color de acento.
+- Máximo 6 filas y 5 columnas: si hace falta más, la tabla va a un anexo o a las notas.
+- Para revelar fila por fila: `.reveal` y `data-step` en cada `<tr>`.
+
+### Timeline (`ol.sz-timeline`)
+
+```html
+<ol class="sz-timeline stagger">
+  <li class="reveal" data-step="2"><span class="when">2023</span><h3>Primer piloto</h3><p>Tres equipos, una integración con Slack.</p></li>
+  <li class="reveal" data-step="2"><span class="when">2024</span><h3>Seed</h3><p>USD 2,1 M para salir de beta.</p></li>
+  <li class="reveal hl" data-step="2"><span class="when">2026</span><h3>Serie A</h3><p>Lo que venimos a pedir hoy.</p></li>
+</ol>
+```
+
+Horizontal, de 3 a 6 hitos. `li.hl` marca el hito que importa (normalmente el último: el que se viene a pedir). Los puntos los inserta el runtime como elementos reales, así que viajan al PPTX. Con `.stagger` entran uno tras otro.
+

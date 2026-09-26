@@ -35,6 +35,7 @@ import { execFileSync } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { findChrome } from './lib/find-chrome.mjs';
+import { injectBeforeBodyEnd } from './lib/inject.mjs';
 
 const args = process.argv.slice(2);
 const file = args.find((a) => !a.startsWith('--'));
@@ -141,7 +142,7 @@ window.addEventListener('DOMContentLoaded', () => {
 </script>
 `;
 
-const withHarness = html.replace('</body>', harness + '</body>');
+const withHarness = injectBeforeBodyEnd(html, harness);
 // El harness se escribe AL LADO del deck real, no en os.tmpdir(): un deck
 // con imagenes/logos locales las referencia con ruta relativa
 // (assets/logos/x.svg), y esa ruta se resuelve contra la carpeta del

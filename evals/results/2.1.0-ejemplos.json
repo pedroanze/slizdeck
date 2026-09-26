@@ -1,0 +1,89 @@
+{
+  "version": "2.1.0",
+  "date": "2026-09-26",
+  "chrome": true,
+  "average": 65,
+  "results": [
+    {
+      "file": "astra-flash.html",
+      "total": 64,
+      "parts": {
+        "validaciones": 30,
+        "texto": 4,
+        "variedad": 20,
+        "visual": 10,
+        "notas": 0
+      },
+      "detail": {
+        "slides": 7,
+        "contentSlides": 4,
+        "checks": {
+          "audit": true,
+          "overflow": true,
+          "contrast": true
+        },
+        "auditWarnings": 2,
+        "avgWords": 52.5,
+        "maxWords": 57,
+        "distinctLayouts": 4,
+        "withVisual": 2,
+        "withNotes": 0,
+        "animated": 4
+      }
+    },
+    {
+      "file": "frontier-septiembre-2026.html",
+      "total": 66,
+      "parts": {
+        "validaciones": 30,
+        "texto": 0,
+        "variedad": 20,
+        "visual": 16,
+        "notas": 0
+      },
+      "detail": {
+        "slides": 14,
+        "contentSlides": 9,
+        "checks": {
+          "audit": true,
+          "overflow": true,
+          "contrast": true
+        },
+        "auditWarnings": 2,
+        "avgWords": 78.7,
+        "maxWords": 140,
+        "distinctLayouts": 9,
+        "withVisual": 7,
+        "withNotes": 0,
+        "animated": 9
+      }
+    },
+    {
+      "file": "tesis-frontera-modelos.html",
+      "total": 65,
+      "parts": {
+        "validaciones": 30,
+        "texto": 0,
+        "variedad": 20,
+        "visual": 15,
+        "notas": 0
+      },
+      "detail": {
+        "slides": 18,
+        "contentSlides": 11,
+        "checks": {
+          "audit": true,
+          "overflow": true,
+          "contrast": true
+        },
+        "auditWarnings": 2,
+        "avgWords": 125.3,
+        "maxWords": 225,
+        "distinctLayouts": 10,
+        "withVisual": 8,
+        "withNotes": 0,
+        "animated": 11
+      }
+    }
+  ]
+}

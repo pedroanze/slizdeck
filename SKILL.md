@@ -7,7 +7,7 @@ description: |
 license: MIT
 compatibility: Requiere un agente con capacidad de ejecutar comandos de shell (crear/copiar archivos, abrir el navegador) y búsqueda web. Probado en Claude Code; compatible con cualquier cliente del estándar Agent Skills (agentskills.io).
 metadata:
-  version: "2.1.0"
+  version: "2.2.0"
 allowed-tools: Bash, Read, Write, Edit, WebSearch, WebFetch
 # user-invocable / argument-hint son extensiones de Claude Code, no del
 # estandar portable de agentskills.io (que solo define name/description/
@@ -46,10 +46,11 @@ Fork/adaptación de [`claude-slides`](https://github.com/marcogalluccio/claude-s
 | `reference/design-guidelines.md` | Principios de diseño: poco texto, un color dominante, anti-clichés, variedad de layout. Aplicar al construir el wireframe y al generar el HTML. |
 | `reference/deck-schema.md` | Formato del wireframe, arcos narrativos por tipo de deck, niveles de animación, estructura de cada `<section>`. |
 | `reference/components.md` | Catálogo de patrones de layout (cards, grids, mockups, diagramas) con HTML+CSS listos para copiar. |
-| `reference/media-and-data.md` | Patrones HTML/CSS de imágenes, métricas, barras y pantalla de inicio (usados desde la fase `build`). |
+| `reference/media-and-data.md` | Patrones de imágenes, métricas, barras, pantalla de inicio y **datos** (gráficas declarativas `.sz-chart`, tabla `.sz-table`, timeline `.sz-timeline`), usados desde la fase `build`. |
 | `reference/animations.md` | Catálogo de técnicas de animación (reveal por pasos, dibujo de SVG, popups) y gotchas conocidos — solo para nivel HEAVY. |
 | `reference/icons.md` | Librería de íconos SVG con estilo coherente. |
 | `examples/demo-deck.html` | Deck de ejemplo de 6 slides heredado del fork original, sin modificar (ver `NOTICE.md`) — no usa el sistema de packs. |
+| `examples/datos-showcase.html` | Referencia de los patrones de datos: gráficas `.sz-chart` (barras, líneas log, barras horizontales), contadores con decimales, tabla y timeline. Pasa todos los validadores en los 5 packs. |
 | `examples/pitch-showcase.html` | Deck de ejemplo propio de slizdeck (7 slides, pack Paper White), pasa limpio `audit.mjs`/`check-style-pack.mjs`/`check-reveal.mjs` — referencia end-to-end del sistema de packs actual. |
 | `styles/index.md` | Catálogo de style packs. **Lo único que hay que leer para elegir estilo.** |
 | `styles/<pack>.md` | Un mundo visual completo: tokens, tipografía y reglas de composición. |
@@ -69,6 +70,7 @@ Fork/adaptación de [`claude-slides`](https://github.com/marcogalluccio/claude-s
 | `scripts/check-docs.mjs` | Canario de drift docs↔repo: cobertura de scripts/referencias en las tablas, links relativos, DESIGN.md vs design.json, fuentes de los packs. |
 | `scripts/smoke-test.mjs` | Regresión de los 5 packs × 3 alternativas tipográficas, renderizando cada variante en Chrome headless. |
 | `scripts/check-versions.mjs` | Verifica que la versión coincida en `package.json`, `SKILL.md`, `template.html` y `CHANGELOG.md` — corre en CI. |
+| `scripts/score-deck.mjs` | Puntaje automático 0-100 de un deck (validaciones, texto, variedad, visual, notas) para los evals de `evals/` — comparar calidad entre versiones de la skill. |
 | `scripts/renumber.mjs` | Recalcula `data-label` y `<span class="num">` de todas las slides en orden de documento — usar siempre después de insertar una slide en medio del deck. |
 
 ## Cuándo activar esta skill
@@ -125,7 +127,7 @@ Si `export-pptx.mjs` avisa que faltan dependencias, correr el `npm install --pre
 7. **Puente entre slides** lo dice el presentador — las slides son marco, no discurso completo.
 8. **Cover y cierre en gradiente** (`class="grad"`); slides intermedias en `--cs-cream`. Es el default del sistema: si el style pack elegido pide otra cosa (committed manda una de cada tres slides a gradiente), manda el pack.
 9. **Cover y transition siempre estáticas** (`data-steps="1" data-current-step="1"`, sin `.reveal`).
-10. **Corte directo entre slides** (ya está en el template, 120ms). Sin sweep/gradiente al entrar.
+10. **Corte directo entre slides** (ya está en el template, 120ms). Sin sweep/gradiente al entrar. Un fundido (`<deck-stage transition="fade">`) solo si el usuario lo pide.
 11. **Footer siempre presente**: logo (si hay) + nombre/org + número de slide.
 
 `scripts/audit.mjs` verifica automáticamente **solo algunas** de estas reglas: em-dash (5), punto final en `h1/h2/h3/.subtitle` (2), numeración de footers (4, 11) y estáticas sin `.reveal` (9). Las demás (síntesis en pantalla, títulos de una línea, emojis, puente entre slides, gradiente de cover/cierre) **quedan a criterio del modelo** y hay que revisarlas a ojo — ver [reference/audit.md](reference/audit.md) para la checklist completa.

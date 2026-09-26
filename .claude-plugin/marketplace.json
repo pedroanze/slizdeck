@@ -9,7 +9,7 @@
     {
       "name": "slizdeck",
       "source": "./",
-      "version": "2.1.0",
+      "version": "2.2.0",
       "description": "Decks de slides HTML animados desde tu design system, exportables a PDF y PPTX editable"
     }
   ]

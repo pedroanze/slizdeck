@@ -88,6 +88,8 @@ The skill's own instructions are written in Spanish; agents follow them fine, an
 | **A standalone `.html`** | Open it in a browser and present: 1920×1080, arrow keys, fullscreen. Nothing to install. |
 | **PDF** | One page per slide, lightweight, animations resolved. |
 | **Editable PowerPoint** | Every text and shape in place, editable in PowerPoint or Google Slides, with images and speaker notes. |
+| **Presenter mode** | Press `P` with the deck open: your notes, the next slide and a timer in a separate window. |
+| **Charts, tables and timelines** | The agent writes the data and the deck draws the chart in your style's palette, animated when you present. |
 
 ```bash
 npx slizdeck export pdf deck.html

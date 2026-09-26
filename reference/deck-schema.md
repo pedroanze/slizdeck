@@ -50,7 +50,10 @@ Cada slide en `template.html` es un `<section>` con estas convenciones (ver ejem
 |---|---|---|
 | **NONE** | Todo estático, sin `.reveal` | Decks que se van a compartir async, sin presentador en vivo |
 | **LIGHT** | Reveal por pasos (`.reveal`, fade-in escalonado) en cards/elementos, sin animaciones SVG grandes | Default para pitch decks largos (10 slides o más) y para presentar en vivo sin sobrecargar |
+| **MEDIUM** | LIGHT + los datos se animan al revelarse: gráficas `.sz-chart` que se dibujan, contadores `data-counter`, barras y proporciones que se llenan, timelines con `.stagger`. Opcional: fundido entre slides (`<deck-stage transition="fade">`) | Default cuando el deck es denso en datos (tracción, métricas, precios, benchmarks): el movimiento está al servicio de la cifra, no es decoración. Sirve para cualquier largo |
 | **HEAVY** | LIGHT + animaciones SVG "signature" de `animations.md` (dibujo de paths, popups, pulsos) | Ideal en decks cortos (menos de 10 slides) donde cada slide cuenta. Entre 10 y 18 slides solo con pedido explícito del usuario (no es default en ese rango). Máximo 1-2 slides HEAVY por deck, nunca todo el deck |
+
+El fundido entre slides es opt-in y solo con pedido del usuario: el default del sistema es corte directo (regla de voz 10). Con `prefers-reduced-motion` los pasos se revelan con un fundido corto, sin desplazamientos.
 
 Reglas fijas (no negociables): cover y transition **siempre** estáticas (`data-steps="1" data-current-step="1"`, sin `.reveal`); nunca HEAVY en más de 18 slides, ni con pedido explícito.
 

@@ -21,7 +21,14 @@
  *
  * Un patron de layout nuevo se exporta sin tocar este script.
  *
- *   node scripts/export-pptx.mjs deck.html [salida.pptx] [--safe-fonts] [--slides=1,3-5] [--legacy]
+ *   node scripts/export-pptx.mjs deck.html [salida.pptx] [--safe-fonts] [--slides=1,3-5] [--charts=native] [--legacy]
+ *
+ *  - Graficas declarativas (.sz-chart, reference/media-and-data.md): por
+ *    default como cualquier SVG (imagen fiel + rotulos y ejes editables).
+ *    --charts=native (experimental) las arma como grafica nativa de
+ *    PowerPoint con los datos editables; Keynote y Quick Look no dibujan
+ *    las graficas que genera pptxgenjs, y en PowerPoint real todavia no se
+ *    verifico, por eso no es el default.
  *
  *   --safe-fonts  usa Arial/Georgia/Consolas en vez de las fuentes del deck
  *                 (para abrirlo en una maquina sin las fuentes del pack)
@@ -72,7 +79,7 @@ const { measureDeck, shootBackground } = await import('./lib/measure-deck.mjs');
 
 const [input, outArg] = args.filter((a) => !a.startsWith('--'));
 if (!input) {
-  console.error('uso: node scripts/export-pptx.mjs <deck.html> [salida.pptx] [--safe-fonts] [--slides=1,3-5] [--legacy]');
+  console.error('uso: node scripts/export-pptx.mjs <deck.html> [salida.pptx] [--safe-fonts] [--slides=1,3-5] [--charts=native] [--legacy]');
   process.exit(1);
 }
 if (!existsSync(input)) {
@@ -218,10 +225,88 @@ function addRect(pptx, slide, item) {
   });
 }
 
+/* ── Graficas nativas ────────────────────────────────────────────────── */
+// Formato de numero de Excel/PowerPoint con el prefijo, la unidad y los
+// decimales de la grafica: "$"#,##0.0" M".
+function numFmt(spec, decimals) {
+  const esc = (s) => (s ? `"${String(s).replace(/"/g, '')}"` : '');
+  const body = decimals > 0 ? `#,##0.${'0'.repeat(decimals)}` : '#,##0';
+  return `${esc(spec.prefix)}${body}${esc(spec.unit)}`;
+}
+function addChart(pptx, slide, item) {
+  const { spec, colors: c, fonts } = item;
+  const type = spec.type || 'bar';
+  const series = spec.series.map((s, i) => ({ name: s.name || `Serie ${i + 1}`, values: (s.values || []).map(Number) }));
+  const n = Math.max(...series.map((s) => s.values.length));
+  const labels = (spec.labels || Array.from({ length: n }, (_, i) => String(i + 1))).map(String);
+  const hex = (x, d) => (x && x.hex) || d;
+  const palette = [hex(c.primary, '16181A'), hex(c.muted, '6B7278'), hex(c.secondary, '5A6169'), hex(c.borderStrong, 'BBBBBB')];
+  const accent = hex(c.accentInk || c.accent, 'E23D1E');
+  const decimals = Math.min(3, Math.max(0, ...series.flatMap((s) => s.values).map((v) => (String(v).split('.')[1] || '').length)));
+  const log = spec.scale === 'log';
+  const isBar = type === 'bar' || type === 'hbar';
+
+  let data = series.map((s) => ({ name: s.name, labels, values: s.values }));
+  let chartColors = palette.slice(0, series.length);
+  let grouping;
+  // Resaltado de un punto en una serie de barras: PowerPoint colorea por
+  // serie, asi que el punto resaltado va en una segunda serie apilada que
+  // solo tiene ese valor.
+  const vals = series[0].values;
+  const hl = spec.highlight === 'last' ? vals.length - 1 : spec.highlight === 'max' ? vals.indexOf(Math.max(...vals))
+    : spec.highlight === 'min' ? vals.indexOf(Math.min(...vals)) : typeof spec.highlight === 'number' ? spec.highlight : -1;
+  if (isBar && series.length === 1 && hl >= 0) {
+    data = [
+      { name: series[0].name, labels, values: vals.map((v, i) => (i === hl ? 0 : v)) },
+      { name: series[0].name + ' ', labels, values: vals.map((v, i) => (i === hl ? v : 0)) },
+    ];
+    chartColors = [palette[0], accent];
+    grouping = 'stacked';
+  }
+
+  const tickFont = fontFor(fonts.tick || 'Arial');
+  const catFont = fontFor(fonts.cat || 'Arial');
+  const opts = {
+    x: inch(item.x), y: inch(item.y), w: inch(item.w), h: inch(item.h),
+    chartColors,
+    showLegend: series.length > 1,
+    legendPos: 't', legendFontFace: catFont, legendFontSize: 12, legendColor: hex(c.muted, '6B7278'),
+    catAxisLabelColor: hex(c.muted, '6B7278'), catAxisLabelFontFace: catFont, catAxisLabelFontSize: 12,
+    valAxisLabelColor: hex(c.muted, '6B7278'), valAxisLabelFontFace: tickFont, valAxisLabelFontSize: 11,
+    valGridLine: { color: hex(c.border, 'E5E5E5'), style: 'solid', size: 1 },
+    catGridLine: { style: 'none' },
+    valAxisLineShow: false,
+    catAxisLineShow: true,
+    valAxisLabelFormatCode: log ? '0E+0' : numFmt(spec, 0),
+    dataLabelFormatCode: log ? '0.0E+0' : numFmt(spec, decimals),
+    dataLabelColor: hex(c.fg1, '0A0B0C'), dataLabelFontFace: catFont, dataLabelFontSize: 13, dataLabelFontBold: true,
+    plotArea: { fill: { type: 'none' } },
+  };
+  if (spec.min != null) opts.valAxisMinVal = spec.min;
+  if (spec.max != null) opts.valAxisMaxVal = spec.max;
+  if (log) opts.valAxisLogScaleBase = 10;
+
+  if (isBar) {
+    Object.assign(opts, {
+      barDir: type === 'hbar' ? 'bar' : 'col',
+      barGapWidthPct: 60,
+      showValue: series.length === 1 && n <= 10,
+      dataLabelPosition: grouping ? 'inEnd' : 'outEnd',
+    });
+    if (grouping) Object.assign(opts, { barGrouping: 'stacked', barOverlapPct: 100, showValue: false });
+    if (type === 'hbar') opts.catAxisOrientation = 'maxMin';   // de arriba hacia abajo, como en el deck
+    slide.addChart(pptx.ChartType.bar, data, opts);
+  } else {
+    Object.assign(opts, { lineSize: 3, lineDataSymbol: n <= 12 ? 'circle' : 'none', lineDataSymbolSize: 8 });
+    slide.addChart(type === 'area' ? pptx.ChartType.area : pptx.ChartType.line, data, opts);
+  }
+  return grouping && hl >= 0;
+}
+
 /* ── Main ────────────────────────────────────────────────────────────── */
 let model;
 try {
-  model = measureDeck(input);
+  model = measureDeck(input, { nativeCharts: flagValue('charts') === 'native' });
 } catch (e) {
   console.error(`✗ ${e.message}`);
   process.exit(1);
@@ -235,6 +320,7 @@ pptx.title = path.basename(input, path.extname(input));
 
 const lost = [];
 const warnings = { gradients: 0, decorations: 0, raster: [] };
+let charts = 0;
 
 // Un fondo capturado se guarda una sola vez, en un slide master, y lo
 // comparten todas las slides con el mismo fondo (cover y cierre suelen
@@ -268,6 +354,7 @@ for (const s of model.slides) {
 
   for (const item of s.items) {
     if (item.type === 'rect') addRect(pptx, slide, item);
+    else if (item.type === 'chart') { addChart(pptx, slide, item); charts++; }
     else if (item.type === 'text') addText(slide, item);
     else if (item.type === 'image' || item.type === 'image-src') {
       let data = item.data ? item.data.replace(/^data:/, '') : null;
@@ -334,6 +421,7 @@ if (lost.length) {
 console.log(`  Fuentes: ${fonts.join(', ')}${SAFE ? ' (--safe-fonts)' : ''}`);
 if (!SAFE) console.log('  Quien abra el .pptx necesita esas fuentes instaladas (Google Fonts); si no, usa --safe-fonts.');
 if (withNotes) console.log(`  Speaker notes en ${withNotes} slide(s), en el campo de notas de PowerPoint.`);
+if (charts) console.log(`  ${charts} gráfica(s) como gráfica nativa de PowerPoint (experimental: Keynote y Quick Look no las dibujan).`);
 if (warnings.gradients) console.log(`  · ${warnings.gradients} degradado(s) de cajas aplanados a su primer color.`);
 if (warnings.decorations) console.log(`  · ${warnings.decorations} decoracion(es) CSS (::before/::after sin texto) no se exportan.`);
 for (const w of warnings.raster) console.log(`  · ${w}`);

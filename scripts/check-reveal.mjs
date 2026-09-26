@@ -50,6 +50,7 @@ import { readFileSync, writeFileSync, rmSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import path from 'node:path';
 import { findChrome } from './lib/find-chrome.mjs';
+import { injectBeforeBodyEnd } from './lib/inject.mjs';
 
 let CHROME;
 try {
@@ -101,7 +102,7 @@ window.addEventListener('DOMContentLoaded', () => {
 </script>
 `;
 
-const withHarness = html.replace('</body>', harness + '</body>');
+const withHarness = injectBeforeBodyEnd(html, harness);
 // Al lado del deck real, no en os.tmpdir(): ver el comentario equivalente
 // en check-overflow.mjs — rutas relativas a assets locales se rompen si el
 // harness se copia a otra carpeta.

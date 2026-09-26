@@ -52,6 +52,7 @@ import { readFileSync, writeFileSync, rmSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import path from 'node:path';
 import { findChrome } from './lib/find-chrome.mjs';
+import { injectBeforeBodyEnd } from './lib/inject.mjs';
 
 let CHROME;
 try {
@@ -198,7 +199,7 @@ window.addEventListener('DOMContentLoaded', () => {
 </script>
 `;
 
-const withHarness = html.replace('</body>', harness + '</body>');
+const withHarness = injectBeforeBodyEnd(html, harness);
 // Al lado del deck real, no en os.tmpdir(): un <img> con ruta relativa
 // (assets/logos/x.svg) se resuelve contra la carpeta del archivo — copiarlo
 // a /tmp rompe esa ruta en silencio (Chrome no tira error, la imagen

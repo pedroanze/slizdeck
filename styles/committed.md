@@ -15,6 +15,9 @@
   --cs-accent:      #C8F135;
   /* El lima solo se usa sobre cobalto, nunca sobre el fondo blanco. */
   --cs-accent-on:   primary;
+  /* Resaltado sobre el fondo blanco (graficas, tablas, timeline): el
+     marino del pack, porque el lima ahi queda a 1.3:1. */
+  --cs-accent-ink:  #0B1B8A;
   --cs-cream:       #FFFFFF;
   --cs-cream-2:     #F0F2FF;
   --cs-black:       #0A0E27;

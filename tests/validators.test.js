@@ -63,6 +63,18 @@ function detecta(nombre, script, mutate, esperado) {
   });
 }
 
+/** Un aviso: el deck sigue pasando (exit 0) pero audit tiene que decirlo. */
+function avisa(nombre, mutate, esperado) {
+  test(nombre, () => {
+    const { file, cleanup } = deckWith(mutate);
+    try {
+      const { code, out } = run('audit.mjs', [file]);
+      assert.equal(code, 0, `un aviso no deberia hacer fallar audit:\n${out}`);
+      assert.match(out, esperado, `audit no aviso:\n${out}`);
+    } finally { cleanup(); }
+  });
+}
+
 /* ── El caso base: sin defectos, todo pasa ──────────────────────────── */
 
 test('audit.mjs aprueba el deck de referencia', () => {
@@ -179,3 +191,31 @@ test('check-versions.mjs falla si el tag no coincide con la version', () => {
     assert.match(e.stdout.toString(), /no coincide/i);
   }
 });
+
+/* ── Avisos de criterio (2.2): no fallan, pero se tienen que ver ───────── */
+
+avisa('audit.mjs avisa de una slide con demasiado texto',
+  (h) => h.replace(/(<h2 class="title[^"]*"[^>]*>[^<]+<\/h2>)/, '$1<p>' + 'palabra '.repeat(60) + '</p>'),
+  /⚠ \d+ slide\(s\) con más de 45 palabras/);
+
+avisa('audit.mjs avisa de emojis en pantalla',
+  (h) => h.replace(/(<h2 class="title[^"]*"[^>]*>)([^<]+)(<\/h2>)/, '$1$2 🚀$3'),
+  /⚠ emojis en pantalla/);
+
+test('audit.mjs no cuenta las notas del presentador como texto en pantalla', () => {
+  // 80 palabras de notas en la cover: si contaran, la cover apareceria en
+  // la lista de slides con demasiado texto.
+  const { file, cleanup } = deckWith((h) => h.replace('</section>', '<aside class="notes"><p>' + 'palabra '.repeat(80) + '</p></aside></section>'));
+  try {
+    const { code, out } = run('audit.mjs', [file]);
+    assert.equal(code, 0, out);
+    assert.doesNotMatch(out, /01 Cover: \d+ palabras/, out);
+  } finally { cleanup(); }
+});
+
+detecta('check-style-pack.mjs detecta un acento ilegible como resaltado sobre el fondo', 'check-style-pack.mjs',
+  // Un lima sobre blanco (1.3:1): valido sobre el primario, no para resaltar
+  // la cifra de una grafica sobre el fondo claro.
+  (h) => h.replace(/--cs-accent:\s*#[0-9A-Fa-f]{6};/, '--cs-accent: #C8F135; --cs-accent-on: primary;'),
+  /acento resaltado vs fondo/);
+

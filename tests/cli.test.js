@@ -38,7 +38,7 @@ test('install --agent all deja la skill completa en los cuatro agentes', () => w
   for (const agent of ['claude', 'codex', 'gemini', 'opencode']) {
     const dir = skillDir(home, agent);
     for (const f of ['SKILL.md', 'template.html', 'CHANGELOG.md', 'styles/index.md', 'scripts/audit.mjs',
-      'scripts/lib/find-chrome.mjs', 'examples/pitch-showcase.html', '.slizdeck-install.json']) {
+      'scripts/lib/find-chrome.mjs', 'scripts/lib/inject.mjs', 'scripts/lib/measure-deck.mjs', 'examples/pitch-showcase.html', 'examples/datos-showcase.html', '.slizdeck-install.json']) {
       assert.ok(existsSync(path.join(dir, f)), `${agent}: falta ${f}`);
     }
   }

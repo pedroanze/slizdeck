@@ -76,6 +76,22 @@ jobs:
           node scripts/doctor.mjs examples/pitch-showcase.html
           node scripts/shoot.mjs examples/pitch-showcase.html --slides=1 --out=/tmp/ci-shots
 
+      - name: Validar examples/datos-showcase.html (patrones de datos, en los 5 packs)
+        env:
+          CHROME_PATH: ${{ steps.setup-chrome.outputs.chrome-path }}
+        run: |
+          node scripts/audit.mjs examples/datos-showcase.html
+          node scripts/check-reveal.mjs examples/datos-showcase.html
+          node scripts/check-overflow.mjs examples/datos-showcase.html
+          for p in terminal paper-white committed instrument editorial; do
+            node scripts/apply-style-pack.mjs "styles/$p.md" examples/datos-showcase.html "/tmp/ci-datos-$p.html"
+            node scripts/check-contrast.mjs "/tmp/ci-datos-$p.html"
+          done
+          node scripts/export-pptx.mjs examples/datos-showcase.html /tmp/ci-datos.pptx
+          node scripts/export-pptx.mjs examples/datos-showcase.html /tmp/ci-datos-native.pptx --charts=native
+          node scripts/export-pdf.mjs examples/datos-showcase.html /tmp/ci-datos.pdf
+          node scripts/score-deck.mjs examples/datos-showcase.html --no-chrome
+
       - name: export-pptx.mjs, export-pdf.mjs y make-offline.mjs (cobertura del export)
         env:
           CHROME_PATH: ${{ steps.setup-chrome.outputs.chrome-path }}

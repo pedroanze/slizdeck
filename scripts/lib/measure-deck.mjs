@@ -21,6 +21,7 @@ import { readFileSync, writeFileSync, rmSync, existsSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import path from 'node:path';
 import { findChrome } from './find-chrome.mjs';
+import { injectBeforeBodyEnd } from './inject.mjs';
 
 const HARNESS = String.raw`
 <style>
@@ -419,6 +420,32 @@ const firstGradientColor = (bgImage) => {
       }
     }
 
+    /* ── Graficas declarativas (.sz-chart): datos, no pixeles ──────── */
+    const cssVar = (el, name) => color(getComputedStyle(el).getPropertyValue(name).trim());
+    function chartItem(el, box, op) {
+      const tag = el.querySelector('script[type="application/json"]');
+      let spec = null;
+      try { spec = JSON.parse(tag ? tag.textContent : (el.dataset.chart || 'null')); } catch (e) {}
+      if (!spec || !Array.isArray(spec.series)) return null;
+      const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+      while (walker.nextNode()) collected.add(walker.currentNode);
+      const ts = el.querySelector('.sz-tick'), cat = el.querySelector('.sz-cat');
+      for (const t of [ts, cat]) if (t) fontsUsed.add(family(getComputedStyle(t).fontFamily));
+      return {
+        type: 'chart', ...box, op, spec,
+        colors: {
+          primary: cssVar(el, '--cs-primary'), secondary: cssVar(el, '--cs-secondary'),
+          muted: cssVar(el, '--cs-muted'), accent: cssVar(el, '--cs-accent'), accentInk: cssVar(el, '--cs-accent-ink'),
+          border: cssVar(el, '--cs-border'), borderStrong: cssVar(el, '--cs-border-strong'),
+          fg1: cssVar(el, '--cs-fg-1'),
+        },
+        fonts: {
+          tick: ts ? family(getComputedStyle(ts).fontFamily) : '',
+          cat: cat ? family(getComputedStyle(cat).fontFamily) : '',
+        },
+      };
+    }
+
     /* ── Recorrido en orden de pintado (orden de documento) ────────── */
     async function walk(el, opacity, clip) {
       const cs = getComputedStyle(el);
@@ -427,6 +454,11 @@ const firstGradientColor = (bgImage) => {
       if (op < 0.02) return;
       const box = rel(el.getBoundingClientRect());
       const hidden = cs.visibility === 'hidden';
+
+      if (window.__SZ_NATIVE_CHARTS && el.classList && el.classList.contains('sz-chart') && el.dataset.rendered) {
+        const it = !hidden && chartItem(el, box, op);
+        if (it) { items.push(it); return; }
+      }
 
       if (el.namespaceURI === SVGNS) {
         const vis = intersect(box, clip);
@@ -481,7 +513,15 @@ const firstGradientColor = (bgImage) => {
       index: si + 1,
       label: section.getAttribute('data-label') || '',
       bg, rasterBg, items, lostText, stats,
-      notes: typeof notes[si] === 'string' ? notes[si] : '',
+      // <aside class="notes"> dentro de la slide manda sobre el JSON por indice.
+      notes: (() => {
+        const aside = section.querySelector('aside.notes');
+        if (aside) {
+          const ps = [...aside.querySelectorAll('p')].map((p) => p.textContent.replace(/\s+/g, ' ').trim()).filter(Boolean);
+          return ps.length ? ps.join('\n\n') : aside.textContent.replace(/\s+/g, ' ').trim();
+        }
+        return typeof notes[si] === 'string' ? notes[si] : '';
+      })(),
     });
   }
 
@@ -511,12 +551,18 @@ function writeBeside(file, suffix, html) {
   return tmp;
 }
 
-/** Mide el deck y devuelve { canvas, fonts, slides[] }. */
-export function measureDeck(file, { attempts = 2 } = {}) {
+/**
+ * Mide el deck y devuelve { canvas, fonts, slides[] }.
+ * nativeCharts: las .sz-chart salen como item 'chart' (sus datos), para que
+ * el export las reconstruya como grafica nativa; si no, se rasterizan como
+ * cualquier otro SVG.
+ */
+export function measureDeck(file, { attempts = 2, nativeCharts = false } = {}) {
   const chrome = findChrome();
   const html = readFileSync(file, 'utf8');
   if (!html.includes('</body>')) throw new Error(`${file}: no tiene </body>, no se puede inyectar el medidor`);
-  const tmp = writeBeside(file, 'measure', html.replace('</body>', HARNESS + '</body>'));
+  const flags = `<script>window.__SZ_NATIVE_CHARTS = ${nativeCharts ? 'true' : 'false'};</script>`;
+  const tmp = writeBeside(file, 'measure', injectBeforeBodyEnd(html, flags + HARNESS));
   try {
     for (let i = 1; i <= attempts; i++) {
       const dom = execFileSync(chrome, [...CHROME_FLAGS, '--dump-dom', '--virtual-time-budget=20000', `file://${tmp}`], {
@@ -550,7 +596,7 @@ export function shootBackground(file, n) {
   deck-stage > section > * { visibility: hidden !important; }
   #progress-bar, #fs-btn { display: none !important; }
 </style>`;
-  const tmp = writeBeside(file, 'bg', html.replace('</body>', hide + '</body>'));
+  const tmp = writeBeside(file, 'bg', injectBeforeBodyEnd(html, hide));
   const png = tmp.replace(/\.html$/, '.jpeg');
   try {
     execFileSync(chrome, [...CHROME_FLAGS, `--screenshot=${png}`, '--virtual-time-budget=5000', `file://${tmp}#${n}`], {

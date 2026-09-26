@@ -21,6 +21,7 @@ Si la nueva slide necesita imagen, logo o un dato real, aplicar el mismo criteri
 - Si es una slide de frase sola, elegir el tamaño de `.ts-title` por longitud del texto (tabla en `reference/design-guidelines.md`) — no usar el default a ciegas.
 - Aplicar las reglas de voz de `SKILL.md` igual que en cualquier slide nueva.
 - Insertar el `<section>` en la posición elegida del HTML, con cualquier `data-label`/`<span class="num">` provisional — el número real lo pone el paso siguiente, no a mano.
+- Las notas del presentador de la slide nueva van en su propio `<aside class="notes">`, dentro del `<section>`. Si el deck usa en cambio el JSON de `<script id="speaker-notes">` (decks anteriores a 2.2), ese array va por índice: insertar la nota nueva en la misma posición del array, o todas las notas posteriores quedan corridas una slide.
 
 ## 4. Renumerar (nunca a mano)
 

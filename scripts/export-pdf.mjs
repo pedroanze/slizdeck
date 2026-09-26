@@ -27,6 +27,7 @@ import { existsSync, readFileSync, writeFileSync, rmSync, statSync } from 'node:
 import { execFileSync } from 'node:child_process';
 import path from 'node:path';
 import { findChrome } from './lib/find-chrome.mjs';
+import { injectBeforeBodyEnd } from './lib/inject.mjs';
 
 const args = process.argv.slice(2);
 const [input, outArg] = args.filter((a) => !a.startsWith('--'));
@@ -78,7 +79,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
 // Al lado del deck: las rutas relativas de <img> tienen que seguir resolviendo.
 const tmp = path.join(path.dirname(path.resolve(input)), `.slizdeck-pdf-${process.pid}.html`);
-writeFileSync(tmp, html.replace('</body>', harness + '</body>'));
+writeFileSync(tmp, injectBeforeBodyEnd(html, harness));
 
 try {
   execFileSync(CHROME, [
