@@ -78,7 +78,17 @@ window.addEventListener('DOMContentLoaded', () => {
   // mayoria de las veces (medido: 9 de 10 corridas se cuelgan esperandolo,
   // sin ningun error). El harness nunca llegaba a correr, asi que nunca se
   // media nada — no un falso verde, un chequeo que no llegaba a existir.
-  requestAnimationFrame(() => { setTimeout(() => {
+  // rAF + setTimeout como siempre, pero con un temporizador de respaldo:
+  // en Chrome headless sin GPU (Linux del CI) a veces ni el primer rAF
+  // llega, y el harness no corria nunca: "Chrome no termino a tiempo" sin
+  // ningun error real. Lo que llegue primero arranca, una sola vez.
+  const __szStart = (fn) => {
+    let done = false;
+    const once = () => { if (!done) { done = true; fn(); } };
+    requestAnimationFrame(() => setTimeout(once, 0));
+    setTimeout(once, 250);
+  };
+  __szStart(() => {
     // Forzar cada data-counter a su valor final (texto mas largo posible)
     // antes de medir, en vez del "0" con el que arranca antes de runCounter.
     document.querySelectorAll('[data-counter]').forEach((el) => {
@@ -194,7 +204,7 @@ window.addEventListener('DOMContentLoaded', () => {
     });
 
     document.title = 'DONE::' + JSON.stringify(violations);
-  }, 0); });
+  });
 });
 </script>
 `;

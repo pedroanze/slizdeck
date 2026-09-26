@@ -69,10 +69,20 @@ const harness = `
 </style>
 <script>
 window.addEventListener('DOMContentLoaded', () => {
-  requestAnimationFrame(() => { setTimeout(() => {
+  // rAF + setTimeout como siempre, pero con un temporizador de respaldo:
+  // en Chrome headless sin GPU (Linux del CI) a veces ni el primer rAF
+  // llega, y el harness no corria nunca: "Chrome no termino a tiempo" sin
+  // ningun error real. Lo que llegue primero arranca, una sola vez.
+  const __szStart = (fn) => {
+    let done = false;
+    const once = () => { if (!done) { done = true; fn(); } };
+    requestAnimationFrame(() => setTimeout(once, 0));
+    setTimeout(once, 250);
+  };
+  __szStart(() => {
     try { window.dispatchEvent(new Event('beforeprint')); } catch (e) {}
     document.querySelectorAll('.reveal').forEach((el) => el.classList.add('is-on'));
-  }, 0); });
+  });
 });
 </script>
 `;

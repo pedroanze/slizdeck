@@ -68,7 +68,9 @@ const firstGradientColor = (bgImage) => {
 };
 
 (async () => {
-  await new Promise((r) => requestAnimationFrame(() => setTimeout(r, 0)));
+  // Temporizador de respaldo: en Chrome headless sin GPU (Linux del CI) a
+  // veces el primer rAF no llega nunca.
+  await new Promise((r) => { requestAnimationFrame(() => setTimeout(r, 0)); setTimeout(r, 250); });
   finalize();
   await sleep(200);
   finalize();               // resetAndEnter() del deck puede haber corrido en medio
