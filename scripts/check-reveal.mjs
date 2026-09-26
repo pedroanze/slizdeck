@@ -77,7 +77,17 @@ window.addEventListener('DOMContentLoaded', () => {
   // mayoria de las veces (medido: 9 de 10 corridas se cuelgan esperandolo,
   // sin ningun error). El harness nunca llegaba a marcar .is-on, y el
   // resultado dependia de la suerte de esa corrida en particular.
-  requestAnimationFrame(() => { setTimeout(() => {
+  // rAF + setTimeout como siempre, pero con un temporizador de respaldo:
+  // en Chrome headless sin GPU (Linux del CI) a veces ni el primer rAF
+  // llega, y el harness no corria nunca: "Chrome no termino a tiempo" sin
+  // ningun error real. Lo que llegue primero arranca, una sola vez.
+  const __szStart = (fn) => {
+    let done = false;
+    const once = () => { if (!done) { done = true; fn(); } };
+    requestAnimationFrame(() => setTimeout(once, 0));
+    setTimeout(once, 250);
+  };
+  __szStart(() => {
     document.querySelectorAll('.reveal').forEach((el) => el.classList.add('is-on'));
     const violations = [];
     document.querySelectorAll('.reveal.is-on').forEach((el) => {
@@ -97,7 +107,7 @@ window.addEventListener('DOMContentLoaded', () => {
       }
     });
     document.title = 'DONE::' + JSON.stringify(violations);
-  }, 0); });
+  });
 });
 </script>
 `;

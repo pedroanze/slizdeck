@@ -126,7 +126,17 @@ window.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.reveal').forEach((el) => el.classList.add('is-on'));
     document.documentElement.setAttribute('data-slizdeck-shot', 'ready');
   };
-  requestAnimationFrame(() => { setTimeout(() => {
+  // rAF + setTimeout como siempre, pero con un temporizador de respaldo:
+  // en Chrome headless sin GPU (Linux del CI) a veces ni el primer rAF
+  // llega, y el harness no corria nunca: "Chrome no termino a tiempo" sin
+  // ningun error real. Lo que llegue primero arranca, una sola vez.
+  const __szStart = (fn) => {
+    let done = false;
+    const once = () => { if (!done) { done = true; fn(); } };
+    requestAnimationFrame(() => setTimeout(once, 0));
+    setTimeout(once, 250);
+  };
+  __szStart(() => {
     reveal();
     // Navegar a #N (para capturar una slide puntual) dispara el propio
     // slidechange del deck-stage, que llama resetAndEnter(): quita .is-on
@@ -137,7 +147,7 @@ window.addEventListener('DOMContentLoaded', () => {
     // arriba). Repetir el reveal en una segunda vuelta lo deja ganando
     // siempre, sin importar el orden real de ambas inicializaciones.
     setTimeout(reveal, 150);
-  }, 0); });
+  });
 });
 </script>
 `;

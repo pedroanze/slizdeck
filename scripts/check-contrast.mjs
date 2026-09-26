@@ -66,7 +66,17 @@ window.addEventListener('DOMContentLoaded', () => {
   // 0 de 5 con este patron). Con --virtual-time-budget eso no truena con
   // error: el harness simplemente nunca corre, .reveal se queda en
   // opacidad 0, y ese texto se salta en silencio en vez de medirse.
-  requestAnimationFrame(() => { setTimeout(() => {
+  // rAF + setTimeout como siempre, pero con un temporizador de respaldo:
+  // en Chrome headless sin GPU (Linux del CI) a veces ni el primer rAF
+  // llega, y el harness no corria nunca: "Chrome no termino a tiempo" sin
+  // ningun error real. Lo que llegue primero arranca, una sola vez.
+  const __szStart = (fn) => {
+    let done = false;
+    const once = () => { if (!done) { done = true; fn(); } };
+    requestAnimationFrame(() => setTimeout(once, 0));
+    setTimeout(once, 250);
+  };
+  __szStart(() => {
     // Todas las slides a su estado final: si no, el texto aun no revelado
     // mide opacidad 0 y se saltaria justo lo que hay que verificar.
     try { window.dispatchEvent(new Event('beforeprint')); } catch (e) {}
@@ -186,7 +196,7 @@ window.addEventListener('DOMContentLoaded', () => {
     });
 
     document.title = 'DONE::' + JSON.stringify({ findings, checked, skippedGradient });
-  }, 0); });
+  });
 });
 </script>
 `;

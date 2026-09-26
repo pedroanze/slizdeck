@@ -92,6 +92,18 @@ jobs:
           node scripts/export-pdf.mjs examples/datos-showcase.html /tmp/ci-datos.pdf
           node scripts/score-deck.mjs examples/datos-showcase.html --no-chrome
 
+      - name: Los validadores terminan aunque Chrome no entregue ningun frame
+        env:
+          CHROME_PATH: ${{ steps.setup-chrome.outputs.chrome-path }}
+        run: |
+          # En Linux sin GPU a veces el primer requestAnimationFrame no llega:
+          # los harness tienen que arrancar igual (temporizador de respaldo).
+          sed 's#<head>#<head><script>window.requestAnimationFrame=function(){return 0};</script>#' \
+            examples/datos-showcase.html > /tmp/ci-noraf.html
+          node scripts/check-contrast.mjs /tmp/ci-noraf.html
+          node scripts/check-reveal.mjs /tmp/ci-noraf.html
+          node scripts/check-overflow.mjs /tmp/ci-noraf.html
+
       - name: export-pptx.mjs, export-pdf.mjs y make-offline.mjs (cobertura del export)
         env:
           CHROME_PATH: ${{ steps.setup-chrome.outputs.chrome-path }}
