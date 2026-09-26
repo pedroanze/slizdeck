@@ -28,7 +28,9 @@ jobs:
 
       # npm 11.5.1+ publica con trusted publishing (OIDC) si el paquete lo
       # tiene configurado en npmjs.com, sin token; si no, usa NPM_TOKEN.
-      - run: npm install -g npm@latest
+      # Fijado a la linea 11: npm@latest (12+) exige Node 22 y este job
+      # corre en Node 20, el minimo que soporta la skill.
+      - run: npm install -g npm@^11.5.1
 
       - run: npm ci
 
