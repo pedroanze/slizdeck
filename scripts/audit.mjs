@@ -12,9 +12,9 @@
  * la revise a ojo antes de entregar — que funciona, pero no escala y no
  * dispara nada verificable en CI ni en una segunda pasada. Los checks aqui
  * son deliberadamente los que SI se pueden verificar con una regex sobre
- * el HTML final; el resto de la checklist (jerarquia visual, variedad de
- * layout, si el mensaje de cada slide aterriza) sigue siendo criterio del
- * modelo, no de este script.
+ * el HTML final. Desde 2.2 avisa ademas (sin fallar) de texto de mas por
+ * slide, emojis y rachas de layout repetido; la jerarquia visual y si el
+ * mensaje de cada slide aterriza siguen siendo criterio del modelo.
  *
  *   node scripts/audit.mjs deck.html
  */
@@ -123,6 +123,47 @@ else bad('<title> sin actualizar o vacío', title ? `"${title}"` : '(vacío)');
 const pending = [...html.matchAll(/<!--\s*SLIZDECK-ASSET-PENDING:\s*([^-][\s\S]*?)-->/g)].map((m) => m[1].trim());
 if (!pending.length) ok('sin assets pendientes marcados');
 else caution(`${pending.length} asset(s) pendiente(s), aceptados explícitamente en la fase assets`, pending.join('\n      '));
+
+// 9-11. Criterio que antes quedaba solo a ojo: texto de mas, emojis y
+// layouts repetidos. Avisos, no fallos: hay slides que justifican romper
+// cada regla (una cita larga, un deck que pidio emojis), pero el modelo
+// tiene que ver el aviso y decidirlo, no pasarlo por alto.
+const deckBody = /<deck-stage[^>]*>([\s\S]*)<\/deck-stage>/.exec(visible)?.[1] || '';
+const slides = [...deckBody.matchAll(/<section\b([^>]*)>([\s\S]*?)<\/section>/g)].map((m) => {
+  const label = /data-label="([^"]*)"/.exec(m[1])?.[1] || '(sin data-label)';
+  const inner = m[2]
+    .replace(/<aside class="notes"[\s\S]*?<\/aside>/g, ' ')
+    .replace(/<div class="footer"[\s\S]*?<\/div>\s*<\/div>/g, ' ');
+  // Tablas y graficas son datos, no discurso: no suman palabras.
+  const text = inner.replace(/<svg[\s\S]*?<\/svg>/g, ' ').replace(/<table[\s\S]*?<\/table>/g, ' ')
+    .replace(/<figure[\s\S]*?<\/figure>/g, ' ').replace(/<[^>]+>/g, ' ')
+    .replace(/&[a-z]+;|&#\d+;/g, ' ').replace(/\s+/g, ' ').trim();
+  const words = text ? text.split(' ').filter((w) => /[\p{L}\p{N}]/u.test(w)).length : 0;
+  const COMMON = /^(reveal|r-\w+|is-on|eyebrow|title|subtitle|footer|num|left|pad|center|act-marker|step-num|step-total|stagger|sweep|grad|grad-word|unit|cover|cover-md|ts-title|ts-tagline|payoff|lead|sub|hl|num)$/;
+  const classes = new Set();
+  for (const c of m[2].matchAll(/class="([^"]*)"/g)) for (const t of c[1].split(/\s+/)) if (t && !COMMON.test(t)) classes.add(t);
+  return { label, words, text, sig: [...classes].sort().join(' ') };
+});
+
+const MAX_WORDS = 45;
+const wordy = slides.filter((s) => s.words > MAX_WORDS);
+if (!wordy.length) ok(`texto en pantalla contenido (≤ ${MAX_WORDS} palabras por slide, sin contar footer, notas, tablas ni gráficas)`);
+else caution(`${wordy.length} slide(s) con más de ${MAX_WORDS} palabras en pantalla: el discurso va a las notas (regla de voz 1)`,
+  wordy.map((s) => `${s.label}: ${s.words} palabras`).join('\n      '));
+
+const EMOJI = /\p{Extended_Pictographic}/u;
+const withEmoji = slides.filter((s) => EMOJI.test(s.text));
+if (!withEmoji.length) ok('sin emojis en las slides');
+else caution('emojis en pantalla (regla de voz 6: usar SVG de reference/icons.md salvo pedido explícito)',
+  withEmoji.map((s) => `${s.label}: ${[...s.text.matchAll(/\p{Extended_Pictographic}/gu)].map((x) => x[0]).join(' ')}`).join('\n      '));
+
+const runs = [];
+for (let i = 2; i < slides.length; i++) {
+  const [a, b, c] = [slides[i - 2], slides[i - 1], slides[i]];
+  if (c.sig && a.sig === b.sig && b.sig === c.sig) runs.push(`${a.label} → ${c.label}  (${c.sig})`);
+}
+if (!runs.length) ok('variedad de layout (ninguna racha de 3 slides seguidas con la misma estructura)');
+else caution('3 o más slides seguidas con la misma estructura: variar el layout (reference/design-guidelines.md)', runs.join('\n      '));
 
 console.log(`\n${fail ? `✗ ${fail} categoría(s) con fallos` : '✓ audit OK'}${warn ? ` · ${warn} aviso(s)` : ''}\n`);
 process.exit(fail ? 1 : 0);

@@ -24,6 +24,11 @@ Hacia dónde va slizdeck. Es un plan vivo, medido en días de trabajo: se ajusta
 - [x] Publicación automática a npm al etiquetar una versión
 - [ ] Probado de verdad en Codex, Gemini CLI y OpenCode
 
+## Próximo · Subir el puntaje de los evals
+
+- [ ] Correr los 8 briefs de `evals/` con 2.2 y publicar el primer resultado completo
+- [ ] Atacar lo que marcan: texto en pantalla (hoy 52 a 125 palabras por slide) y notas del presentador en todas las slides
+
 ## 2.1 · Exports — días 4 a 5
 
 - [x] PPTX por geometría: cada texto y forma en su posición real medida en Chrome, imágenes reales, notas en el campo de PowerPoint
@@ -31,11 +36,12 @@ Hacia dónde va slizdeck. Es un plan vivo, medido en días de trabajo: se ajusta
 
 ## 2.2 · Diseño y animación — días 6 a 8
 
-- [ ] Evals: briefs fijos y una rúbrica para medir la calidad del output entre versiones (se corren antes de cada cambio de diseño)
-- [ ] Patrones de datos: tabla, gráficas con ejes, timeline, serie temporal, con animación de entrada y gráficas nativas en PPTX
-- [ ] Fuentes por defecto del template fuera de la lista prohibida
-- [ ] Nivel de animación MEDIUM, transiciones opcionales entre slides, contadores con decimales
-- [ ] Modo presentador con speaker notes, slide siguiente y timer
+- [x] Evals: briefs fijos y una rúbrica para medir la calidad del output entre versiones (se corren antes de cada cambio de diseño)
+- [x] Patrones de datos: tabla, gráficas con ejes, timeline, serie temporal, con animación de entrada
+- [ ] Gráficas nativas en PPTX por default (hoy experimental, `--charts=native`: falta verificarlas en PowerPoint real)
+- [x] Fuentes por defecto del template fuera de la lista prohibida
+- [x] Nivel de animación MEDIUM, transiciones opcionales entre slides, contadores con decimales
+- [x] Modo presentador con speaker notes, slide siguiente y timer
 
 ## 3.0 · Slizdeck Studio — días 9 a 12
 

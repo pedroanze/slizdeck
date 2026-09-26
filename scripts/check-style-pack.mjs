@@ -119,6 +119,21 @@ function main() {
     console.log(`  ${ok ? '✓' : '✗'} ${'primario vs acento'.padEnd(24)} ${c.toFixed(2)}:1  (min 1.7)`);
   }
 
+  // El acento como texto o resaltado SOBRE EL FONDO: la cifra resaltada de
+  // una grafica, la celda .hl de una tabla, el hito .hl de un timeline
+  // (patrones de datos, 2.2). Usan --cs-accent-ink; si el pack no lo
+  // declara, es el propio acento. Umbral 3:1: texto grande (>=24px) y
+  // elementos graficos. Un acento pensado para ir sobre el primario (el lima
+  // de committed) necesita declarar su version legible sobre el fondo.
+  const ink = asHex(t['accent-ink']) || acc;
+  if (ink && asHex(t.cream)) {
+    const c = contrast(ink, asHex(t.cream));
+    const ok = c >= 3;
+    if (!ok) fail++;
+    console.log(`  ${ok ? '✓' : '✗'} ${'acento resaltado vs fondo'.padEnd(24)} ${c.toFixed(2)}:1  (min 3)`);
+    if (!ok) console.log('      declarar --cs-accent-ink: la version del acento para resaltar sobre el fondo de las slides.');
+  }
+
   // Zonas atractoras que impeccable nombra explicitamente
   const bg = asHex(t.cream);
   if (p && bg) {

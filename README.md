@@ -86,6 +86,8 @@ Después puedes pedir cambios puntuales ("cambia el pack a terminal", "arregla e
 | **Un `.html` autónomo** | Lo abres en el navegador y presentas: 1920×1080, flechas del teclado, pantalla completa. Sin instalar nada. |
 | **PDF** | Una página por slide, liviano, con las animaciones resueltas. |
 | **PowerPoint editable** | Cada texto y cada forma en su lugar, editables en PowerPoint o Google Slides, con imágenes y notas del presentador. |
+| **Modo presentador** | Aprieta `P` con el deck abierto: tus notas, la slide que sigue y un cronómetro en otra ventana. |
+| **Gráficas, tablas y timelines** | El agente escribe los datos y el deck dibuja la gráfica con la paleta de tu estilo, y la anima al presentar. |
 
 ```bash
 npx slizdeck export pdf deck.html

@@ -44,7 +44,7 @@ const AGENTS = {
 const PAYLOAD = [
   'SKILL.md', 'template.html', 'styles', 'reference', 'scripts', 'bin',
   'CHANGELOG.md', 'DESIGN.md', 'design.json', 'LICENSE', 'NOTICE.md', 'package.json',
-  'examples/demo-deck.html', 'examples/pitch-showcase.html',
+  'examples/demo-deck.html', 'examples/pitch-showcase.html', 'examples/datos-showcase.html',
 ];
 
 /* ── Scripts expuestos como subcomandos ─────────────────────────────────── */
@@ -62,6 +62,7 @@ const SCRIPTS = {
   'export-pdf': 'export-pdf.mjs',
   'make-offline': 'make-offline.mjs',
   'smoke-test': 'smoke-test.mjs',
+  score: 'score-deck.mjs',
 };
 
 const HELP = `slizdeck ${PKG.version} — decks de slides HTML animados (Agent Skill)
@@ -87,9 +88,10 @@ Deck
   doctor <deck>             Fixes del engine que le faltan a un deck viejo
   renumber <deck>
   apply-pack <pack> <deck> [salida] [--font=<id>]   (pack: nombre o ruta)
-  export pptx <deck> [salida.pptx] [--safe-fonts] [--slides=1,3-5] [--legacy]
+  export pptx <deck> [salida.pptx] [--safe-fonts] [--slides=1,3-5] [--charts=native] [--legacy]
   export pdf <deck> [salida.pdf] [--grain]
   export offline <deck> [salida.html]
+  score <deck> | score --all <carpeta> [--out=x.json]   Puntaje 0-100 (evals/README.md)
   smoke-test
 
   new <deck.html> [--pack=<pack>] [--font=<id>]     Copia el template y aplica un pack

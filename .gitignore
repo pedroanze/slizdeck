@@ -14,3 +14,6 @@ node_modules/
 examples/**/*.pdf
 examples/**/*.pptx
 .slizdeck-shots/
+
+# Decks generados al correr los evals: se versionan solo los puntajes (evals/results/)
+evals/runs/

@@ -4,6 +4,27 @@ Historial de cambios al engine (`template.html`) y a los scripts de la skill. Ca
 
 Una sola versión gobierna todo el proyecto y vive en seis sitios que deben coincidir siempre: `package.json`, el `metadata.version` de `SKILL.md`, el marcador `slizdeck-engine-version` de `template.html`, la primera entrada de este archivo, y el `version` de `.claude-plugin/plugin.json` y `.claude-plugin/marketplace.json`. `node scripts/check-versions.mjs` lo verifica y falla si alguno se desalinea.
 
+## 2.2.0
+
+Diseño, animación y datos. Cambia el engine: un deck generado antes de 2.2 no trae los patrones de datos ni el modo presentador (`doctor.mjs` lo avisa).
+
+- **Nuevo: gráficas declarativas `.sz-chart`** (`reference/media-and-data.md` → "Datos"). El deck trae los datos en JSON y el runtime dibuja el SVG con el tamaño real de la figura: `bar`, `hbar`, `line`, `area`, escala `log` con exponentes `10²⁵`, `highlight` (`last`/`max`/`min`/índice) en el color de acento, formato de números según el `lang` del deck, prefijo y unidad. Animación de entrada al revelarse: las barras crecen escalonadas, las líneas se dibujan. Las tres pruebas de `examples/test-0*` habían tenido que inventar sus propias gráficas a mano.
+- **Nuevo: tabla `table.sz-table` y timeline `ol.sz-timeline`** como patrones de primera clase, con el CSS ya en el template. Los puntos del timeline son elementos reales (no `::before`), para que viajen al PPTX.
+- **Nuevo: nivel de animación MEDIUM** (`deck-schema.md`): LIGHT + los datos se animan (gráficas, contadores, barras, timelines). Default para decks densos en datos.
+- **Nuevo: modo presentador** (tecla `P`): ventana con las notas de la slide actual, la siguiente, el paso en curso y un cronómetro; las flechas funcionan desde las dos ventanas.
+- **Nuevo: notas dentro de cada slide**, `<aside class="notes">`: viajan con la slide al reordenar o insertar (el JSON de `#speaker-notes` va por índice y se desalineaba con `add`). El export a PPTX las lee; el JSON sigue funcionando.
+- **Nuevo: transición opcional entre slides**, `<deck-stage transition="fade">` (View Transitions). El default sigue siendo corte directo.
+- **Contadores con decimales y formato**: `data-counter="57.5"` → `57,5`; separador de miles según el idioma, sin agrupar años; `data-format="compact"` (`2,4 M`), `data-decimals`.
+- **Fix: un contador animándose pisaba la cifra final** que dejaba `finalizeForPrint` (PDF, export, capturas): `shoot.mjs` capturaba `37,4` en vez de `57,5`. Cada animación ahora lleva un id y se corta al finalizar.
+- **Movimiento reducido**: los pasos se siguen revelando con un fundido corto en vez de mostrar todo de golpe (el presentador conserva el ritmo). `.stagger` escalona hasta 12 hijos (antes 6).
+- **Defaults del template = pack paper-white.** El default anterior (teal + Newsreader + IBM Plex) no pasaba su propio validador: primario y acento a 1,01:1, zona atractora de IA, y dos fuentes de la lista de clichés. `DESIGN.md` ya documentaba paper-white como default.
+- **Nuevo token `--cs-accent-ink`**: el acento cuando resalta sobre el fondo. `check-style-pack.mjs` lo exige a 3:1. `committed` lo declara (su lima quedaba a 1,3:1 sobre blanco al resaltar una cifra); la segunda serie de las gráficas usa `--cs-muted`, validado como texto en todos los packs, en vez de `--cs-secondary` (2,1:1 en `terminal`).
+- **`audit.mjs` avisa** (sin fallar) de slides con más de 45 palabras en pantalla, emojis y rachas de 3 slides con la misma estructura.
+- **Nuevo: evals** (`evals/`): 8 briefs fijos, rúbrica visual y `scripts/score-deck.mjs` (puntaje 0-100). Línea base: los tres decks de prueba dan 65/100, con demasiado texto y sin notas.
+- **Export a PPTX**: las notas de `<aside class="notes">`; `--charts=native` (experimental) arma las `.sz-chart` como gráfica nativa de PowerPoint con los datos editables. No es el default porque Keynote y Quick Look no dibujan las gráficas que genera pptxgenjs y todavía no se verificó en PowerPoint real; por default van como imagen con los rótulos editables.
+- **Fix: los scripts inyectaban su harness antes del PRIMER `</body>` del deck** (`scripts/lib/inject.mjs`). Un `</body>` dentro de un string de JS (el modo presentador lo tenía) cortaba el script del deck y Chrome headless se colgaba sin error.
+- **Nuevo: `examples/datos-showcase.html`**, referencia de los patrones de datos; el CI lo valida en los 5 packs y lo exporta. `shoot.mjs --clean` oculta la UI del reproductor para capturas de README.
+
 ## 2.1.0
 
 Exports. El engine (`template.html`) no cambia de comportamiento.

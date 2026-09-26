@@ -33,6 +33,11 @@ Los cuatro se corren desde la carpeta del proyecto con la ruta de la skill delan
 | Cover/transition estáticas | Ninguna `<section data-steps="1">` tiene `.reveal` adentro |
 | `<title>` | Actualizado, no el placeholder del template |
 | Assets pendientes | Lista los `<!-- SLIZDECK-ASSET-PENDING: ... -->` que quedaron de la fase `assets` — es un aviso, no un fallo: ya fue una decisión informada del usuario |
+| Texto en pantalla | Aviso si una slide pasa de 45 palabras (sin contar footer, notas, tablas ni gráficas): ese discurso va a `<aside class="notes">` |
+| Emojis | Aviso si hay emojis en pantalla (regla de voz 6) |
+| Variedad de layout | Aviso si 3 o más slides seguidas tienen la misma estructura |
+
+Los tres últimos son **avisos**: no hacen fallar el script, pero cada uno se resuelve o se justifica antes de entregar (una cita larga puede justificar las 45 palabras; un deck que pidió emojis, los emojis).
 
 Un fallo (✗) hay que corregirlo antes de entregar. Un aviso (⚠) se reporta al usuario pero no bloquea — típicamente son los assets pendientes o casos donde el script no tiene suficiente contexto para decidir (ej. un deck sin ninguna slide de contenido numerada).
 

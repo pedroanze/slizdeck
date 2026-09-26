@@ -98,11 +98,15 @@ No hace falta más que eso: sin prefijos tipo `feat:`/`fix:`, sin body extenso s
 | `scripts/make-offline.mjs` | Incrusta las fuentes como `data:` URI para presentar sin depender de red. |
 | `scripts/check-docs.mjs` | Verifica que la documentación siga alineada con el repo: scripts y referencias listados, links que resuelven, DESIGN.md ≡ design.json. |
 | `scripts/check-versions.mjs` | Verifica que la versión coincida en los seis sitios donde se declara (`package.json`, `SKILL.md`, `template.html`, `CHANGELOG.md`, `.claude-plugin/plugin.json` y `marketplace.json`). |
+| `scripts/score-deck.mjs` | Puntaje automático 0-100 de un deck para los evals (`evals/README.md`): validaciones, texto en pantalla, variedad de layout, slides con elemento visual, notas. `--all <carpeta> --out=x.json` para una corrida completa. |
+| `evals/` | Briefs fijos, rúbrica visual y resultados por versión: la forma de saber si una versión genera mejores decks que la anterior. |
+| `scripts/lib/inject.mjs` | Inserta el harness de cada script antes del último `</body>` del deck (no del primero: un `</body>` dentro de un string de JS lo rompía). |
 | `scripts/renumber.mjs` | Recalcula `data-label` y `<span class="num">` de todas las slides en orden de documento — usar después de insertar una slide en medio del deck. |
 | `tests/validators.test.js` · `tests/cli.test.js` | Suites `node:test` (cero deps): que los validadores distingan un deck bueno de uno roto, y que el instalador instale, respete y desinstale bien. `npm test`. |
 | `scripts/smoke-test.mjs` | Test de regresión: ejercita cada pack con cada alternativa tipográfica. |
 | `examples/demo-deck.html` | Deck de ejemplo heredado del fork original, sin modificar (ver `NOTICE.md`). |
 | `docs/img/` | Capturas del README, generadas con `shoot.mjs --clean` sobre los decks del smoke-test y de `examples/`. |
+| `examples/datos-showcase.html` | Referencia de los patrones de datos de 2.2 (gráficas, contadores, tabla, timeline). El CI lo valida y exporta. |
 | `examples/pitch-showcase.html` | Deck de ejemplo propio de slizdeck (7 slides, pack Paper White) — pasa limpio `audit.mjs` + `check-style-pack.mjs` + `check-reveal.mjs`, referencia de la calidad actual del output. |
 
 ## Notas técnicas

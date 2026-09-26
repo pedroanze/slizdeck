@@ -5,11 +5,11 @@
      (ver CHANGELOG.md). Se copia tal cual al generar un deck nuevo en build. -->
 <!-- lang: ajustar al idioma del deck (es, en, pt...). Afecta la
      hifenizacion, el corrector y como lo lee un lector de pantalla. -->
-<html lang="en">
+<html lang="es">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Slizdeck · [DECK NAME]</title>
+<title>Slizdeck · patrones de datos</title>
 <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <!-- Iconos lucide: opt-in. La mayoria de los decks no usa ninguno, y
      cargarlo siempre es una peticion de red que no hace falta. Descomentar
@@ -638,6 +638,10 @@
 <body>
 
 <deck-stage width="1920" height="1080">
+  <!-- Ejemplo de referencia de los patrones de datos de 2.2 (reference/media-and-data.md → "Datos"):
+       .sz-chart (bar, line log multi-serie, hbar), data-counter con decimales y formato
+       compacto, table.sz-table, ol.sz-timeline y notas en <aside class="notes">.
+       Pack por default del template (paper-white). Lo valida y exporta el CI. -->
 
   <!-- ============================================================
        INSERT SLIDES HERE
@@ -656,54 +660,75 @@
        - icons.md       → SVG icons library
        ============================================================ -->
 
-  <!-- ────────── EXAMPLE 1: Cover slide (gradient, static) ────────── -->
-  <section class="grad" data-label="01 Cover" data-steps="1" data-current-step="1">
-    <div class="pad center">
-      <div class="eyebrow">Workshop · DATE · ORG</div>
-      <h1 class="cover">Deck Title Here</h1>
-      <div class="subtitle">Optional subtitle that explains in one sentence what this is about</div>
-    </div>
-    <div class="footer">
-      <div class="left">
-        <!-- Optional logo -->
-        <!-- <img src="assets/logos/logo-white.png" alt="Logo"> -->
-      </div>
-      <div>Speaker · Org · <span class="num">01</span></div>
-    </div>
-  </section>
-
-  <!-- ────────── EXAMPLE 2: Content slide (cream, multi-step animated) ────────── -->
-  <section data-label="02 Content example" data-steps="2" data-current-step="0">
-    <div class="sweep"></div>
+  
+  <section data-label="01 Barras" data-steps="2" data-current-step="0">
     <div class="pad">
       <div class="act-marker"><span class="step-num">1</span><span class="step-total">/2</span></div>
-      <div class="eyebrow reveal" data-step="1">Section eyebrow</div>
-      <h2 class="title reveal" data-step="1" style="--d:80ms">Slide title goes here</h2>
-
-      <div class="card reveal" data-step="2">
-        <div class="card-eyebrow">CARD EYEBROW</div>
-        <h3>Card heading</h3>
-        <p>Card body. Replace this with real content. For richer card patterns (consequence cards, mockups, terminals), see components.md.</p>
+      <div class="eyebrow reveal" data-step="1">Tracción</div>
+      <h2 class="title reveal" data-step="1">ARR se triplicó en un año</h2>
+      <figure class="sz-chart reveal" data-step="2" style="height:600px;margin-top:48px">
+        <script type="application/json">{"type":"bar","labels":["T1 25","T2 25","T3 25","T4 25","T1 26","T2 26"],"series":[{"name":"ARR","values":[0.8,1.1,1.5,1.9,2.6,3.4]}],"prefix":"$","unit":" M","highlight":"last"}</script>
+      </figure>
+    </div>
+    <aside class="notes"><p>Arrancar por el último trimestre: 3,4 millones.</p><p>Después contar el porqué.</p></aside>
+    <div class="footer"><div class="left"></div><div>Patrones de datos · slizdeck · <span class="num">01</span></div></div>
+  </section>
+  <section data-label="02 Lineas log" data-steps="2" data-current-step="0">
+    <div class="pad">
+      <div class="eyebrow reveal" data-step="1">Cómputo</div>
+      <h2 class="title reveal" data-step="1">Catorce años multiplicando por cinco</h2>
+      <figure class="sz-chart reveal" data-step="2" style="height:620px;margin-top:40px">
+        <script type="application/json">{"type":"line","scale":"log","labels":["2012","2014","2016","2018","2020","2022","2024"],"series":[{"name":"Frontera","values":[1e18,2e19,5e20,1e22,3e23,4e24,5e25]},{"name":"Notables","values":[5e17,6e18,1e20,2e21,5e22,6e23,8e24]}],"highlight":"last"}</script>
+      </figure>
+    </div>
+    <div class="footer"><div class="left"></div><div>Patrones de datos · slizdeck · <span class="num">02</span></div></div>
+  </section>
+  <section data-label="03 Hbar y contadores" data-steps="1" data-current-step="1">
+    <div class="pad">
+      <div class="eyebrow">Dónde gana cada uno</div>
+      <h2 class="title">Precio por millón de tokens</h2>
+      <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:80px;margin-top:48px;align-items:center">
+        <figure class="sz-chart" style="height:460px">
+          <script type="application/json">{"type":"hbar","labels":["GPT-6 Astra","Claude Fable 5.1","Kimi K3","Qwen3.8-Max","DeepSeek V4-Pro"],"series":[{"name":"Output","values":[50,50,15,6,0.87]}],"prefix":"$","highlight":"min"}</script>
+        </figure>
+        <div>
+          <div class="stat-num" style="font-size:180px;font-weight:700;color:var(--cs-fg-1)" data-counter="57.5">0<span class="unit">x</span></div>
+          <div style="font-size:30px">de diferencia entre el más caro y el más barato</div>
+          <div style="font-size:120px;font-weight:700;margin-top:40px" data-counter="125000">0</div>
+          <div style="font-size:120px;font-weight:700" data-counter="2400000" data-format="compact">0</div>
+        </div>
       </div>
     </div>
-    <div class="footer">
-      <div class="left"></div>
-      <div>Speaker · Org · <span class="num">02</span></div>
-    </div>
+    <div class="footer"><div class="left"></div><div>Patrones de datos · slizdeck · <span class="num">03</span></div></div>
   </section>
-
-  <!-- ────────── EXAMPLE 3: Transition slide (cream, big centered, static) ────────── -->
-  <section data-label="03 Transition example" data-steps="1" data-current-step="1">
-    <div class="pad center">
-      <h1 class="ts-title">The <span class="grad-word">shift</span></h1>
-      <div class="ts-tagline">Optional subtitle below the big title</div>
+  <section data-label="04 Tabla" data-steps="2" data-current-step="0">
+    <div class="pad">
+      <div class="eyebrow reveal" data-step="1">Precio de lista</div>
+      <h2 class="title reveal" data-step="1">Cinco modelos, dos órdenes de magnitud</h2>
+      <table class="sz-table reveal" data-step="2" style="margin-top:48px">
+        <thead><tr><th>Modelo</th><th class="num">Input $/Mtok</th><th class="num">Output $/Mtok</th><th>Pesos</th></tr></thead>
+        <tbody>
+          <tr><td class="lead">GPT-6 Astra<span class="sub">OpenAI</span></td><td class="num">10.00</td><td class="num">50.00</td><td>Cerrados</td></tr>
+          <tr><td class="lead">Kimi K3<span class="sub">Moonshot AI</span></td><td class="num">3.00</td><td class="num">15.00</td><td>Abiertos</td></tr>
+          <tr class="hl"><td class="lead">DeepSeek V4-Pro<span class="sub">DeepSeek</span></td><td class="num">0.435</td><td class="num hl">0.87</td><td>Abiertos</td></tr>
+        </tbody>
+      </table>
     </div>
-    <div class="footer">
-      <div class="left"></div>
-      <div>Speaker · Org · <span class="num">03</span></div>
-    </div>
+    <div class="footer"><div class="left"></div><div>Patrones de datos · slizdeck · <span class="num">04</span></div></div>
   </section>
-
+  <section data-label="05 Timeline" data-steps="2" data-current-step="0">
+    <div class="pad">
+      <div class="eyebrow reveal" data-step="1">Cómo llegamos</div>
+      <h2 class="title reveal" data-step="1">Tres años, cuatro hitos</h2>
+      <ol class="sz-timeline stagger" style="margin-top:96px">
+        <li class="reveal" data-step="2"><span class="when">2023</span><h3>Primer piloto</h3><p>Tres equipos, una integración con Slack.</p></li>
+        <li class="reveal" data-step="2"><span class="when">2024</span><h3>Seed</h3><p>USD 2,1 M para salir de beta.</p></li>
+        <li class="reveal" data-step="2"><span class="when">2025</span><h3>40 equipos</h3><p>94 % de adopción semanal.</p></li>
+        <li class="reveal hl" data-step="2"><span class="when">2026</span><h3>Serie A</h3><p>Lo que venimos a pedir hoy.</p></li>
+      </ol>
+    </div>
+    <div class="footer"><div class="left"></div><div>Patrones de datos · slizdeck · <span class="num">05</span></div></div>
+  </section>
 </deck-stage>
 
 <!-- Viewer chrome: progress bar (top) + fullscreen button (top-right) -->

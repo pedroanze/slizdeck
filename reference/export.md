@@ -32,7 +32,8 @@ Exporta **por geometría**: renderiza cada slide en Chrome en su estado final, m
 - **Imágenes**: embebidas de verdad, ya recortadas como las muestra el deck (`object-fit`, `border-radius`, filtros CSS).
 - **SVG** (íconos, diagramas, charts hechos a mano): imagen PNG a 2x; sus `<text>` (rótulos, ejes) viajan como texto editable encima.
 - **Fondos con degradado o grano** (cover, cierre, transiciones): una captura del fondo sin su contenido, como imagen de fondo.
-- **Speaker notes** (`<script id="speaker-notes">`): al campo nativo de notas de PowerPoint.
+- **Speaker notes** (`<aside class="notes">` de cada slide, o el JSON de `<script id="speaker-notes">`): al campo nativo de notas de PowerPoint.
+- **Gráficas `.sz-chart`**: imagen fiel con sus rótulos y ejes editables. `--charts=native` las arma como gráfica nativa de PowerPoint con los datos editables (experimental: Keynote y Quick Look no las dibujan).
 
 Opciones: `--safe-fonts` (Arial/Georgia/Consolas en vez de las fuentes del pack), `--slides=1,3-5` (solo esas slides), `--legacy` (el exportador anterior por clases, se conserva una versión).
 
@@ -55,6 +56,10 @@ node scripts/make-offline.mjs deck.html
 
 Corre esto **con anticipación**, no el mismo día del evento: descarga las fuentes en el momento de ejecutarlo, así que necesita red entonces aunque el deck final no la necesite después.
 
-## Speaker notes (solo si el usuario las pide)
+## Speaker notes y modo presentador
 
-Generar `[nombre-deck]-notes.md`: un bloque `## Slide NN — Título` por slide, con el discurso completo en párrafos (lo que el presentador dice, no bullets).
+Las notas viven dentro de cada slide, en `<aside class="notes">` (ver `reference/build.md`); el JSON de `<script id="speaker-notes">` por índice sigue funcionando en decks anteriores a 2.2. Con notas en el deck:
+
+- **Modo presentador**: con el deck abierto, la tecla `P` abre una ventana con las notas de la slide actual, el título de la siguiente, el paso en curso y un cronómetro (`R` lo reinicia). Las flechas funcionan desde cualquiera de las dos ventanas: la del presentador va en la laptop, el deck en el proyector.
+- **PPTX**: `export-pptx.mjs` las pone en el campo nativo de notas de PowerPoint.
+- **Documento aparte** (solo si el usuario lo pide): generar `[nombre-deck]-notes.md` con un bloque `## Slide NN — Título` por slide y el discurso completo en párrafos (lo que el presentador dice, no bullets).

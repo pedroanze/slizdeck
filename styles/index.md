@@ -43,7 +43,7 @@ Comprueba los contrastes WCAG que exige el sistema, que el primario y el acento 
 
 ## Añadir un pack nuevo
 
-Copiar cualquier archivo existente como plantilla, cambiar los tokens, y validarlo con el script. Un pack no se da por bueno hasta que el validador pasa sin fallos. Si el acento del pack solo se usa sobre el color primario y no sobre el fondo, declararlo con `--cs-accent-on: primary;` para que el validador lo compruebe contra la superficie correcta.
+Copiar cualquier archivo existente como plantilla, cambiar los tokens, y validarlo con el script. Un pack no se da por bueno hasta que el validador pasa sin fallos. Si el acento del pack solo se usa sobre el color primario y no sobre el fondo, declararlo con `--cs-accent-on: primary;` para que el validador lo compruebe contra la superficie correcta, y declarar además `--cs-accent-ink`: el color con el que se resalta sobre el fondo (la cifra clave de una gráfica, la celda `.hl` de una tabla, el hito `.hl` de un timeline). El validador exige 3:1 contra el fondo para ese color; sin `--cs-accent-ink` usa el propio acento.
 
 Dos convenciones más a seguir:
 - Los tres tokens de gradiente interpolan en OKLCH: `linear-gradient(135deg in oklch, ...)` / `radial-gradient(... at ... in oklch, ...)`, nunca en RGB crudo (ver `DESIGN.md` → Motion).
