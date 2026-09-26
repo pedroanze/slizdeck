@@ -10,14 +10,15 @@ Proponer un nivel (NONE/LIGHT/MEDIUM/HEAVY, tabla y defaults en `reference/deck-
 
 ## 2. Generar el deck
 
-1. Copiar `template.html` al directorio del proyecto con nombre basado en el tema (ej. `pitch-acme.html`). Este es el primer momento en que el archivo del deck existe — todo lo decidido en `init` (pack, alternativa tipográfica, colores de marca) se aplica recién aquí, sobre este archivo:
+1. Crear el deck en la carpeta del proyecto, con nombre basado en el tema: copia el template y le aplica el pack elegido en `init` en un solo paso.
    ```bash
-   node scripts/apply-style-pack.mjs styles/<pack>.md pitch-acme.html               # o con --font=<id> si se eligió una alternativa
-   node scripts/check-style-pack.mjs pitch-acme.html                                # confirmar que pasa antes de seguir
+   node <skill>/bin/slizdeck.mjs new pitch-acme.html --pack=<pack>          # --font=<id> si se eligió una alternativa
+   node <skill>/scripts/check-style-pack.mjs pitch-acme.html                # tiene que pasar antes de seguir
    ```
-   Si `init` inyectó colores de marca sobre el pack, sobreescribirlos después de aplicar el pack y volver a validar.
+   Si hay colores de marca, inyectarlos ahora sobre el pack (tokens y orden en `reference/design-tokens-schema.md`, incluido `--cs-accent-ink`) y volver a validar.
+   **Borrar las tres `<section>` de ejemplo del template** (cover, contenido y transición de muestra) antes de insertar las del deck.
 2. **Assets**: usar los archivos resueltos en la fase `assets`; para los ítems marcados "seguir sin él", insertar el comentario `<!-- SLIZDECK-ASSET-PENDING: ... -->` justo antes del `<section>` afectado (ver `reference/assets.md`).
-3. Por cada slide del wireframe: copiar el patrón elegido de `reference/components.md`, poblarlo con el contenido real; si el nivel es LIGHT, MEDIUM o HEAVY, agregar `class="reveal" data-step="N"` a los elementos a revelar progresivamente y `data-steps="N"` en la `<section>`; si es HEAVY en esa slide, agregar la técnica de `reference/animations.md`. **Cifras, comparaciones y series van con los patrones de datos** (`.sz-chart`, `table.sz-table`, `ol.sz-timeline`, `data-counter`, ver `reference/media-and-data.md` → "Datos"), nunca con tablas o gráficas armadas a mano.
+3. Por cada slide del wireframe: copiar el patrón elegido de `reference/components.md` o `reference/media-and-data.md`, poblarlo con el contenido real; si el nivel es LIGHT, MEDIUM o HEAVY, agregar `class="reveal" data-step="N"` a los elementos a revelar progresivamente y `data-steps="N"` en la `<section>`; si es HEAVY en esa slide, agregar la técnica de `reference/animations.md`. **Cifras, comparaciones y series van con los patrones de datos** (`.sz-chart`, `table.sz-table`, `ol.sz-timeline`, `data-counter`, ver `reference/media-and-data.md` → "Datos"), nunca con tablas o gráficas armadas a mano.
    - **Notas del presentador**: el discurso de cada slide va en `<aside class="notes"><p>…</p></aside>` dentro de la propia `<section>` (no se ve en el deck). Viaja con la slide al reordenar o insertar, lo muestra el modo presentador (tecla `P`) y el export lo pone en el campo de notas de PowerPoint.
 4. Insertar todas las `<section>` donde dice `INSERT SLIDES HERE`.
 5. Actualizar `<title>` y el `lang` de `<html>` y los footers (`Speaker · Org · NN`, numeración sin huecos ni duplicados).

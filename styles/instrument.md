@@ -6,7 +6,7 @@
 
 **Cuándo no:** una charla narrativa o un pitch emocional: la densidad trabaja en contra.
 
-**Estrategia de color:** Restrained — neutros fríos con un azul de precisión, y el ámbar reservado para señalar excepciones en los datos.
+**Estrategia de color:** Restrained — neutros fríos con un azul de precisión, y un rojo óxido reservado para señalar excepciones en los datos.
 
 ```css
 :root {
@@ -68,5 +68,5 @@ https://fonts.googleapis.com/css2?family=Commissioner:wght@400;500;600;700;800&f
 **Composición:**
 - **Toda cifra va en `--cs-font-mono`** con `font-variant-numeric: tabular-nums`: las columnas de números deben alinearse verticalmente.
 - Radios cortos (4-8px, ya sobreescritos arriba): la geometría es de instrumento, no de app de consumo.
-- El ámbar marca la excepción — el dato que rompe la tendencia — nunca decora.
+- El rojo óxido marca la excepción (el dato que rompe la tendencia); nunca decora.
 - Las cards pueden ir pegadas en grid sin gap, separadas solo por `--cs-border`, como celdas de una tabla.

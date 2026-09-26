@@ -20,17 +20,7 @@ Copiar el CSS al bloque de la slide y el HTML dentro del `.pad`.
 
 ## Cuándo pedirle imágenes al usuario
 
-Antes de generar, revisar el wireframe y **pedir explícitamente** los assets de las slides que los necesiten. Es preferible una slide vacía esperando una foto real que una slide rellena de texto que sustituye a la imagen que debería estar ahí.
-
-Pedir imagen cuando la slide:
-- Muestra un producto, una pantalla o un resultado visible.
-- Presenta personas (equipo, speakers, testimonios).
-- Abre o cierra el deck y necesita peso visual.
-- Es una pantalla de espera antes de empezar (ver `## Pantalla de inicio`).
-
-Formato de la petición: decir **qué slide**, **qué debería mostrar** y **en qué proporción** (a sangre completa: 1920×1080; media pantalla: 960×1080; recuadro: libre). Ofrecer seguir sin ella y dejar el hueco marcado si el usuario no la tiene a mano.
-
-Guardar en `assets/` dentro del proyecto: `assets/img/`, `assets/people/`, `assets/logos/`.
+Lo decide la fase `assets` (`reference/assets.md`): checklist bloqueante por slide, formato de la petición, y marcador `SLIZDECK-ASSET-PENDING` si el usuario sigue sin la imagen. Los assets van en `assets/img/`, `assets/people/` y `assets/logos/` dentro del proyecto.
 
 ---
 
@@ -41,18 +31,19 @@ Ocupa la slide entera, con el texto encima sobre un velo que garantiza legibilid
 ```css
 .bleed { position: absolute; inset: 0; overflow: hidden; }
 .bleed img { width: 100%; height: 100%; object-fit: cover; display: block; }
-/* El velo no es decoración: sin él, el texto blanco es ilegible sobre
-   las zonas claras de cualquier foto. */
-.bleed::after {
-  content: ""; position: absolute; inset: 0;
-  background: linear-gradient(180deg, rgba(0,0,0,.25) 0%, rgba(0,0,0,.72) 100%);
+/* El velo no es decoración: sin él, el texto blanco es ilegible sobre las
+   zonas claras de cualquier foto. Es un <div> real y no un ::after, para que
+   viaje al PPTX; el color base (.4) es el que queda al aplanarse ahí. */
+.bleed .veil {
+  position: absolute; inset: 0;
+  background: linear-gradient(180deg, rgba(0,0,0,0) 30%, rgba(0,0,0,.35) 100%) rgba(0,0,0,.4);
 }
 .bleed-txt { position: relative; z-index: 2; color: #fff; }
 ```
 
 ```html
 <section class="grad" data-label="NN Titulo" data-steps="1" data-current-step="1">
-  <div class="bleed"><img src="assets/img/foto.jpg" alt="Descripción real de la foto"></div>
+  <div class="bleed"><img src="assets/img/foto.jpg" alt="Descripción real de la foto"><div class="veil"></div></div>
   <div class="pad center bleed-txt">
     <h1 class="cover-md">Título encima de la imagen</h1>
   </div>
@@ -93,7 +84,7 @@ Para el dato que carga la slide. Usa el contador animado del template: el númer
 .metrica .cifra {
   font-family: var(--cs-font-heading);
   font-size: 220px; line-height: .9; letter-spacing: -.03em;
-  color: var(--cs-accent); font-variant-numeric: tabular-nums;
+  color: var(--cs-accent-ink); font-variant-numeric: tabular-nums;
 }
 .metrica .cifra .unit { font-size: .5em; }
 .metrica .glosa { font-size: 32px; line-height: 1.4; color: var(--cs-body); max-width: 760px; }
@@ -139,9 +130,9 @@ Tres o cuatro cifras comparables. Más de cuatro y dejan de leerse.
 
 ---
 
-## Barras comparativas
+## Barras comparativas (reparto de un total)
 
-Para dos o tres magnitudes donde **el ancho es el argumento**. El `r-wipe` las descubre de izquierda a derecha, que es la dirección en que se leen.
+Para mostrar **cómo se reparte un total** en dos o tres segmentos de una misma barra, donde el ancho de cada segmento es el argumento. El `r-wipe` las descubre de izquierda a derecha, que es la dirección en que se leen. **Para comparar magnitudes entre sí** (precios, ARR, benchmarks) no usar esto: va `.sz-chart` tipo `hbar` o `bar` (sección "Datos"), que dibuja los ejes y el resaltado solo.
 
 ```css
 .barras { display: flex; flex-direction: column; gap: 40px; }
@@ -151,7 +142,7 @@ Para dos o tres magnitudes donde **el ancho es el argumento**. El `r-wipe` las d
 }
 .barra { display: flex; height: 88px; width: 100%; }
 .seg { display: flex; align-items: center; padding: 0 24px; font-size: 24px; font-weight: 600; }
-.seg.a { background: var(--cs-primary); color: #fff; }
+.seg.a { background: var(--cs-primary); color: var(--cs-on-primary); }
 .seg.b { background: var(--cs-cream-2); color: var(--cs-body); }
 .seg.c { background: var(--cs-surface); color: var(--cs-muted); border: 1px solid var(--cs-border); }
 ```
@@ -171,7 +162,7 @@ Para dos o tres magnitudes donde **el ancho es el argumento**. El `r-wipe` las d
 
 ## Progreso / proporción
 
-Una sola magnitud sobre su total. Más honesto que un donut cuando solo hay un dato.
+Una sola magnitud sobre su total (el 94 % de adopción, el 3 de 5 hitos). Más honesto que un donut cuando solo hay un dato.
 
 ```css
 .prop { display: flex; flex-direction: column; gap: 18px; }
@@ -232,7 +223,7 @@ Esta slide **no lleva número de footer**: no cuenta como parte de la charla.
 
 ## Datos: gráficas, tabla y timeline
 
-Tres patrones de primera clase: su CSS ya viene en `template.html` (clases `sz-*`), así que **no hay que copiar estilos**, solo el HTML. Usan los tokens del pack elegido y se exportan a PDF y PPTX sin nada extra. Usarlos en lugar de armar tablas o gráficas a mano: las tres pruebas de `examples/test-0*` inventaron cada una su propia versión, y ninguna se reutilizaba ni se exportaba bien.
+Tres patrones de primera clase: su CSS ya viene en `template.html` (clases `sz-*`), así que **no hay que copiar estilos**, solo el HTML. Usan los tokens del pack elegido y se exportan a PDF y PPTX sin nada extra. Usarlos en lugar de armar tablas o gráficas a mano.
 
 ### Gráfica (`.sz-chart`)
 

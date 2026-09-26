@@ -1,77 +1,53 @@
 ---
 name: slizdeck
 description: |
-  Genera decks de slides HTML animados a partir de un design system propio — enfocado en pitch decks de startup (minimalista, poco texto, mucha imagen/gráfica), pero también sirve para charlas, demos y recaps de evento. Arquitectura deck-stage 1920×1080 con navegación por teclado, pensado para presentar en vivo. Trae cinco style packs listos (terminal oscuro, blanco puro, color dominante, denso en datos, editorial), cada uno con paleta, tipografía y reglas de composición validadas contra contraste WCAG y clichés visuales de IA. El design system se define de forma guiada —elegir un pack, inyectar los colores de la marca del usuario, o generar una paleta a medida— y nunca requiere que el usuario escriba CSS/JSON a mano. El contenido se construye investigando en internet antes de proponer un wireframe que el usuario aprueba. Salida: archivo HTML autónomo (sin build step), exportable a PDF con impresión nativa del navegador y a PPTX editable (texto y formas nativas de PowerPoint, no imágenes).
+  Genera decks de slides HTML animados a partir de un design system propio — enfocado en pitch decks de startup (minimalista, poco texto, mucha imagen/gráfica), pero también sirve para charlas, demos y recaps de evento. Arquitectura deck-stage 1920×1080 con navegación por teclado, pensado para presentar en vivo. Trae cinco style packs listos (terminal oscuro, blanco puro, color dominante, denso en datos, editorial), cada uno con paleta, tipografía y reglas de composición validadas contra contraste WCAG y clichés visuales de IA. El design system se define de forma guiada —elegir un pack, inyectar los colores de la marca del usuario, o generar una paleta a medida— y nunca requiere que el usuario escriba CSS/JSON a mano. El contenido se construye investigando en internet antes de proponer un wireframe que el usuario aprueba. Salida: archivo HTML autónomo (sin build step) con modo presentador, exportable a PDF liviano y a PPTX editable (texto y formas nativas de PowerPoint; imágenes, SVG y fondos degradados como imagen).
 
   DISPARADORES: crea un pitch deck, hazme un deck, presentación para X, slides para X, deck de startup, prepara una presentación, build slides, crea slides.
 license: MIT
 compatibility: Requiere un agente con capacidad de ejecutar comandos de shell (crear/copiar archivos, abrir el navegador) y búsqueda web. Probado en Claude Code; compatible con cualquier cliente del estándar Agent Skills (agentskills.io).
 metadata:
-  version: "2.2.0"
+  version: "2.3.0"
 allowed-tools: Bash, Read, Write, Edit, WebSearch, WebFetch
-# user-invocable / argument-hint son extensiones de Claude Code, no del
-# estandar portable de agentskills.io (que solo define name/description/
-# license/compatibility/metadata/allowed-tools) — habilitan el tab-completion
-# de "/slizdeck" en Claude Code. Otros clientes deberian ignorar claves de
-# frontmatter que no reconocen sin romper el parseo, pero no está verificado
-# en Gemini CLI/Codex/OpenCode especificamente.
+# user-invocable / argument-hint: extensiones de Claude Code (tab-completion de /slizdeck).
 user-invocable: true
 argument-hint: "[init|brief|assets|build|audit|export|add|fix] [detalle o deck.html]"
 ---
 
 # Slizdeck
 
-Genera un deck HTML: canvas 1920×1080 controlado por teclado, autónomo (sin dependencias externas de build), con navegación, barra de progreso, fullscreen, y export a PDF por impresión nativa del navegador.
+Genera un deck HTML: canvas 1920×1080 controlado por teclado, autónomo (sin build step), con barra de progreso, pantalla completa y modo presentador (tecla `P`), exportable a PDF y PPTX.
 
 Fork/adaptación de [`claude-slides`](https://github.com/marcogalluccio/claude-slides) (MIT) — ver `NOTICE.md`.
 
 ## Archivos de la skill
 
+`<skill>` es la carpeta de la que se cargó este `SKILL.md` (ver "Dónde se corre cada cosa").
+
 | Archivo | Uso |
 |---|---|
-| `template.html` | Boilerplate del deck-stage (motor de navegación + tokens de diseño + reveal system). Punto de partida de todo deck nuevo. |
-| `reference/init.md` | Fase init: elegir/cambiar pack, colores de marca, tipografía. |
-| `reference/brief.md` | Fase brief: tema, público, tipo, tamaño, research, arco narrativo, wireframe. |
-| `reference/assets.md` | Fase assets: checklist obligatorio de imágenes, logos y datos por slide. |
-| `reference/build.md` | Fase build: nivel de animación y generación del HTML. |
-| `reference/audit.md` | Fase audit: qué valida `scripts/audit.mjs` y qué queda a criterio del modelo. |
-| `reference/export.md` | Fase export: PDF, PPTX, deck sin red, speaker notes. |
-| `reference/add.md` | Fase add: agregar slides a un deck existente sin romper la numeración. |
-| `reference/fix.md` | Fase fix: corregir o mejorar una slide puntual sin romper el resto del deck. |
-| `reference/hooks.md` | Hook opcional de Claude Code que audita un deck automáticamente después de cada edición — ver `scripts/verify-hook.mjs`. |
-| `CHANGELOG.md` | Historial de versiones del engine (`template.html`) — lo que lee `scripts/doctor.mjs` para detectar drift. |
-| `CONTRIBUTING.md` | Cómo agregar un style pack/patrón nuevo, correr los tests locales, convención de commits. |
-| `.github/workflows/ci.yml` | CI en cada push/PR: coherencia de versiones, smoke-test de packs, y la validación completa sobre un deck generado al vuelo y sobre `examples/pitch-showcase.html`. |
-| `reference/design-tokens-schema.md` | Esquema del design system (`design-tokens.json`) y cómo se mapea a las CSS variables del template. |
-| `reference/design-guidelines.md` | Principios de diseño: poco texto, un color dominante, anti-clichés, variedad de layout. Aplicar al construir el wireframe y al generar el HTML. |
-| `reference/deck-schema.md` | Formato del wireframe, arcos narrativos por tipo de deck, niveles de animación, estructura de cada `<section>`. |
-| `reference/components.md` | Catálogo de patrones de layout (cards, grids, mockups, diagramas) con HTML+CSS listos para copiar. |
-| `reference/media-and-data.md` | Patrones de imágenes, métricas, barras, pantalla de inicio y **datos** (gráficas declarativas `.sz-chart`, tabla `.sz-table`, timeline `.sz-timeline`), usados desde la fase `build`. |
-| `reference/animations.md` | Catálogo de técnicas de animación (reveal por pasos, dibujo de SVG, popups) y gotchas conocidos — solo para nivel HEAVY. |
-| `reference/icons.md` | Librería de íconos SVG con estilo coherente. |
-| `examples/demo-deck.html` | Deck de ejemplo de 6 slides heredado del fork original, sin modificar (ver `NOTICE.md`) — no usa el sistema de packs. |
-| `examples/datos-showcase.html` | Referencia de los patrones de datos: gráficas `.sz-chart` (barras, líneas log, barras horizontales), contadores con decimales, tabla y timeline. Pasa todos los validadores en los 5 packs. |
-| `examples/pitch-showcase.html` | Deck de ejemplo propio de slizdeck (7 slides, pack Paper White), pasa limpio `audit.mjs`/`check-style-pack.mjs`/`check-reveal.mjs` — referencia end-to-end del sistema de packs actual. |
-| `styles/index.md` | Catálogo de style packs. **Lo único que hay que leer para elegir estilo.** |
-| `styles/<pack>.md` | Un mundo visual completo: tokens, tipografía y reglas de composición. |
-| `bin/slizdeck.mjs` | CLI: instalador multi-agente y atajo a todos los scripts, acepta packs por nombre — ver "Dónde se corre cada cosa". |
-| `scripts/apply-style-pack.mjs` | Aplica un pack a un deck fusionando tokens (no reemplaza el `:root`). |
-| `scripts/check-style-pack.mjs` | Valida contrastes, distinción primario/acento y clichés de IA. |
-| `scripts/audit.mjs` | Valida un deck generado: contraste, balance HTML, reglas de voz, assets pendientes. |
-| `scripts/check-reveal.mjs` | Verifica que la cascada CSS de `.reveal` resuelva bien al revelarse (`.is-on` debe ganar contra cualquier variante `r-*`) — detecta bugs de orden de cascada que `audit.mjs` no puede ver porque solo mira el HTML estático. |
-| `scripts/shoot.mjs` | Renderiza cada slide a PNG en su estado final para **mirar** el deck en la fase `audit` — el único paso que juzga jerarquía, variedad de composición y peso visual. |
-| `scripts/check-contrast.mjs` | Mide el contraste de cada texto renderizado contra su fondo real (complementa `check-style-pack.mjs`, que solo valida pares de tokens). |
-| `scripts/check-overflow.mjs` | Detecta texto que desborda el canvas 1920×1080 o se trunca en una línea que no cabe (`white-space: nowrap` con contenido más ancho que su caja) — mide con Chrome headless, con los `data-counter` forzados a su valor final. |
-| `scripts/doctor.mjs` | Compara la versión de engine embebida en un deck contra `CHANGELOG.md` y avisa (sin reparar) si le falta algún fix conocido — ver `reference/audit.md`. |
-| `scripts/verify-hook.mjs` | Hook opcional de Claude Code: corre `audit.mjs` automáticamente después de editar un deck — ver `reference/hooks.md`. |
-| `scripts/export-pptx.mjs` | Exporta un deck HTML a `.pptx` editable por geometría: cada texto, forma, imagen y SVG en su posición real medida en Chrome, con speaker notes. |
-| `scripts/export-pdf.mjs` | Exporta un deck a PDF liviano (una página por slide, estado final, sin el grano rasterizado) y verifica el número de páginas. |
-| `scripts/make-offline.mjs` | Incrusta las fuentes como `data:` URI para presentar sin red. |
-| `scripts/check-docs.mjs` | Canario de drift docs↔repo: cobertura de scripts/referencias en las tablas, links relativos, DESIGN.md vs design.json, fuentes de los packs. |
-| `scripts/smoke-test.mjs` | Regresión de los 5 packs × 3 alternativas tipográficas, renderizando cada variante en Chrome headless. |
-| `scripts/check-versions.mjs` | Verifica que la versión coincida en `package.json`, `SKILL.md`, `template.html` y `CHANGELOG.md` — corre en CI. |
-| `scripts/score-deck.mjs` | Puntaje automático 0-100 de un deck (validaciones, texto, variedad, visual, notas) para los evals de `evals/` — comparar calidad entre versiones de la skill. |
-| `scripts/renumber.mjs` | Recalcula `data-label` y `<span class="num">` de todas las slides en orden de documento — usar siempre después de insertar una slide en medio del deck. |
+| `template.html` | El engine: canvas, navegación, pasos, tokens, patrones de datos, modo presentador. Punto de partida de todo deck. |
+| `reference/init.md` · `brief.md` · `assets.md` · `build.md` · `audit.md` · `export.md` · `add.md` · `fix.md` | Una fase cada uno (tabla de fases abajo). |
+| `reference/deck-schema.md` | Formato del wireframe, arcos narrativos, niveles de animación, estructura de cada `<section>`. |
+| `reference/design-guidelines.md` | Principios de diseño y anti-clichés. Aplicar en el wireframe y al generar. |
+| `reference/components.md` | Catálogo de layouts (cards, grids, mockups, diagramas). **Ir directo al patrón que pide el wireframe.** |
+| `reference/media-and-data.md` | Imágenes, métricas y **datos**: gráficas `.sz-chart`, tabla `.sz-table`, timeline `.sz-timeline`, contadores. |
+| `reference/animations.md` | Modelo de pasos, stagger, contadores y técnicas SVG para HEAVY, con sus gotchas. |
+| `reference/icons.md` | Íconos SVG en línea (`svg.ic`). |
+| `reference/design-tokens-schema.md` | Qué hace cada token `--cs-*` (para inyectar colores de marca). |
+| `reference/hooks.md` | Hook opcional de Claude Code que audita el deck después de cada edición (`scripts/verify-hook.mjs`). |
+| `styles/index.md` | Catálogo de los 5 style packs: **lo único que hay que leer para elegir estilo.** `styles/<pack>.md` trae los tokens y reglas de uno. |
+| `examples/pitch-showcase.html` · `examples/datos-showcase.html` | Decks de referencia: un pitch completo y los patrones de datos. |
+| `bin/slizdeck.mjs` | Atajo a todos los scripts; acepta packs por nombre. |
+| `scripts/apply-style-pack.mjs` | Aplica un pack a un deck (fusiona tokens; al cambiar de pack devuelve al default los del anterior). |
+| `scripts/check-style-pack.mjs` | Contrastes de los tokens, distinción primario/acento, clichés de IA. |
+| `scripts/audit.mjs` | Validación estática: contraste, balance HTML, reglas de voz, assets pendientes, texto de más, emojis, layouts repetidos. |
+| `scripts/check-reveal.mjs` · `scripts/check-overflow.mjs` · `scripts/check-contrast.mjs` | Validación en Chrome: cascada de `.reveal`, texto que desborda o se superpone, contraste medido sobre el fondo real. |
+| `scripts/shoot.mjs` | PNG de cada slide en su estado final, para **mirar** el deck en `audit`. |
+| `scripts/doctor.mjs` | Avisa si un deck se generó con un engine anterior a algún fix (lee `CHANGELOG.md`). |
+| `scripts/renumber.mjs` | Renumera `data-label` y footers en orden de documento. Siempre después de insertar una slide. |
+| `scripts/export-pdf.mjs` · `scripts/export-pptx.mjs` · `scripts/make-offline.mjs` | PDF liviano, PPTX editable, deck con las fuentes incrustadas para presentar sin red. |
+| `scripts/verify-hook.mjs` | El hook de `reference/hooks.md`. |
 
 ## Cuándo activar esta skill
 
@@ -103,7 +79,7 @@ Al reconocer el disparador inicial: *"Te armo el deck. Antes, defino tu design s
 
 ## Dónde se corre cada cosa
 
-El deck vive en la carpeta del proyecto del usuario; los scripts viven en la skill. Llamamos `<skill>` a la carpeta donde está este `SKILL.md` (según cómo se instaló: `~/.claude/skills/slizdeck`, la caché de un plugin de Claude Code, `~/.codex/skills/slizdeck`, etc.).
+El deck vive en la carpeta del proyecto del usuario; los scripts viven en la skill. `<skill>` es la carpeta de la que se cargó este `SKILL.md`: la ruta absoluta que el agente usó para leerlo (`~/.claude/skills/slizdeck`, la caché de un plugin de Claude Code, `~/.codex/skills/slizdeck`…).
 
 **Todo se corre desde la carpeta del proyecto, sin `cd`.** Cada `node scripts/X.mjs` de esta documentación significa `node <skill>/scripts/X.mjs`, y cada `styles/<pack>.md` significa `<skill>/styles/<pack>.md`. Los scripts encuentran sus propios archivos solos; las rutas al deck se resuelven contra la carpeta actual:
 
@@ -112,29 +88,29 @@ node <skill>/scripts/audit.mjs deck.html
 node <skill>/scripts/apply-style-pack.mjs <skill>/styles/terminal.md deck.html
 ```
 
-`<skill>/bin/slizdeck.mjs` es un atajo equivalente que además acepta packs por nombre (`node <skill>/bin/slizdeck.mjs apply-pack terminal deck.html`, `… check deck.html` corre los cuatro validadores). Usar siempre los scripts de `<skill>`, no `npx slizdeck`: `npx` baja la última versión publicada, que puede no coincidir con la skill instalada.
+`<skill>/bin/slizdeck.mjs` es un atajo equivalente que además acepta packs por nombre: `… new deck.html --pack=terminal` copia el template y aplica el pack en un paso, `… apply-pack terminal deck.html` cambia el pack, `… check deck.html` corre los cuatro validadores. Usar siempre los scripts de `<skill>`, no `npx slizdeck`: `npx` baja la última versión publicada, que puede no coincidir con la skill instalada.
 
 Si `export-pptx.mjs` avisa que faltan dependencias, correr el `npm install --prefix …` exacto que imprime.
 
 ## Reglas de voz — aplicar siempre
 
-1. **Sintético en pantalla, el presentador habla.** Nada de párrafos largos en la slide — el discurso completo va en las speaker notes.
+1. **Sintético en pantalla, el presentador habla.** Nada de párrafos largos en la slide: el discurso completo va en `<aside class="notes">` de cada slide.
 2. **Sin punto final** en `h1`/`h2`/`h3`, `.subtitle`, `.ts-tagline`, `.eyebrow` y `.payoff` — son rótulos, no oraciones. **Sí llevan punto** los párrafos de cuerpo (`<p>`), las quotes y los captions (`.glosa`, `.stat-source`). `audit.mjs` solo verifica los cuatro primeros; el resto es criterio del modelo.
 3. **Títulos en una sola línea** cuando sea posible.
 4. **Numeración 01/02/03**, no A/B/C.
 5. **Sin em-dash** (— o --). Usar comas, dos puntos, punto y aparte, o paréntesis.
-6. **Sin emojis en las slides** (salvo pedido explícito) — usar SVG de `reference/icons.md`.
+6. **Sin emojis en las slides** (salvo pedido explícito): usar SVG de `reference/icons.md`.
 7. **Puente entre slides** lo dice el presentador — las slides son marco, no discurso completo.
 8. **Cover y cierre en gradiente** (`class="grad"`); slides intermedias en `--cs-cream`. Es el default del sistema: si el style pack elegido pide otra cosa (committed manda una de cada tres slides a gradiente), manda el pack.
 9. **Cover y transition siempre estáticas** (`data-steps="1" data-current-step="1"`, sin `.reveal`).
-10. **Corte directo entre slides** (ya está en el template, 120ms). Sin sweep/gradiente al entrar. Un fundido (`<deck-stage transition="fade">`) solo si el usuario lo pide.
+10. **Corte directo entre slides** (ya está en el template). Un fundido (`<deck-stage transition="fade">`) solo si el usuario lo pide.
 11. **Footer siempre presente**: logo (si hay) + nombre/org + número de slide.
 
-`scripts/audit.mjs` verifica automáticamente **solo algunas** de estas reglas: em-dash (5), punto final en `h1/h2/h3/.subtitle` (2), numeración de footers (4, 11) y estáticas sin `.reveal` (9). Las demás (síntesis en pantalla, títulos de una línea, emojis, puente entre slides, gradiente de cover/cierre) **quedan a criterio del modelo** y hay que revisarlas a ojo — ver [reference/audit.md](reference/audit.md) para la checklist completa.
+`scripts/audit.mjs` verifica em-dash (5), punto final en `h1/h2/h3/.subtitle` (2), numeración de footers (4, 11) y estáticas sin `.reveal` (9), y **avisa** de slides con más de 45 palabras en pantalla (1) y de emojis (6). Los títulos de una línea, el puente entre slides y el gradiente de cover/cierre quedan a criterio del modelo: ver [reference/audit.md](reference/audit.md).
 
 ## Notas finales
 
 - **El template es punto de partida, no dogma.** Si hace falta un layout nuevo, agregarlo a `reference/components.md` después de crearlo.
-- **`reference/animations.md` tiene los gotchas** de cada técnica — leerlos antes de usar nivel HEAVY.
+- **`reference/animations.md` tiene los gotchas** de cada técnica: leerlos antes de usar nivel HEAVY.
 - **Probar siempre en el navegador.** Abrir, verificar que el mensaje pasa, iterar.
 - **Animar cuesta tokens.** Respetar el nivel elegido; si el usuario pide "esta slide debe ser WOW", subir de nivel solo esa slide, no todo el deck.

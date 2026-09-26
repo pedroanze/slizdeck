@@ -35,7 +35,7 @@ Exporta **por geometría**: renderiza cada slide en Chrome en su estado final, m
 - **Speaker notes** (`<aside class="notes">` de cada slide, o el JSON de `<script id="speaker-notes">`): al campo nativo de notas de PowerPoint.
 - **Gráficas `.sz-chart`**: imagen fiel con sus rótulos y ejes editables. `--charts=native` las arma como gráfica nativa de PowerPoint con los datos editables (experimental: Keynote y Quick Look no las dibujan).
 
-Opciones: `--safe-fonts` (Arial/Georgia/Consolas en vez de las fuentes del pack), `--slides=1,3-5` (solo esas slides), `--legacy` (el exportador anterior por clases, se conserva una versión).
+Opciones: `--safe-fonts` (Arial/Georgia/Consolas en vez de las fuentes del pack), `--slides=1,3-5` (solo esas slides).
 
 Advertir al usuario de lo que el formato no puede llevar:
 - **Sin animaciones**: se exporta el estado final de cada slide.

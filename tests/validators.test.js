@@ -10,11 +10,11 @@
  * sale con codigo distinto de 0. Sin fixtures propios que mantener al dia:
  * el deck de referencia ya vive en el repo y se valida en CI.
  *
- * Solo node:test y node:assert — cero dependencias, como el resto de los
- * scripts. Los validadores que necesitan Chrome (reveal, overflow,
- * contrast, shoot) no se cubren aca: ya corren en CI sobre el showcase.
+ * Solo node:test y node:assert, sin dependencias. Los validadores que
+ * necesitan Chrome (reveal, overflow, contrast, shoot) no se cubren aca:
+ * ya corren en CI sobre los ejemplos.
  *
- *   node --test tests/
+ *   npm test
  */
 
 import { test } from 'node:test';
@@ -31,7 +31,7 @@ const SHOWCASE = path.join(ROOT, 'examples', 'pitch-showcase.html');
 /** Corre un script de la skill y devuelve {code, out}. Nunca lanza. */
 function run(script, args = []) {
   try {
-    const out = execFileSync('node', [path.join(ROOT, 'scripts', script), ...args], {
+    const out = execFileSync(process.execPath, [path.join(ROOT, 'scripts', script), ...args], {
       stdio: 'pipe', timeout: 60000, cwd: ROOT,
     }).toString();
     return { code: 0, out };
@@ -107,7 +107,7 @@ detecta('audit.mjs detecta HTML desbalanceado', 'audit.mjs',
   /balance/i);
 
 detecta('audit.mjs detecta el <title> sin personalizar', 'audit.mjs',
-  (h) => h.replace(/<title>[^<]*<\/title>/, '<title>Claude Slides · [DECK NAME]</title>'),
+  (h) => h.replace(/<title>[^<]*<\/title>/, '<title>Slizdeck · [DECK NAME]</title>'),
   /title/i);
 
 /* ── Negativos: lo que NO debe pasar por deck ───────────────────────── */
@@ -123,7 +123,7 @@ test('export-pptx.mjs rechaza un HTML que no es un deck', () => {
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
-for (const script of ['audit.mjs', 'doctor.mjs', 'export-pptx.mjs', 'check-contrast.mjs']) {
+for (const script of ['audit.mjs', 'doctor.mjs', 'export-pptx.mjs', 'export-pdf.mjs', 'check-contrast.mjs', 'check-reveal.mjs', 'check-overflow.mjs', 'check-style-pack.mjs', 'renumber.mjs', 'make-offline.mjs', 'shoot.mjs', 'score-deck.mjs']) {
   test(`${script} da un error legible si el archivo no existe`, () => {
     const { code, out } = run(script, ['/tmp/no-existe-jamas-slizdeck.html']);
     assert.notEqual(code, 0, `${script} deberia fallar con un archivo inexistente`);
@@ -182,7 +182,7 @@ test('make-offline no cuenta como remoto un <script> comentado', () => {
 
 test('check-versions.mjs falla si el tag no coincide con la version', () => {
   try {
-    execFileSync('node', [path.join(ROOT, 'scripts', 'check-versions.mjs')], {
+    execFileSync(process.execPath, [path.join(ROOT, 'scripts', 'check-versions.mjs')], {
       stdio: 'pipe', cwd: ROOT, env: { ...process.env, GITHUB_REF_NAME: 'v0.0.1' },
     });
     assert.fail('deberia haber fallado con un tag que no coincide');
@@ -218,4 +218,18 @@ detecta('check-style-pack.mjs detecta un acento ilegible como resaltado sobre el
   // la cifra de una grafica sobre el fondo claro.
   (h) => h.replace(/--cs-accent:\s*#[0-9A-Fa-f]{6};/, '--cs-accent: #C8F135; --cs-accent-on: primary;'),
   /acento resaltado vs fondo/);
+
+test('apply-style-pack.mjs: pasar de un pack a otro deja el deck igual que aplicar el segundo de entrada', () => {
+  const dir = mkdtempSync(path.join(os.tmpdir(), 'slizdeck-test-'));
+  const tokens = (f) => [...readFileSync(f, 'utf8').matchAll(/(--cs-[a-z0-9-]+)\s*:\s*([^;]+);/g)]
+    .map((m) => `${m[1]}:${m[2].trim()}`).sort().join('\n');
+  try {
+    const via = path.join(dir, 'via.html'), direct = path.join(dir, 'direct.html');
+    for (const [pack, from, to] of [['committed', SHOWCASE, via], ['terminal', via, via], ['terminal', SHOWCASE, direct]]) {
+      const r = run('apply-style-pack.mjs', [path.join(ROOT, 'styles', `${pack}.md`), from, to]);
+      assert.equal(r.code, 0, r.out);
+    }
+    assert.equal(tokens(via), tokens(direct), 'committed → terminal dejo tokens de committed');
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
 

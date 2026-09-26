@@ -6,12 +6,13 @@
  * comprueba que los textos sean buenos: comprueba invariantes que, si se
  * rompen, hacen que un modelo siguiendo la doc haga algo imposible.
  *
- *   1. Todo script de scripts/*.mjs aparece en la tabla de SKILL.md y en
- *      la de CONTRIBUTING.md (y al reves: nada listado ahi que no exista).
+ *   1. Todo script de scripts/*.mjs y bin/ aparece en la tabla de
+ *      CONTRIBUTING.md, y los que usa el agente tambien en la de SKILL.md
+ *      (las herramientas de mantenimiento, DEV_ONLY, solo en CONTRIBUTING).
  *   2. Todo reference/*.md aparece en la tabla de SKILL.md.
  *   3. Los links relativos de los .md resuelven a un archivo real.
  *   4. Los colores clave de DESIGN.md coinciden con design.json — el
- *      README los presenta como el mismo contrato en dos formatos.
+ *      son el mismo contrato en dos formatos.
  *   5. Ningun style pack declara una fuente de la lista de clichés que el
  *      propio check-style-pack.mjs rechaza (autoconsistencia).
  *
@@ -49,14 +50,17 @@ const scripts = readdirSync(path.join(ROOT, 'scripts'))
 const refs = readdirSync(path.join(ROOT, 'reference'))
   .filter((f) => f.endsWith('.md'));
 
-const faltanSkill = scripts.filter((f) => !skill.includes(`scripts/${f}`));
+// Herramientas de mantenimiento del repo: el agente que usa la skill no las
+// necesita, asi que no ocupan lugar en SKILL.md.
+const DEV_ONLY = ['check-docs.mjs', 'check-versions.mjs', 'smoke-test.mjs', 'score-deck.mjs'];
+const faltanSkill = scripts.filter((f) => !DEV_ONLY.includes(f) && !skill.includes(`scripts/${f}`));
 const faltanReadme = scripts.filter((f) => !readme.includes(`scripts/${f}`));
 const bins = readdirSync(path.join(ROOT, 'bin')).filter((f) => f.endsWith('.mjs'));
 const binsFaltan = bins.filter((f) => !skill.includes(`bin/${f}`) || !readme.includes(`bin/${f}`));
 if (binsFaltan.length) bad('ejecutables de bin/ sin documentar en SKILL.md y CONTRIBUTING.md', binsFaltan.join(', '));
 if (faltanSkill.length) bad('scripts sin documentar en SKILL.md', faltanSkill.join(', '));
 if (faltanReadme.length) bad('scripts sin documentar en CONTRIBUTING.md', faltanReadme.join(', '));
-if (!faltanSkill.length && !faltanReadme.length) ok(`los ${scripts.length} scripts estan en SKILL.md y CONTRIBUTING.md`);
+if (!faltanSkill.length && !faltanReadme.length) ok(`los ${scripts.length} scripts estan en CONTRIBUTING.md, y los ${scripts.length - DEV_ONLY.length} que usa el agente tambien en SKILL.md`);
 
 const refsFaltan = refs.filter((f) => !skill.includes(`reference/${f}`));
 if (refsFaltan.length) bad('archivos de reference/ sin documentar en SKILL.md', refsFaltan.join(', '));
@@ -121,7 +125,7 @@ if (listaFuentes) {
   if (infractores.length) bad('un style pack declara una fuente de la lista de clichés', infractores.join(', '));
   else ok(`los ${packs.length} style packs evitan las fuentes que check-style-pack.mjs rechaza`);
 } else {
-  console.log('  ⚠ no se pudo leer la lista de fuentes de check-style-pack.mjs (¿cambio el nombre de la constante?)');
+  bad('no se pudo leer la lista de fuentes de check-style-pack.mjs', '¿cambio el nombre de la constante? Sin la lista este chequeo no verifica nada.');
 }
 
 /* ── Salida ───────────────────────────────────────────────────────────── */

@@ -44,7 +44,7 @@ const AGENTS = {
 const PAYLOAD = [
   'SKILL.md', 'template.html', 'styles', 'reference', 'scripts', 'bin',
   'CHANGELOG.md', 'DESIGN.md', 'design.json', 'LICENSE', 'NOTICE.md', 'package.json',
-  'examples/demo-deck.html', 'examples/pitch-showcase.html', 'examples/datos-showcase.html',
+  'examples/pitch-showcase.html', 'examples/datos-showcase.html',
 ];
 
 /* ── Scripts expuestos como subcomandos ─────────────────────────────────── */
@@ -88,11 +88,12 @@ Deck
   doctor <deck>             Fixes del engine que le faltan a un deck viejo
   renumber <deck>
   apply-pack <pack> <deck> [salida] [--font=<id>]   (pack: nombre o ruta)
-  export pptx <deck> [salida.pptx] [--safe-fonts] [--slides=1,3-5] [--charts=native] [--legacy]
+  export pptx <deck> [salida.pptx] [--safe-fonts] [--slides=1,3-5] [--charts=native]
   export pdf <deck> [salida.pdf] [--grain]
   export offline <deck> [salida.html]
-  score <deck> | score --all <carpeta> [--out=x.json]   Puntaje 0-100 (evals/README.md)
-  smoke-test
+  score <deck> [--json] [--no-chrome] | score --all <carpeta> [--out=x.json]
+                            Puntaje 0-100 del deck (evals/README.md)
+  smoke-test [--pack=<pack>] [--no-render]
 
   new <deck.html> [--pack=<pack>] [--font=<id>]     Copia el template y aplica un pack
 `;
@@ -308,7 +309,8 @@ function newDeck(argv) {
   const font = argv.find((a) => a.startsWith('--font='));
   const out = argv.find((a) => !a.startsWith('--'));
   if (!out) fail('uso: slizdeck new <deck.html> [--pack=<pack>] [--font=<id>]');
-  if (existsSync(out)) fail(`${out} ya existe — no lo piso`);
+  if (existsSync(out)) fail(`${out} ya existe: no lo piso`);
+  if (font && !pack) fail('--font elige una alternativa tipográfica del pack: va junto con --pack=<pack>');
   cpSync(path.join(ROOT, 'template.html'), out);
   console.log(`  ✓ ${out} creado desde el template ${PKG.version}`);
   if (pack) return runScript('apply-style-pack.mjs', [resolvePack(pack), out, ...(font ? [font] : [])]);

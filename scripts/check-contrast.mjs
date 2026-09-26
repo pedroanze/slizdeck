@@ -29,11 +29,8 @@
  * Requiere Chrome/Chromium (ver scripts/lib/find-chrome.mjs, CHROME_PATH).
  */
 
-import { readFileSync, writeFileSync, rmSync, existsSync } from 'node:fs';
-import { execFileSync } from 'node:child_process';
-import path from 'node:path';
-import { findChrome } from './lib/find-chrome.mjs';
-import { injectBeforeBodyEnd } from './lib/inject.mjs';
+import { readFileSync, existsSync } from 'node:fs';
+import { START, NO_MOTION, runHarness } from './lib/chrome-run.mjs';
 
 const file = process.argv[2];
 if (!file) {
@@ -45,37 +42,14 @@ if (!existsSync(file)) {
   process.exit(1);
 }
 
-let CHROME;
-try {
-  CHROME = findChrome();
-} catch (err) {
-  console.error(err.message);
-  process.exit(1);
-}
 
 const html = readFileSync(file, 'utf8');
 
 const harness = `
-<style>*, *::before, *::after { transition: none !important; animation: none !important; }</style>
+${NO_MOTION}
 <script>
 window.addEventListener('DOMContentLoaded', () => {
-  // Un solo rAF + un macrotask (setTimeout), NO un rAF anidado dentro de
-  // otro: en Chrome headless con --disable-gpu (sin compositor real) un
-  // segundo rAF encadenado no llega a dispararse la inmensa mayoria de las
-  // veces (medido: 9 de 10 corridas se quedan colgadas esperandolo, contra
-  // 0 de 5 con este patron). Con --virtual-time-budget eso no truena con
-  // error: el harness simplemente nunca corre, .reveal se queda en
-  // opacidad 0, y ese texto se salta en silencio en vez de medirse.
-  // rAF + setTimeout como siempre, pero con un temporizador de respaldo:
-  // en Chrome headless sin GPU (Linux del CI) a veces ni el primer rAF
-  // llega, y el harness no corria nunca: "Chrome no termino a tiempo" sin
-  // ningun error real. Lo que llegue primero arranca, una sola vez.
-  const __szStart = (fn) => {
-    let done = false;
-    const once = () => { if (!done) { done = true; fn(); } };
-    requestAnimationFrame(() => setTimeout(once, 0));
-    setTimeout(once, 250);
-  };
+${START}
   __szStart(() => {
     // Todas las slides a su estado final: si no, el texto aun no revelado
     // mide opacidad 0 y se saltaria justo lo que hay que verificar.
@@ -87,11 +61,23 @@ window.addEventListener('DOMContentLoaded', () => {
     // se medirian los textos de UNA slide y se daria el deck por revisado.
     document.querySelectorAll('deck-stage > section').forEach((s) => s.setAttribute('data-deck-active', ''));
 
+    // Cualquier sintaxis CSS a rgba pintando un pixel: rgb(), color(srgb …)
+    // (lo que computa color-mix) u oklch(). El regex de rgba() que habia
+    // antes dejaba sin medir, en silencio, todo texto o fondo en esos colores.
+    const cv = document.createElement('canvas'); cv.width = cv.height = 1;
+    const cx = cv.getContext('2d', { willReadFrequently: true });
+    const colorCache = new Map();
     const parseColor = (s) => {
-      const m = /rgba?\\(([^)]+)\\)/.exec(s || '');
-      if (!m) return null;
-      const p = m[1].split(',').map((x) => parseFloat(x));
-      return { r: p[0], g: p[1], b: p[2], a: p.length > 3 ? p[3] : 1 };
+      if (!s || s === 'none') return null;
+      if (colorCache.has(s)) return colorCache.get(s);
+      cx.clearRect(0, 0, 1, 1);
+      cx.fillStyle = 'rgba(0,0,0,0)';
+      cx.fillStyle = s;
+      cx.fillRect(0, 0, 1, 1);
+      const [r, g, b, a] = cx.getImageData(0, 0, 1, 1).data;
+      const out = { r, g, b, a: a / 255 };
+      colorCache.set(s, out);
+      return out;
     };
     const over = (fg, bg) => ({
       r: fg.r * fg.a + bg.r * (1 - fg.a),
@@ -131,7 +117,6 @@ window.addEventListener('DOMContentLoaded', () => {
     };
 
     const label = (section) => (section && section.getAttribute('data-label')) || '?';
-    const stage = document.querySelector('deck-stage');
     const findings = [];
     let checked = 0, skippedGradient = 0;
 
@@ -201,46 +186,7 @@ window.addEventListener('DOMContentLoaded', () => {
 </script>
 `;
 
-const withHarness = injectBeforeBodyEnd(html, harness);
-// Al lado del deck real, no en os.tmpdir(): ver el comentario equivalente
-// en check-overflow.mjs — rutas relativas a assets locales se rompen si el
-// harness se copia a otra carpeta.
-const tmp = path.join(path.dirname(path.resolve(file)), `.slizdeck-check-contrast-${process.pid}.html`);
-writeFileSync(tmp, withHarness);
-
-const MAX_ATTEMPTS = 2;
-let m = null;
-try {
-  for (let attempt = 1; attempt <= MAX_ATTEMPTS && !m; attempt++) {
-    const dom = execFileSync(
-      CHROME,
-      ['--headless', '--disable-gpu', '--no-sandbox', '--dump-dom', '--virtual-time-budget=12000', `file://${tmp}`],
-      { stdio: 'pipe', timeout: 40000 },
-    ).toString();
-    m = /<title>DONE::(.*?)<\/title>/s.exec(dom);
-    if (!m && attempt < MAX_ATTEMPTS) {
-      console.error(`(intento ${attempt}/${MAX_ATTEMPTS}: Chrome headless no termino a tiempo, reintentando...)`);
-    }
-  }
-} finally {
-  rmSync(tmp, { force: true });
-}
-
-if (!m) {
-  console.error(`No se pudo leer el resultado tras ${MAX_ATTEMPTS} intentos — Chrome headless no termino.`);
-  const externos = [...html.replace(/<!--[\s\S]*?-->/g, (c) => ' '.repeat(c.length)).matchAll(/<script\b[^>]*\bsrc=["'](https?:\/\/[^"']+)["']/gi)].map((x) => x[1]);
-  if (externos.length) {
-    console.error(`  Causa mas probable: el deck carga script(s) externo(s) bloqueante(s): ${externos.join(', ')}`);
-  } else {
-    console.error('  El deck no tiene scripts externos: revisar que Chrome headless funcione en esta maquina.');
-  }
-  process.exit(1);
-}
-
-const unescape = (s) => s
-  .replace(/&quot;/g, '"').replace(/&#39;/g, "'")
-  .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
-const { findings, checked, skippedGradient } = JSON.parse(unescape(m[1]));
+const { findings, checked, skippedGradient } = runHarness(file, html, harness, { tag: 'check-contrast' });
 
 console.log(`\n${file}\n`);
 

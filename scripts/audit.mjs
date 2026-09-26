@@ -23,6 +23,7 @@ import { readFileSync, existsSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { slides as parseSlides } from './lib/deck-html.mjs';
 
 const file = process.argv[2];
 if (!file) {
@@ -48,7 +49,7 @@ console.log(`\n${file}\n`);
 
 // 1. Contraste y clichés (delegado, ya cubre su propio pass/fail)
 try {
-  execFileSync('node', [path.join(ROOT, 'scripts/check-style-pack.mjs'), file], { stdio: 'pipe' });
+  execFileSync(process.execPath, [path.join(ROOT, 'scripts/check-style-pack.mjs'), file], { stdio: 'pipe' });
   ok('contraste y paleta (check-style-pack.mjs)');
 } catch (e) {
   bad('contraste y paleta (check-style-pack.mjs)', e.stdout?.toString().trim());
@@ -112,7 +113,7 @@ if (!staticWithReveal.length) ok('slides estáticas (data-steps="1") sin .reveal
 else bad('slide marcada estática pero con .reveal adentro', staticWithReveal.join(', '));
 
 // 7. <title> actualizado (no el placeholder del template, que es
-// "Claude Slides · [DECK NAME]": cualquier corchete sin resolver delata que
+// "Slizdeck · [DECK NAME]": cualquier corchete sin resolver delata que
 // no se toco, igual que "deck title here" del H1 de ejemplo)
 const title = /<title>([^<]*)<\/title>/.exec(html)?.[1]?.trim();
 const looksPlaceholder = !title || /\[[^\]]*\]/.test(title) || /deck title here/i.test(title);
@@ -128,22 +129,7 @@ else caution(`${pending.length} asset(s) pendiente(s), aceptados explícitamente
 // layouts repetidos. Avisos, no fallos: hay slides que justifican romper
 // cada regla (una cita larga, un deck que pidio emojis), pero el modelo
 // tiene que ver el aviso y decidirlo, no pasarlo por alto.
-const deckBody = /<deck-stage[^>]*>([\s\S]*)<\/deck-stage>/.exec(visible)?.[1] || '';
-const slides = [...deckBody.matchAll(/<section\b([^>]*)>([\s\S]*?)<\/section>/g)].map((m) => {
-  const label = /data-label="([^"]*)"/.exec(m[1])?.[1] || '(sin data-label)';
-  const inner = m[2]
-    .replace(/<aside class="notes"[\s\S]*?<\/aside>/g, ' ')
-    .replace(/<div class="footer"[\s\S]*?<\/div>\s*<\/div>/g, ' ');
-  // Tablas y graficas son datos, no discurso: no suman palabras.
-  const text = inner.replace(/<svg[\s\S]*?<\/svg>/g, ' ').replace(/<table[\s\S]*?<\/table>/g, ' ')
-    .replace(/<figure[\s\S]*?<\/figure>/g, ' ').replace(/<[^>]+>/g, ' ')
-    .replace(/&[a-z]+;|&#\d+;/g, ' ').replace(/\s+/g, ' ').trim();
-  const words = text ? text.split(' ').filter((w) => /[\p{L}\p{N}]/u.test(w)).length : 0;
-  const COMMON = /^(reveal|r-\w+|is-on|eyebrow|title|subtitle|footer|num|left|pad|center|act-marker|step-num|step-total|stagger|sweep|grad|grad-word|unit|cover|cover-md|ts-title|ts-tagline|payoff|lead|sub|hl|num)$/;
-  const classes = new Set();
-  for (const c of m[2].matchAll(/class="([^"]*)"/g)) for (const t of c[1].split(/\s+/)) if (t && !COMMON.test(t)) classes.add(t);
-  return { label, words, text, sig: [...classes].sort().join(' ') };
-});
+const slides = parseSlides(html);
 
 const MAX_WORDS = 45;
 const wordy = slides.filter((s) => s.words > MAX_WORDS);

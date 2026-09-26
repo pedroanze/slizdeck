@@ -28,6 +28,8 @@ import { execFileSync } from 'node:child_process';
 import path from 'node:path';
 import { findChrome } from './lib/find-chrome.mjs';
 import { injectBeforeBodyEnd } from './lib/inject.mjs';
+import { START } from './lib/chrome-run.mjs';
+import { countSlides } from './lib/deck-html.mjs';
 
 const args = process.argv.slice(2);
 const [input, outArg] = args.filter((a) => !a.startsWith('--'));
@@ -52,9 +54,7 @@ try {
 
 const out = path.resolve(outArg || path.basename(input, path.extname(input)) + '.pdf');
 const html = readFileSync(input, 'utf8');
-const masked = html.replace(/<!--[\s\S]*?-->/g, (c) => ' '.repeat(c.length));
-const stage = /<deck-stage[^>]*>([\s\S]*?)<\/deck-stage>/.exec(masked);
-const slides = stage ? [...stage[1].matchAll(/<section\b/g)].length : 0;
+const slides = countSlides(html);
 if (!slides) {
   console.error(`${input}: no se encontro <deck-stage> con slides. ¿Es un deck de slizdeck?`);
   process.exit(1);
@@ -69,16 +69,7 @@ const harness = `
 </style>
 <script>
 window.addEventListener('DOMContentLoaded', () => {
-  // rAF + setTimeout como siempre, pero con un temporizador de respaldo:
-  // en Chrome headless sin GPU (Linux del CI) a veces ni el primer rAF
-  // llega, y el harness no corria nunca: "Chrome no termino a tiempo" sin
-  // ningun error real. Lo que llegue primero arranca, una sola vez.
-  const __szStart = (fn) => {
-    let done = false;
-    const once = () => { if (!done) { done = true; fn(); } };
-    requestAnimationFrame(() => setTimeout(once, 0));
-    setTimeout(once, 250);
-  };
+${START}
   __szStart(() => {
     try { window.dispatchEvent(new Event('beforeprint')); } catch (e) {}
     document.querySelectorAll('.reveal').forEach((el) => el.classList.add('is-on'));
@@ -91,6 +82,7 @@ window.addEventListener('DOMContentLoaded', () => {
 const tmp = path.join(path.dirname(path.resolve(input)), `.slizdeck-pdf-${process.pid}.html`);
 writeFileSync(tmp, injectBeforeBodyEnd(html, harness));
 
+rmSync(out, { force: true });   // un PDF viejo no puede pasar por nuevo
 try {
   execFileSync(CHROME, [
     '--headless', '--disable-gpu', '--no-sandbox', '--no-pdf-header-footer',

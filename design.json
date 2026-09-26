@@ -28,6 +28,12 @@
         "canonical": "#E23D1E",
         "note": "El unico color que grita. Un elemento por slide como maximo."
       },
+      "accent-ink": {
+        "role": "accent-ink",
+        "displayName": "Accent Ink",
+        "canonical": "#E23D1E",
+        "note": "El acento cuando resalta sobre el fondo. Default: el propio acento; un pack cuyo acento no se lee sobre el fondo declara aqui su version legible."
+      },
       "bg": {
         "role": "background",
         "displayName": "Background",
@@ -81,19 +87,9 @@
     },
     "shadows": [
       {
-        "name": "shadow-1",
-        "value": "0 1px 2px rgba(0,0,0,0.04), 0 1px 1px rgba(0,0,0,0.03)",
-        "purpose": "Separación mínima, casi imperceptible."
-      },
-      {
         "name": "shadow-2",
         "value": "0 4px 12px rgba(0,0,0,0.06), 0 2px 4px rgba(0,0,0,0.04)",
         "purpose": "Sombra default de las cards."
-      },
-      {
-        "name": "shadow-3",
-        "value": "0 12px 32px rgba(0,0,0,0.08), 0 4px 10px rgba(0,0,0,0.05)",
-        "purpose": "Elementos que necesitan destacar más (mockups, nivel de animación HEAVY)."
       }
     ],
     "motion": [

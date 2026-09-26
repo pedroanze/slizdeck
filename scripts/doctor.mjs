@@ -7,7 +7,7 @@
  * artefacto estructurado (design-tokens.json), un deck es HTML fuertemente
  * customizado a mano — contenido, animaciones propias, layouts copiados y
  * editados — así que un auto-fix real sería arriesgado. Este script solo
- * dice "esto cambió entre tu versión y la actual, decidí si te aplica",
+ * dice "esto cambió entre tu versión y la actual, decide si te aplica",
  * leyendo las entradas de CHANGELOG.md entre ambas versiones.
  *
  *   node scripts/doctor.mjs deck.html
@@ -75,7 +75,7 @@ console.log(`\n${file}\n`);
 
 if (!m) {
   console.log(`  ⚠ este deck no tiene el marcador slizdeck-engine-version — se generó antes de que existiera (versiones < 1.0.0).`);
-  console.log(`    No se puede comparar automáticamente contra la versión actual (${current}). Revisar CHANGELOG.md a mano si sospechás de un bug conocido (ej. correr scripts/check-reveal.mjs para el fix de cascada CSS de 1.0.0).\n`);
+  console.log(`    No se puede comparar automáticamente contra la versión actual (${current}). Revisar CHANGELOG.md a mano si sospechas de un bug conocido (ej. correr scripts/check-reveal.mjs para el fix de cascada CSS de 1.0.0).\n`);
   process.exit(0);
 }
 
@@ -91,5 +91,5 @@ for (const entry of entries) {
   console.log(entry.split('\n').map((l) => `    ${l}`).join('\n'));
   console.log();
 }
-console.log('  Esto es informativo, no un fallo — decidí si alguno de estos cambios te aplica y aplicalo a mano si corresponde.\n');
+console.log('  Esto es informativo, no un fallo — decide si alguno de estos cambios te aplica y aplícalo a mano si corresponde.\n');
 process.exit(0);

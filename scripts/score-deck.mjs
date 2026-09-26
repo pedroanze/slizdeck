@@ -32,6 +32,7 @@ import { readFileSync, readdirSync, writeFileSync, existsSync, statSync } from '
 import { execFileSync } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { slides as parseSlides } from './lib/deck-html.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const args = process.argv.slice(2);
@@ -48,37 +49,9 @@ function runScript(script, file) {
   }
 }
 
-const VISUAL = /<(img|svg|figure|table|canvas)\b|data-counter=|class="[^"]*\b(sz-chart|sz-timeline|card|pq-card|metrica|metricas|barras|prop|split|bleed|pipe-card)\b/;
-const COMMON = /^(reveal|r-\w+|is-on|eyebrow|title|subtitle|footer|num|left|pad|center|act-marker|step-num|step-total|stagger|sweep|grad|grad-word|unit|cover|cover-md|ts-title|ts-tagline|payoff|lead|sub|hl)$/;
-
-function analyze(html) {
-  const visible = html.replace(/<!--[\s\S]*?-->/g, '').replace(/<script[\s\S]*?<\/script>/g, (m) => (/speaker-notes/.test(m) ? m : ''));
-  const body = /<deck-stage[^>]*>([\s\S]*)<\/deck-stage>/.exec(visible)?.[1] || '';
-  let jsonNotes = [];
-  try { jsonNotes = JSON.parse(/<script[^>]*id="speaker-notes"[^>]*>([\s\S]*?)<\/script>/.exec(html)?.[1] || '[]'); } catch (e) {}
-  const slides = [...body.matchAll(/<section\b([^>]*)>([\s\S]*?)<\/section>/g)].map((m, i) => {
-    const attrs = m[1], inner = m[2];
-    const label = /data-label="([^"]*)"/.exec(attrs)?.[1] || `slide ${i + 1}`;
-    const isStatic = /data-steps="1"/.test(attrs);
-    const special = /\bclass="[^"]*\bgrad\b/.test(attrs) && /h1 class="cover/.test(inner)
-      || (isStatic && /class="ts-title/.test(inner))
-      || /\bstandby\b/.test(inner) || /standby/i.test(label);
-    const onScreen = inner.replace(/<aside class="notes"[\s\S]*?<\/aside>/g, ' ')
-      .replace(/<div class="footer"[\s\S]*?<\/div>\s*<\/div>/g, ' ');
-    const text = onScreen.replace(/<svg[\s\S]*?<\/svg>/g, ' ').replace(/<table[\s\S]*?<\/table>/g, ' ')
-      .replace(/<figure[\s\S]*?<\/figure>/g, ' ').replace(/<[^>]+>/g, ' ').replace(/&[a-z]+;|&#\d+;/g, ' ');
-    const words = text.split(/\s+/).filter((w) => /[\p{L}\p{N}]/u.test(w)).length;
-    const classes = new Set();
-    for (const c of inner.matchAll(/class="([^"]*)"/g)) for (const t of c[1].split(/\s+/)) if (t && !COMMON.test(t)) classes.add(t);
-    const hasNotes = /<aside class="notes"[\s\S]*?\S[\s\S]*?<\/aside>/.test(inner) || (typeof jsonNotes[i] === 'string' && jsonNotes[i].trim().length > 0);
-    return { label, special, words, sig: [...classes].sort().join(' '), visual: VISUAL.test(onScreen), notes: hasNotes, reveals: (inner.match(/class="[^"]*\breveal\b/g) || []).length };
-  });
-  return slides;
-}
-
 function score(file) {
   const html = readFileSync(file, 'utf8');
-  const slides = analyze(html);
+  const slides = parseSlides(html);
   const content = slides.filter((s) => !s.special);
   const n = content.length || 1;
 

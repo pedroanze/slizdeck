@@ -1,6 +1,6 @@
 # Fase: assets — imágenes, logos y datos obligatorios
 
-**Se activa siempre entre `brief` y `build`, nunca se salta.** La mayoría de los decks reales llevan imágenes en más de la mitad de sus slides — un wireframe aprobado sin resolver esto todavía es un wireframe a medio hacer, no uno listo para generar. Esta fase existe porque antes vivía como un sub-paso fácil de pasar por alto dentro de la generación; ahora es un punto de control explícito con su propia pregunta y su propia respuesta antes de que se escriba una sola línea de HTML.
+**Se activa siempre entre `brief` y `build`, nunca se salta.** La mayoría de los decks reales llevan imágenes en más de la mitad de sus slides — un wireframe aprobado sin resolver esto todavía es un wireframe a medio hacer, no uno listo para generar.
 
 También se activa suelta cuando el usuario pregunta directamente "¿qué imágenes necesito?" sobre un wireframe ya aprobado, o cuando pide agregar una imagen a una slide de un deck ya generado.
 
@@ -45,7 +45,7 @@ Si el usuario no responde a un ítem (lo ignora, cambia de tema), **volver a pre
 
 ## 4. Guardar los archivos
 
-`assets/img/` para fotos y capturas, `assets/people/` para personas, `assets/logos/` para marcas, `assets/qr/` para códigos QR (`qrencode -o assets/qr/[nombre].png -s 20 -m 2 -l H "URL"`, requiere `brew install qrencode` una vez).
+`assets/img/` para fotos y capturas, `assets/people/` para personas, `assets/logos/` para marcas, `assets/qr/` para códigos QR (`qrencode -o assets/qr/[nombre].png -s 20 -m 2 -l H "URL"`, requiere `qrencode`: `brew install qrencode` en macOS, `apt install qrencode` en Linux).
 
 Ver `reference/media-and-data.md` para los patrones HTML/CSS de cada tipo de slide con imagen o dato.
 

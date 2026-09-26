@@ -21,7 +21,7 @@
  *
  * Un patron de layout nuevo se exporta sin tocar este script.
  *
- *   node scripts/export-pptx.mjs deck.html [salida.pptx] [--safe-fonts] [--slides=1,3-5] [--charts=native] [--legacy]
+ *   node scripts/export-pptx.mjs deck.html [salida.pptx] [--safe-fonts] [--slides=1,3-5] [--charts=native]
  *
  *  - Graficas declarativas (.sz-chart, reference/media-and-data.md): por
  *    default como cualquier SVG (imagen fiel + rotulos y ejes editables).
@@ -33,7 +33,6 @@
  *   --safe-fonts  usa Arial/Georgia/Consolas en vez de las fuentes del deck
  *                 (para abrirlo en una maquina sin las fuentes del pack)
  *   --slides      exporta solo esas slides
- *   --legacy      el exportador anterior por reconocimiento de clases
  *
  * Lo que no viaja se reporta y el script sale con codigo 1: texto que no se
  * pudo ubicar, texto generado por CSS (::before/::after con content). Los
@@ -45,7 +44,6 @@
  */
 
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
-import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -54,14 +52,9 @@ const args = process.argv.slice(2);
 const flag = (n) => args.includes(`--${n}`);
 const flagValue = (n) => args.find((a) => a.startsWith(`--${n}=`))?.split('=').slice(1).join('=');
 
-if (flag('legacy')) {
-  const legacy = path.join(path.dirname(fileURLToPath(import.meta.url)), 'lib', 'export-pptx-legacy.mjs');
-  const r = spawnSync(process.execPath, [legacy, ...args.filter((a) => a !== '--legacy')], { stdio: 'inherit' });
-  process.exit(r.status ?? 1);
-}
 
-// La unica dependencia npm de la skill (junto con node-html-parser, que usa
-// solo el legacy). import() para fallar con un mensaje que dice que hacer.
+// Las dependencias npm de la skill (pptxgenjs y jszip, que ya trae) solo las
+// usa este script. import() para fallar con un mensaje que dice que hacer.
 let PptxGenJS, JSZip;
 try {
   ({ default: PptxGenJS } = await import('pptxgenjs'));
@@ -69,17 +62,18 @@ try {
 } catch (e) {
   if (e.code !== 'ERR_MODULE_NOT_FOUND') throw e;
   const root = fileURLToPath(new URL('..', import.meta.url));
-  console.error('✗ falta la dependencia del export a PPTX (pptxgenjs).');
+  console.error('✗ faltan las dependencias del export a PPTX (pptxgenjs, jszip).');
   console.error(`  Instálala con: npm install --prefix "${root}"`);
   console.error('  (o reinstala la skill con: npx slizdeck install)');
   process.exit(1);
 }
 
 const { measureDeck, shootBackground } = await import('./lib/measure-deck.mjs');
+const { countSlides, parseSlideRange } = await import('./lib/deck-html.mjs');
 
 const [input, outArg] = args.filter((a) => !a.startsWith('--'));
 if (!input) {
-  console.error('uso: node scripts/export-pptx.mjs <deck.html> [salida.pptx] [--safe-fonts] [--slides=1,3-5] [--charts=native] [--legacy]');
+  console.error('uso: node scripts/export-pptx.mjs <deck.html> [salida.pptx] [--safe-fonts] [--slides=1,3-5] [--charts=native]');
   process.exit(1);
 }
 if (!existsSync(input)) {
@@ -88,15 +82,11 @@ if (!existsSync(input)) {
 }
 const out = outArg || path.basename(input, path.extname(input)) + '.pptx';
 
-// Antes de levantar Chrome: un HTML que no es un deck de slizdeck produciria
-// un .pptx vacio con un "✓", que es justo lo que ningun script debe hacer.
-{
-  const masked = readFileSync(input, 'utf8').replace(/<!--[\s\S]*?-->/g, (c) => ' '.repeat(c.length));
-  const stage = /<deck-stage[^>]*>([\s\S]*?)<\/deck-stage>/.exec(masked);
-  if (!stage || !/<section\b/.test(stage[1])) {
-    console.error(`✗ ${input}: no se encontro <deck-stage> con slides. ¿Es un deck de slizdeck?`);
-    process.exit(1);
-  }
+// Antes de levantar Chrome: un HTML que no es un deck produciria un .pptx
+// vacio con un "✓", que es justo lo que ningun script debe hacer.
+if (!countSlides(readFileSync(input, 'utf8'))) {
+  console.error(`✗ ${input}: no se encontro <deck-stage> con slides. ¿Es un deck de slizdeck?`);
+  process.exit(1);
 }
 
 /* ── Unidades ────────────────────────────────────────────────────────────
@@ -125,16 +115,6 @@ function fontFor(f) {
   return f || 'Arial';
 }
 
-function parseRange(spec, max) {
-  if (!spec) return null;
-  const set = new Set();
-  for (const part of spec.split(',')) {
-    const m = /^(\d+)(?:-(\d+))?$/.exec(part.trim());
-    if (!m) { console.error(`--slides: no entiendo "${part}"`); process.exit(1); }
-    for (let i = Number(m[1]); i <= Number(m[2] || m[1]); i++) if (i >= 1 && i <= max) set.add(i);
-  }
-  return set;
-}
 
 /* ── Imagenes que el navegador no pudo leer (remotas sin CORS) ─────────── */
 const MIME = { png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', gif: 'image/gif', svg: 'image/svg+xml', webp: 'image/webp' };
@@ -300,7 +280,6 @@ function addChart(pptx, slide, item) {
     Object.assign(opts, { lineSize: 3, lineDataSymbol: n <= 12 ? 'circle' : 'none', lineDataSymbolSize: 8 });
     slide.addChart(type === 'area' ? pptx.ChartType.area : pptx.ChartType.line, data, opts);
   }
-  return grouping && hl >= 0;
 }
 
 /* ── Main ────────────────────────────────────────────────────────────── */
@@ -313,7 +292,7 @@ try {
 }
 PX_PER_IN = model.canvas.w / 13.333;
 
-const only = parseRange(flagValue('slides'), model.slides.length);
+const only = flagValue('slides') ? new Set(parseSlideRange(flagValue('slides'), model.slides.length)) : null;
 const pptx = new PptxGenJS();
 pptx.layout = 'LAYOUT_WIDE';
 pptx.title = path.basename(input, path.extname(input));

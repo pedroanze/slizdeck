@@ -12,7 +12,7 @@ Catálogo de layout patterns compatibles con `template.html` (deck-stage 1920×1
 
 ## Índice
 
-23 patrones. **Ir directo al que pide el wireframe** — este archivo son 1200+ líneas y leerlo entero de corrido gasta contexto y termina sesgando hacia los primeros patrones (justo el anti-patrón "la misma composición cinco veces" que `audit.md` pide evitar). Si no sabés cuál elegir, la tabla del final ("Resumen — patrón por mensaje") mapea mensaje → patrón.
+19 patrones. **Ir directo al que pide el wireframe** — este archivo son 1200+ líneas y leerlo entero de corrido gasta contexto y termina sesgando hacia los primeros patrones (justo el anti-patrón "la misma composición cinco veces" que `audit.md` pide evitar). Si no sabes cuál elegir, la tabla del final ("Resumen — patrón por mensaje") mapea mensaje → patrón.
 
 | Familia | Patrones |
 |---|---|
@@ -20,11 +20,11 @@ Catálogo de layout patterns compatibles con `template.html` (deck-stage 1920×1
 | 2 · Comparison cards | `pq-card-2col` · `pq-card-3col` |
 | 3 · Card grids | `card-grid-3col-numbered` · `card-grid-4col` |
 | 4 · Mockups | `file-mockup` · `terminal-dark` · `terminal-light` · `mobile-mockup` · `deck-cover-replica` |
-| 5 · Diagramas y flujos | `bubble-cloud` · `mini-diagram-in-card` · `tools-split` · `counter-bars` · `flow-pipeline` |
+| 5 · Diagramas y flujos | `bubble-cloud` · `mini-diagram-in-card` · `tools-split` · `flow-pipeline` |
 | 6 · Special | `kb-tree` · `skill-list-with-workflow` |
 | 7 · Intro / About | `speaker-card` · `org-hero` |
 
-Métricas, barras comparativas, imágenes a sangre y pantalla de standby viven en `media-and-data.md`, no acá.
+**Datos (gráficas, tablas, timelines, métricas), imágenes a sangre y pantalla de standby viven en `media-and-data.md`**, no aquí.
 
 ---
 
@@ -292,7 +292,7 @@ Slide title
   <div class="warn-card reveal" data-step="2">
     <div class="warn-num-row">
       <span class="warn-num">01</span>
-      <span class="warn-icon"><i data-lucide="alert-triangle"></i></span>
+      <span class="warn-icon"><svg class="ic" viewBox="0 0 24 24"><path d="M12 3L2 21h20L12 3z"/><path d="M12 9v6"/><path d="M12 18v.01"/></svg></span>
     </div>
     <h3>Errors and hallucinations</h3>
     <p>Less frequent with clean context, but always possible. Verify important outputs.</p>
@@ -405,7 +405,7 @@ Para hacer meta-referencias (mostrar el propio deck, la app del cliente, un docu
   font-family: var(--cs-font-mono);
   font-size: 11px; font-weight: 700;
   letter-spacing: 0.10em;
-  color: #fff;
+  color: var(--cs-on-primary);
   background: var(--cs-primary);
   padding: 4px 10px; border-radius: 4px;
   align-self: flex-start;
@@ -415,7 +415,7 @@ Para hacer meta-referencias (mostrar el propio deck, la app del cliente, un docu
 .file-lines { display: flex; flex-direction: column; gap: 8px; flex: 1; }
 .file-lines .ln {
   height: 4px; border-radius: 2px;
-  background: rgba(0,0,0,0.10);
+  background: var(--cs-scrim);
 }
 .file-lines .ln.s { width: 75%; }
 .file-lines .ln.xs { width: 50%; }
@@ -503,8 +503,8 @@ Para hacer meta-referencias (mostrar el propio deck, la app del cliente, un docu
 **CSS:**
 ```css
 .mini-term {
-  background: rgba(0,0,0,0.04);
-  border: 1px solid rgba(0,0,0,0.06);
+  background: var(--cs-scrim);
+  border: 1px solid var(--cs-border);
   border-radius: 10px;
   padding: 14px 18px;
   margin-top: auto;  /* push to bottom of card */
@@ -701,7 +701,7 @@ Para hacer meta-referencias (mostrar el propio deck, la app del cliente, un docu
   border-radius: 999px;
 }
 .bubble.stale {
-  background: rgba(0,0,0,0.05);
+  background: var(--cs-scrim);
   color: var(--cs-muted);
   text-decoration: line-through;
 }
@@ -721,7 +721,7 @@ Para hacer meta-referencias (mostrar el propio deck, la app del cliente, un docu
 }
 ```
 
-**Nota:** si ponés `.sources` con reveal centrado, hacé override de `transform: translate(-50%, -50%)` sobre `.is-on` (ver specificity wars en `animations.md`).
+**Nota:** si pones `.sources` con reveal centrado, haz override de `transform: translate(-50%, -50%)` sobre `.is-on` (ver specificity wars en `animations.md`).
 
 ---
 
@@ -752,7 +752,7 @@ Para hacer meta-referencias (mostrar el propio deck, la app del cliente, un docu
 .diag-isolated { display: flex; gap: 12px; justify-content: center; }
 .chat-mini {
   width: 50px; height: 36px;
-  background: rgba(0,0,0,0.04);
+  background: var(--cs-scrim);
   border-radius: 6px;
   display: grid; grid-template-columns: 1fr 1fr;
   font-size: 11px; color: var(--cs-muted);
@@ -774,15 +774,15 @@ Para hacer meta-referencias (mostrar el propio deck, la app del cliente, un docu
 <div class="ts-grid">
   <div class="ts-tools">
     <div class="ts-tool">
-      <div class="ts-tool-ic"><i data-lucide="mail"></i></div>
+      <div class="ts-tool-ic"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg></div>
       <div class="ts-tool-name">Mail</div>
     </div>
     <div class="ts-tool">
-      <div class="ts-tool-ic"><i data-lucide="folder"></i></div>
+      <div class="ts-tool-ic"><svg class="ic" viewBox="0 0 24 24"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/></svg></div>
       <div class="ts-tool-name">Drive</div>
     </div>
     <div class="ts-tool">
-      <div class="ts-tool-ic"><i data-lucide="search"></i></div>
+      <div class="ts-tool-ic"><svg class="ic" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5l4 4"/></svg></div>
       <div class="ts-tool-name">Web search</div>
     </div>
   </div>
@@ -820,7 +820,7 @@ Para hacer meta-referencias (mostrar el propio deck, la app del cliente, un docu
   width: 64px; height: 64px;
   border-radius: 18px;
   background: var(--cs-grad-linear);
-  color: #fff;
+  color: var(--cs-on-primary);
   display: grid; place-items: center;
   flex-shrink: 0;
 }
@@ -833,77 +833,6 @@ Para hacer meta-referencias (mostrar el propio deck, la app del cliente, un docu
   margin-bottom: 8px;
 }
 ```
-
----
-
-### `counter-bars` — barras + counter que sube
-
-**Cuándo:** mostrar degradación progresiva (ej. compresión de tokens: 100% → 75% → 25%). Barra que se llena + counter que sube. Patrón animado — ver `animations.md` para el counter.
-
-**HTML:**
-```html
-<div class="tk-rows">
-  <div class="tk-row reveal" data-step="2">
-    <div class="tk-label">Chat start</div>
-    <div class="tk-bar"><div class="tk-fill" style="--w:100%"></div></div>
-    <div class="tk-state badge badge-green">Full precision</div>
-  </div>
-  <div class="tk-row reveal" data-step="3">
-    <div class="tk-label">Long chat</div>
-    <div class="tk-bar"><div class="tk-fill" style="--w:60%"></div></div>
-    <div class="tk-state badge badge-orange">Compression</div>
-  </div>
-  <div class="tk-row reveal" data-step="4">
-    <div class="tk-label">Full chat</div>
-    <div class="tk-bar"><div class="tk-fill" style="--w:25%"></div></div>
-    <div class="tk-state badge badge-red">Details lost</div>
-  </div>
-</div>
-<!-- Counter counterpart on its own (optional) -->
-<div class="tk-counter mono"
-     data-counter="200000"
-     data-target-step="4">0<span class="unit"> tokens</span></div>
-```
-
-**CSS:**
-```css
-.tk-rows { display: grid; gap: 32px; margin-top: 24px; }
-.tk-row {
-  display: grid;
-  grid-template-columns: 280px 1fr 280px;
-  align-items: center; gap: 28px;
-}
-.tk-label, .tk-state {
-  font-size: 20px; font-weight: 700;
-  letter-spacing: 0.10em;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-.tk-bar {
-  height: 18px;
-  background: rgba(0,0,0,0.06);
-  border-radius: 9px;
-  overflow: hidden;
-}
-.tk-fill {
-  height: 100%; width: 0%;
-  background: var(--cs-grad-linear);
-  border-radius: 9px;
-  transition: width 1400ms cubic-bezier(0.22, 1, 0.36, 1) var(--bd, 0ms);
-}
-/* .is-on lo pone el step controller sobre .tk-row (el .reveal), no sobre
-   .tk-fill — mismo patron ascendente que .prop en media-and-data.md.
-   `section[data-active="true"] .tk-fill.is-on` nunca coincidia: exigia
-   .is-on en el propio .tk-fill, que jamas la recibe. */
-.reveal.is-on .tk-fill { width: var(--w, 0%); }
-.tk-counter {
-  font-size: 64px; font-weight: 800;
-  color: var(--cs-black);
-  margin-top: 32px; text-align: center;
-}
-```
-
-**Nota:** el counter usa el `runCounter` del template (ver `animations.md`).
 
 ---
 
@@ -989,7 +918,7 @@ my-kb/<br>
 .kb-tree {
   font-size: 22px; line-height: 1.7;
   color: var(--cs-body);
-  background: rgba(0,0,0,0.04);
+  background: var(--cs-scrim);
   border-radius: 12px;
   padding: 32px 40px;
 }
@@ -1042,7 +971,7 @@ my-kb/<br>
 }
 .skill-row.featured {
   background: var(--cs-grad-linear);
-  color: #fff;
+  color: var(--cs-on-primary);
   border-color: transparent;
   box-shadow: 0 8px 24px color-mix(in srgb, var(--cs-primary) 30%, transparent);
 }
@@ -1050,10 +979,10 @@ my-kb/<br>
   font-size: 14px; letter-spacing: 0.12em;
   text-transform: uppercase; font-weight: 700;
   color: var(--cs-muted);
-  background: rgba(0,0,0,0.04);
+  background: var(--cs-scrim);
   padding: 4px 10px; border-radius: 6px;
 }
-.skill-row.featured .tag { background: rgba(255,255,255,0.18); color: #fff; }
+.skill-row.featured .tag { background: color-mix(in srgb, var(--cs-on-primary) 18%, transparent); color: var(--cs-on-primary); }
 .workflow-box {
   background: var(--cs-surface);
   border: 1px solid var(--cs-border);
@@ -1161,7 +1090,7 @@ qrencode -o assets/qr/alex.png -s 20 -m 2 -l H "https://www.linkedin.com/in/your
 ```
 
 **Notas críticas:**
-- El logo "in" de LinkedIn es SVG inline (path en el código), NO `<i data-lucide="linkedin">`. Lucide no relanza `createIcons()` automáticamente sobre elementos agregados después del render inicial — ver gotcha en `animations.md`.
+- El logo "in" de LinkedIn es SVG en línea (path en el código): el template no carga librerías de íconos.
 - El logo "in" mide ~52% del QR (68px sobre 130px). Mantener esa proporción para legibilidad.
 - Eyebrow + h2 arriba del grid (ej. "WORKSHOP HOSTS" + "Your team for today") con `.reveal data-step="1"`. Speakers en step 2, 3, …
 
@@ -1239,7 +1168,7 @@ qrencode -o assets/qr/alex.png -s 20 -m 2 -l H "https://www.linkedin.com/in/your
   padding: 0 32px;
 }
 .org-stat:not(:first-child) {
-  border-left: 1px solid rgba(0,0,0,0.12);
+  border-left: 1px solid var(--cs-border);
 }
 .org-stat-num {
   font-size: 88px; font-weight: 800;
@@ -1283,7 +1212,9 @@ qrencode -o assets/qr/alex.png -s 20 -m 2 -l H "https://www.linkedin.com/in/your
 | Fragmentos de contexto + sources | `bubble-cloud` |
 | Card con visual al fondo | `mini-diagram-in-card` |
 | Tools + sus problemas | `tools-split` |
-| Degradación progresiva | `counter-bars` |
+| Cifras, series, comparaciones de magnitud | `.sz-chart` (`media-and-data.md` → "Datos") |
+| Tabla comparativa | `table.sz-table` (`media-and-data.md`) |
+| Hitos en el tiempo | `ol.sz-timeline` (`media-and-data.md`) |
 | Pipeline lineal | `flow-pipeline` (estático) o flecha animada con wrap |
 | Estructura de carpetas | `kb-tree` |
 | Lista de skills + workflow de ejemplo | `skill-list-with-workflow` |
@@ -1292,4 +1223,4 @@ qrencode -o assets/qr/alex.png -s 20 -m 2 -l H "https://www.linkedin.com/in/your
 
 Para las animaciones asociadas (popup overlay, SVG path drawing, packets, magic-move): **`animations.md`**.
 
-Para un ejemplo end-to-end ver `examples/demo-deck.html` (demo de 6 slides, animation level LIGHT).
+Ejemplos completos: `examples/pitch-showcase.html` (pitch de 7 slides) y `examples/datos-showcase.html` (patrones de datos).

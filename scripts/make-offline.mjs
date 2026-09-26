@@ -18,7 +18,7 @@
  * archivo.
  */
 
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 
 const UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36';
 
@@ -34,13 +34,19 @@ async function main() {
     console.error('uso: node scripts/make-offline.mjs <deck.html> [salida.html]');
     process.exit(1);
   }
+  if (!existsSync(input)) {
+    console.error(`no existe el archivo: ${input}`);
+    process.exit(1);
+  }
   const out = outArg || input;
   let html = readFileSync(input, 'utf8');
 
-  const linkRe = /[ \t]*<link href="(https:\/\/fonts\.googleapis\.com[^"]*)"[^>]*>\n?/;
+  // href en cualquier posicion del <link>, no solo como primer atributo.
+  const linkRe = /[ \t]*<link\b[^>]*\bhref="(https:\/\/fonts\.googleapis\.com[^"]*)"[^>]*>\n?/;
   const link = linkRe.exec(html);
   if (!link) {
-    console.log('El deck no carga fuentes de Google Fonts. Nada que incrustar.');
+    console.log('El deck no carga fuentes de Google Fonts: nada que incrustar.');
+    reportRemote(html);
     return;
   }
 
@@ -72,24 +78,26 @@ async function main() {
   console.log(`✓ ${out}`);
   console.log(`  ${urls.length} fuentes incrustadas · ${kb(bytes)} de fuentes · archivo final ${kb(Buffer.byteLength(html))}`);
 
-  // Solo se incrustan fuentes. Cualquier otro recurso remoto sigue necesitando
-  // red, asi que no se puede prometer "presentable sin wifi" sin revisarlo.
-  // Con los comentarios enmascarados: template.html trae el <script> de
-  // lucide comentado como opt-in, y contarlo seria un falso positivo.
+  reportRemote(html);
+}
+
+/* Solo se incrustan fuentes. Cualquier otro recurso remoto sigue necesitando
+   red, asi que no se puede prometer "presentable sin wifi" sin revisarlo.
+   Con los comentarios enmascarados, para no contar un <script> comentado. */
+function reportRemote(html) {
   const visible = html.replace(/<!--[\s\S]*?-->/g, (c) => ' '.repeat(c.length));
   const remotos = [
     ...visible.matchAll(/<script\b[^>]*\bsrc=["'](https?:\/\/[^"']+)["']/gi),
     ...visible.matchAll(/<link\b[^>]*\bhref=["'](https?:\/\/[^"']+)["']/gi),
     ...visible.matchAll(/<img\b[^>]*\bsrc=["'](https?:\/\/[^"']+)["']/gi),
   ].map((x) => x[1]);
-
   if (!remotos.length) {
-    console.log('  El deck ya no depende de la red. Se puede presentar sin wifi.');
-  } else {
-    console.log(`  ⚠ Quedan ${remotos.length} recurso(s) remoto(s) sin incrustar — el deck TODAVIA depende de la red:`);
-    for (const u of [...new Set(remotos)]) console.log(`      ${u}`);
-    console.log('    Este script solo incrusta fuentes. Descargar esos recursos a local o quitarlos antes de presentar sin wifi.');
+    console.log('  El deck no depende de la red. Se puede presentar sin wifi.');
+    return;
   }
+  console.log(`  ⚠ Quedan ${remotos.length} recurso(s) remoto(s) sin incrustar: el deck TODAVIA depende de la red:`);
+  for (const u of [...new Set(remotos)]) console.log(`      ${u}`);
+  console.log('    Este script solo incrusta fuentes. Descargar esos recursos a local o quitarlos antes de presentar sin wifi.');
 }
 
 main().catch((e) => { console.error(e.message); process.exit(1); });

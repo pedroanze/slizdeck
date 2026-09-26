@@ -26,6 +26,9 @@
   --cs-scrim:       rgba(255,255,255,0.06);
   --cs-grad-radial: radial-gradient(112% 150% at 0% 100% in oklch, #16191B 0%, #0B0D0E 100%);
   --cs-grad-linear: linear-gradient(135deg in oklch, #E8A33D 0%, #E8433A 100%);
+  /* Texto sobre el ambar (cards o barras en primario, grad-linear): el
+     blanco ahi queda a 2.2:1. */
+  --cs-on-primary:  #0B0D0E;
   --cs-grad-text:   linear-gradient(135deg in oklch, #E8A33D 0%, #E8763B 50%, #E8433A 100%);
   --cs-font-sans:   'Archivo', ui-sans-serif, system-ui, sans-serif;
   --cs-font-heading: 'Archivo', ui-sans-serif, system-ui, sans-serif;

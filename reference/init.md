@@ -6,7 +6,7 @@ Tres caminos, en este orden. El objetivo es que el usuario nunca escriba CSS ni 
 
 **Esta fase decide, no aplica.** El archivo del deck todavía no existe — se crea recién en `build` a partir de `template.html`. Lo que sale de aquí es: qué pack, qué alternativa tipográfica (o el default), y qué colores de marca si los hay. `build` ejecuta `apply-style-pack.mjs` y `check-style-pack.mjs` contra el archivo real una vez que existe, con estas decisiones ya tomadas.
 
-**a) El usuario ya tiene design system.** Buscar `design-tokens.json` en el directorio actual, o leer los tokens que el usuario señale (CSS de su sitio, guía de marca, variables de otro proyecto). Sus colores mandan. Aun así hay que elegir un pack de `styles/index.md`, porque el pack aporta lo que un archivo de tokens casi nunca trae: tipografía, composición y reglas de uso del color.
+**a) El usuario ya tiene design system.** Leer los tokens que el usuario señale (CSS de su sitio, guía de marca, variables de otro proyecto, un archivo de tokens si tiene). Sus colores mandan. Aun así hay que elegir un pack de `styles/index.md`, porque el pack aporta lo que un archivo de tokens casi nunca trae: tipografía, composición y reglas de uso del color.
 
 Si en algún momento posterior (`build`, o un ajuste sobre un deck ya generado) el validador falla al inyectar estos colores, **decirlo y proponer el ajuste mínimo** (normalmente oscurecer el texto atenuado o separar acento de primario), nunca entregar un deck que no pasa.
 
@@ -32,9 +32,9 @@ En ambos casos, presentar el resultado como propuesta, no como hecho consumado; 
 
 **Reglas que no se negocian, vengan los colores de donde vengan:**
 - El fondo es blanco puro o casi negro salvo que el mood sea explícitamente ambiental (un panel de instrumentos, una pantalla de terminal). Un fondo crema "porque se ve cálido" es el cliché que hay que evitar: la calidez va en los colores de marca y en la tipografía, no en la superficie.
-- Nunca usar Inter, Roboto, Fraunces, Newsreader, IBM Plex, Space Grotesk, Geist, DM Sans, Plus Jakarta Sans ni Instrument Sans salvo que el usuario las pida por nombre. Están en la lista de fuentes que delatan una interfaz generada por IA.
+- Nunca usar Inter, Roboto, Geist, IBM Plex, Space Grotesk, Space Mono, DM Sans, DM Serif, Plus Jakarta Sans, Instrument Sans, Outfit, Syne, Fraunces, Newsreader, Playfair, Cormorant, Lora ni Crimson salvo que el usuario las pida por nombre: delatan una interfaz generada por IA. `check-style-pack.mjs` las detecta.
 - El deck no se da por terminado hasta que `check-style-pack.mjs` pasa sin fallos.
 
-Guardar `design-tokens.json` en el directorio del proyecto (no dentro de la skill) para reutilizarlo en futuros decks de la misma marca.
+Para reutilizar la marca en otro deck, el `:root` de este deck ya es la fuente: copiar sus tokens `--cs-*` (ver `reference/design-tokens-schema.md`).
 
 **Al terminar esta fase:** pack, colores y tipografía están decididos (aunque el archivo del deck nuevo todavía no exista). Sigue `brief` si es un deck nuevo. Si el usuario pidió cambiar el estilo de un deck que ya existe, aquí sí se aplica de inmediato con `apply-style-pack.mjs` sobre ese archivo real.

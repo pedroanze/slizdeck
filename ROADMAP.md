@@ -24,11 +24,6 @@ Hacia dónde va slizdeck. Es un plan vivo, medido en días de trabajo: se ajusta
 - [x] Publicación automática a npm al etiquetar una versión
 - [ ] Probado de verdad en Codex, Gemini CLI y OpenCode
 
-## Próximo · Subir el puntaje de los evals
-
-- [ ] Correr los 8 briefs de `evals/` con 2.2 y publicar el primer resultado completo
-- [ ] Atacar lo que marcan: texto en pantalla (hoy 52 a 125 palabras por slide) y notas del presentador en todas las slides
-
 ## 2.1 · Exports — días 4 a 5
 
 - [x] PPTX por geometría: cada texto y forma en su posición real medida en Chrome, imágenes reales, notas en el campo de PowerPoint
@@ -47,6 +42,11 @@ Hacia dónde va slizdeck. Es un plan vivo, medido en días de trabajo: se ajusta
 
 - [ ] Editor visual local (`npx slizdeck studio deck.html`): editar texto sobre la slide y dejar comentarios
 - [ ] Los comentarios llegan al agente (servidor MCP o ejecución headless de Claude/Codex) y se aplican con la fase `fix`
+
+## Próximo · Subir el puntaje de los evals
+
+- [ ] Correr los 8 briefs de `evals/` con 2.2 y publicar el primer resultado completo
+- [ ] Atacar lo que marcan: texto en pantalla (hoy 52 a 125 palabras por slide) y notas del presentador en todas las slides
 
 ## Continuo · Comunidad
 

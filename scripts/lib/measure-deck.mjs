@@ -277,7 +277,7 @@ const firstGradientColor = (bgImage) => {
       const ccs = getComputedStyle(container);
       const cb = rel(container.getBoundingClientRect());
       const content = {
-        x: cb.x + (px(ccs.paddingLeft) + px(ccs.borderLeftWidth)) / 1,
+        x: cb.x + px(ccs.paddingLeft) + px(ccs.borderLeftWidth),
         w: cb.w - px(ccs.paddingLeft) - px(ccs.paddingRight) - px(ccs.borderLeftWidth) - px(ccs.borderRightWidth),
       };
       const fs = px(ccs.fontSize);
@@ -332,7 +332,7 @@ const firstGradientColor = (bgImage) => {
       const ctx = c.getContext('2d');
       ctx.scale(k, k);
       ctx.translate(box.x - vis.x, box.y - vis.y);
-      const radius = Math.min(px(cs.borderTopLeftRadius) / scale, box.w / 2, box.h / 2);
+      const radius = Math.min(px(cs.borderTopLeftRadius), box.w / 2, box.h / 2);
       if (radius > 0) { ctx.beginPath(); ctx.roundRect(0, 0, box.w, box.h, radius); ctx.clip(); }
       if (cs.filter && cs.filter !== 'none') ctx.filter = cs.filter;
       drawFitted(ctx, el, nw, nh, box, cs);
@@ -394,7 +394,6 @@ const firstGradientColor = (bgImage) => {
             spacing: 0, underline: false, strike: false }],
           op, fromSvg: true,
         });
-        for (const tn of o.querySelectorAll('*')) void tn;
         const walker = document.createTreeWalker(o, NodeFilter.SHOW_TEXT);
         while (walker.nextNode()) collected.add(walker.currentNode);
         d.remove();
@@ -475,7 +474,7 @@ const firstGradientColor = (bgImage) => {
       }
       if (el.tagName === 'CANVAS') {
         const vis = intersect(box, clip);
-        try { if (vis) items.push({ type: 'image', ...box, data: el.toDataURL('image/png'), op }); } catch (e) { stats.rasterFailed.push('canvas'); }
+        try { if (vis && !hidden) items.push({ type: 'image', ...box, data: el.toDataURL('image/png'), op }); } catch (e) { stats.rasterFailed.push('canvas'); }
         return;
       }
 

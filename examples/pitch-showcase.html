@@ -1,29 +1,34 @@
 <!doctype html>
-<!-- slizdeck-engine-version: 1.4.0 — no borrar este comentario. scripts/doctor.mjs
+<!-- slizdeck-engine-version: 2.3.0 — no borrar este comentario. scripts/doctor.mjs
      lo lee para saber contra qué versión del engine se generó este deck y
      detectar si hay fixes de template.html posteriores que no llegaron acá
      (ver CHANGELOG.md). Se copia tal cual al generar un deck nuevo en build. -->
+<!-- lang: ajustar al idioma del deck (es, en, pt...). Afecta la
+     hifenizacion, el corrector y como lo lee un lector de pantalla. -->
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Nimbus · Product Demo</title>
 <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-<!-- Iconos lucide: opt-in. La mayoria de los decks no usa ninguno, y
-     cargarlo siempre es una peticion de red que no hace falta. Descomentar
-     solo si el deck usa <i data-lucide="nombre"> (ver reference/icons.md).
-     Version fijada a proposito: @latest ejecuta en el deck lo que haya
-     publicado el CDN ese dia. -->
-<!-- <script src="https://unpkg.com/lucide@0.469.0"></script> -->
 <style>
   /* ============================================================
-     CLAUDE SLIDES DESIGN TOKENS
+     SLIZDECK DESIGN TOKENS
      ============================================================ */
   :root {
     /* --- Colores: primario/secundario dominan, acento se usa con cuentagotas --- */
     --cs-primary:     #16181A;
     --cs-secondary:   #5A6169;
     --cs-accent:      #E23D1E;
+    /* El acento cuando resalta sobre el fondo (la cifra clave de una grafica,
+       la celda .hl de una tabla, el hito .hl de un timeline). Por default el
+       mismo acento; un pack cuyo acento solo vive sobre el primario (el lima
+       de committed) declara aca su version legible. */
+    --cs-accent-ink:  var(--cs-accent);
+    /* Texto sobre un bloque de color primario solido (una card o barra en
+       --cs-primary). Blanco por default; un pack de primario claro (el ambar
+       de terminal) lo oscurece. */
+    --cs-on-primary:  #FFFFFF;
     --cs-cream:       #FFFFFF;
     --cs-cream-2:     #F4F5F6;
     --cs-black:       #0A0B0C;
@@ -43,10 +48,18 @@
     --cs-grad-linear: linear-gradient(135deg in oklch, #16181A 0%, #000000 100%);
     --cs-grad-text:   linear-gradient(135deg in oklch, #16181A 0%, #3A4046 50%, #16181A 100%);
 
-    /* --- Tipografía: heading serif con carácter editorial, body sans funcional --- */
+    /* --- Tipografía. Estos defaults son los del pack paper-white (validado
+       con check-style-pack.mjs); build siempre aplica el pack elegido encima
+       con apply-style-pack.mjs. --- */
     --cs-font-sans:   'Schibsted Grotesk', ui-sans-serif, system-ui, sans-serif;
     --cs-font-heading: 'Schibsted Grotesk', ui-sans-serif, system-ui, sans-serif;
     --cs-font-mono:   ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+    /* Peso de los titulos grandes (cover, h2.title, transition). Un pack
+       cuya fuente de heading solo trae un peso (ej. Young Serif en
+       `editorial`, 400 unicamente) declara este token en 400: pedirle 600
+       a una fuente que no lo tiene fuerza negrita sintetica del navegador,
+       que en un display serif se ve visiblemente peor que el peso real. */
+    --cs-weight-heading: 600;
 
     /* --- Radios: escala corta, todo el sistema de componentes usa estos 3 --- */
     --cs-radius-sm:   12px;
@@ -58,12 +71,9 @@
     --cs-pad-top:     96px;
     --cs-pad-bottom:  120px;
 
-    --cs-shadow-1:    0 1px 2px rgba(0,0,0,0.04), 0 1px 1px rgba(0,0,0,0.03);
     --cs-shadow-2:    none;
-    --cs-shadow-3:    0 12px 32px rgba(0,0,0,0.08), 0 4px 10px rgba(0,0,0,0.05);
     --cs-fg-1:        var(--cs-black);
     --cs-fg-2:        var(--cs-body);
-    --cs-fg-3:        var(--cs-muted);
     --cs-ease-std:    cubic-bezier(0.22, 1, 0.36, 1);
   }
 
@@ -149,20 +159,20 @@
     font-family: var(--cs-font-heading);
     font-size: 168px; line-height: 0.98;
     letter-spacing: -0.02em;
-    margin: 0; font-weight: 600; color: #fff;
+    margin: 0; font-weight: var(--cs-weight-heading); color: #fff;
   }
   h1.cover-md {
     font-family: var(--cs-font-heading);
     font-size: 132px; line-height: 1.0;
     letter-spacing: -0.02em;
-    margin: 0; font-weight: 600; color: #fff;
+    margin: 0; font-weight: var(--cs-weight-heading); color: #fff;
   }
   h2.title {
     font-family: var(--cs-font-heading);
     font-size: 76px; line-height: 1.05;
     letter-spacing: -0.015em;
     margin: 0 0 56px;
-    font-weight: 600; color: var(--cs-black);
+    font-weight: var(--cs-weight-heading); color: var(--cs-black);
   }
   h2.title.tight { margin-bottom: 40px; }
 
@@ -181,6 +191,17 @@
   }
   .payoff em { font-style: normal; }
 
+  /* Cita de fuente para una cifra o afirmación: "Fuente: X, fecha".
+     export-pptx.mjs ya la reconoce (rol "caption"); antes no existia
+     ningun patron que la produjera, asi que cada deck la reinventaba con
+     un nombre distinto que el export no reconocia. Lleva punto final
+     (regla de voz 2: los captions sí cierran con punto). */
+  .stat-source {
+    font-size: 22px; line-height: 1.4;
+    color: var(--cs-muted);
+    margin-top: 24px;
+  }
+
   /* Gradient word — wrap a span/em inside any heading */
   .grad-word {
     background: var(--cs-grad-text);
@@ -197,10 +218,10 @@
     font-family: var(--cs-font-heading);
     font-size: 168px; line-height: 0.98;
     letter-spacing: -0.02em;
-    margin: 0; font-weight: 600; color: var(--cs-black);
+    margin: 0; font-weight: var(--cs-weight-heading); color: var(--cs-black);
     text-align: center;
   }
-  .ts-title .grad-word { font-weight: 600; }
+  .ts-title .grad-word { font-weight: var(--cs-weight-heading); }
   .ts-tagline {
     margin-top: 36px;
     font-size: 36px; line-height: 1.4;
@@ -223,24 +244,26 @@
     font-family: var(--cs-font-heading);
     font-size: 96px; line-height: 1.08;
     letter-spacing: -0.015em;
-    margin: 0; font-weight: 600; color: var(--cs-black);
+    margin: 0; font-weight: var(--cs-weight-heading); color: var(--cs-black);
     text-align: center;
   }
   .ts-title-sm {
     font-family: var(--cs-font-heading);
     font-size: 64px; line-height: 1.15;
     letter-spacing: -0.01em;
-    margin: 0; font-weight: 600; color: var(--cs-black);
+    margin: 0; font-weight: var(--cs-weight-heading); color: var(--cs-black);
     text-align: center;
   }
-  .ts-title-md .grad-word, .ts-title-sm .grad-word { font-weight: 600; }
+  .ts-title-md .grad-word, .ts-title-sm .grad-word { font-weight: var(--cs-weight-heading); }
 
   /* Resaltar una palabra o frase suelta sin necesitar un fondo degradado:
      negrita + color primario. Como maximo un .hl por slide (mismo cupo
      visual que el acento) — no es una alternativa al gradiente, es para
      las slides en --cs-cream que quieren un remate sin cambiar de fondo. */
-  .hl { font-weight: 700; color: var(--cs-primary); }
-  .hl-accent { font-weight: 700; color: var(--cs-accent); }
+  /* Solo en texto en linea: tr.hl, td.hl y li.hl de los patrones de datos
+     tienen su propio estilo y no deben heredar este. */
+  :is(span, strong, em, b).hl { font-weight: 700; color: var(--cs-primary); }
+  :is(span, strong, em, b).hl-accent { font-weight: 700; color: var(--cs-accent-ink); }
 
   /* Separador de seccion: mismo .ts-title/.ts-tagline centrado, pero sobre
      class="grad" (el mismo fondo invertido que cover/cierre) en vez de
@@ -249,6 +272,17 @@
      a estos tamanos). .ts-title/.ts-tagline son negro por default; sobre
      .grad necesitan pasar a blanco, igual que ya hace .eyebrow arriba. */
   .grad .ts-title, .grad .ts-tagline { color: #fff; }
+  /* .grad-word clava su color en el mismo degradado de marca que .grad ya
+     usa de fondo (--cs-grad-text vs --cs-grad-linear/-radial son la misma
+     paleta) — la palabra "resaltada" queda casi invisible contra su propio
+     fondo. Sobre .grad degrada a blanco solido, igual que el resto del
+     titulo a su alrededor: aqui el highlight es el fondo mismo, no hace
+     falta un segundo degradado encima. */
+  .grad .grad-word {
+    background: none;
+    -webkit-background-clip: initial; background-clip: initial;
+    -webkit-text-fill-color: #fff; color: #fff;
+  }
 
   /* ============================================================
      FOOTER (always present on every slide)
@@ -305,10 +339,16 @@
     letter-spacing: 0.14em; text-transform: uppercase;
     padding: 7px 14px; border-radius: 999px;
   }
-  .badge-primary { background: rgba(14,124,102,0.10); color: var(--cs-primary); }
-  .badge-green  { background: rgba(22, 163, 74, 0.12); color: #15803d; }
-  .badge-red    { background: rgba(220, 38, 38, 0.10); color: #b91c1c; }
-  .badge-orange { background: rgba(217, 119, 6, 0.12); color: #b45309; }
+  /* color-mix, no un rgba() fijo: un rgba hardcodeado congela el teal del
+     pack por default y sobrevive a apply-style-pack.mjs (que solo fusiona
+     :root, no reglas fuera de :root) — cambiar de pack dejaba este badge
+     con el color viejo mientras el resto del deck ya usaba el nuevo. */
+  .badge-primary { background: color-mix(in srgb, var(--cs-primary) 10%, transparent); color: var(--cs-primary); }
+  /* Color de estado mezclado con el color de texto del pack: sale mas oscuro
+     en packs claros y mas claro en packs oscuros, legible en los dos. */
+  .badge-green  { background: color-mix(in srgb, #16A34A 14%, transparent); color: color-mix(in srgb, #16A34A 62%, var(--cs-fg-1)); }
+  .badge-red    { background: color-mix(in srgb, #DC2626 14%, transparent); color: color-mix(in srgb, #DC2626 62%, var(--cs-fg-1)); }
+  .badge-orange { background: color-mix(in srgb, #D97706 14%, transparent); color: color-mix(in srgb, #D97706 62%, var(--cs-fg-1)); }
   .badge-muted  { background: var(--cs-scrim); color: var(--cs-muted); }
 
   /* ============================================================
@@ -377,9 +417,115 @@
   .stagger > .reveal:nth-child(4) { --d: 270ms; }
   .stagger > .reveal:nth-child(5) { --d: 360ms; }
   .stagger > .reveal:nth-child(6) { --d: 450ms; }
+  .stagger > .reveal:nth-child(7) { --d: 540ms; }
+  .stagger > .reveal:nth-child(8) { --d: 630ms; }
+  .stagger > .reveal:nth-child(9) { --d: 720ms; }
+  .stagger > .reveal:nth-child(10) { --d: 810ms; }
+  .stagger > .reveal:nth-child(11) { --d: 900ms; }
+  .stagger > .reveal:nth-child(12) { --d: 990ms; }
 
-  /* Sweep no-op (legacy markup compatibility — keep div as harmless empty) */
-  .sweep { display: none; }
+  /* Notas del presentador dentro de la propia slide: viajan con ella al
+     reordenar o insertar slides (el JSON de #speaker-notes va por indice y
+     se desalinea). Nunca se ven en el deck; las lee el modo presentador
+     (tecla P) y el export a PPTX. */
+  aside.notes { display: none !important; }
+
+  /* Transicion entre slides, opt-in: <deck-stage transition="fade">. El
+     default sigue siendo corte directo (regla de voz 10). */
+  ::view-transition-old(root), ::view-transition-new(root) { animation-duration: 320ms; }
+
+  /* Iconos de reference/icons.md: trazo del color del texto, sin relleno. */
+  svg.ic { width: 1em; height: 1em; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+  /* ============================================================
+     DATOS — graficas, tabla, timeline
+     Patrones de primera clase (reference/media-and-data.md → "Datos").
+     Las graficas son declarativas: el deck trae los datos en JSON y el
+     runtime de abajo dibuja el SVG (ejes, grilla, etiquetas) con el
+     tamaño real de la figura. El agente nunca calcula coordenadas.
+     ============================================================ */
+  .sz-chart { position: relative; display: block; width: 100%; height: 520px; margin: 0; }
+  .sz-chart > svg { display: block; width: 100%; height: 100%; overflow: visible; }
+  .sz-chart .sz-grid  { stroke: var(--cs-border); stroke-width: 1.5; }
+  .sz-chart .sz-axis  { stroke: var(--cs-border-strong); stroke-width: 2; }
+  .sz-chart .sz-tick  { fill: var(--cs-muted); font: 500 22px var(--cs-font-mono); }
+  .sz-chart .sz-cat   { fill: var(--cs-muted); font: 500 24px var(--cs-font-sans); }
+  .sz-chart .sz-value { fill: var(--cs-fg-1); font: 700 28px var(--cs-font-sans); }
+  .sz-chart .sz-name  { fill: var(--c); font: 600 24px var(--cs-font-sans); }
+  .sz-chart .sz-s0 { --c: var(--cs-primary); }
+  /* Segunda serie en --cs-muted y no en --cs-secondary: muted esta validado
+     como texto sobre el fondo en todos los packs, secondary no (en terminal
+     es un gris oscuro sobre casi negro, 2.1:1). */
+  .sz-chart .sz-s1 { --c: var(--cs-muted); }
+  .sz-chart .sz-s2 { --c: var(--cs-secondary); }
+  .sz-chart .sz-s3 { --c: var(--cs-border-strong); }
+  .sz-chart .sz-hl { --c: var(--cs-accent-ink); }
+  .sz-chart .sz-value.sz-hl { fill: var(--cs-accent-ink); }
+  /* Exponentes (10²⁵): en sans, porque las monoespaciadas del sistema no
+     traen los superindices y el navegador los compone con otra fuente
+     dejando huecos entre digitos. */
+  .sz-chart .sz-tick.sz-exp { font-family: var(--cs-font-sans); }
+  .sz-chart .sz-bar {
+    fill: var(--c);
+    transform-box: fill-box; transform-origin: 50% 100%; transform: scaleY(0);
+    transition: transform 900ms var(--cs-ease-std); transition-delay: calc(var(--i, 0) * 70ms);
+  }
+  .sz-chart .sz-bar.sz-h { transform-origin: 0 50%; transform: scaleX(0); }
+  .sz-chart .sz-line {
+    fill: none; stroke: var(--c); stroke-width: 5; stroke-linecap: round; stroke-linejoin: round;
+    transition: stroke-dashoffset 1400ms var(--cs-ease-std);
+  }
+  .sz-chart .sz-area { fill: var(--c); opacity: 0; transition: opacity 900ms ease 500ms; }
+  .sz-chart .sz-dot  { fill: var(--cs-cream); stroke: var(--c); stroke-width: 4; opacity: 0; transition: opacity 300ms ease 1100ms; }
+  .sz-chart .sz-value, .sz-chart .sz-name { opacity: 0; transition: opacity 400ms ease 900ms; }
+  /* Estado final: al revelarse el .reveal que la contiene (o de entrada si
+     la grafica no esta dentro de ninguno: sz-static lo pone el runtime). */
+  .sz-static .sz-bar, .reveal.is-on .sz-bar,
+  .sz-static .sz-bar.sz-h, .reveal.is-on .sz-bar.sz-h { transform: none; }
+  .sz-static .sz-line, .reveal.is-on .sz-line { stroke-dashoffset: 0 !important; }
+  .sz-static .sz-area, .reveal.is-on .sz-area { opacity: .12; }
+  .sz-static .sz-dot, .reveal.is-on .sz-dot,
+  .sz-static .sz-value, .reveal.is-on .sz-value,
+  .sz-static .sz-name, .reveal.is-on .sz-name { opacity: 1; }
+
+  table.sz-table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+  .sz-table th {
+    text-align: left; padding: 0 32px 18px 0;
+    font: 600 20px var(--cs-font-mono); letter-spacing: .08em; text-transform: uppercase;
+    color: var(--cs-muted); border-bottom: 2px solid var(--cs-border-strong);
+  }
+  .sz-table td {
+    padding: 22px 32px 22px 0; vertical-align: middle;
+    font-size: 30px; line-height: 1.2; color: var(--cs-fg-2);
+    border-bottom: 1px solid var(--cs-border);
+  }
+  .sz-table tbody tr:last-child td { border-bottom: none; }
+  .sz-table .num { text-align: right; font-family: var(--cs-font-mono); }
+  .sz-table th:last-child, .sz-table td:last-child { padding-right: 0; }
+  .sz-table td strong, .sz-table td.lead { color: var(--cs-fg-1); font-weight: 600; }
+  .sz-table .sub { display: block; margin-top: 4px; font-size: 22px; color: var(--cs-muted); font-weight: 400; }
+  .sz-table tr.hl td { color: var(--cs-fg-1); font-weight: 600; background: var(--cs-cream-2); }
+  .sz-table td.hl, .sz-table tr.hl td.hl { color: var(--cs-accent-ink); font-weight: 700; }
+  /* Sobre el fondo de la fila resaltada --cs-muted queda por debajo de AA
+     (4.47:1 en paper-white, medido con check-contrast): un paso mas oscuro. */
+  .sz-table tr.hl .sub { color: var(--cs-fg-2); }
+
+  /* Timeline horizontal. La linea es el borde superior de cada paso y el
+     punto un elemento real (lo inserta el runtime): nada de ::before, que no
+     viaja al export a PPTX. */
+  ol.sz-timeline { list-style: none; margin: 0; padding: 0; display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; }
+  .sz-timeline > li { position: relative; padding: 44px 40px 0 0; border-top: 2px solid var(--cs-border-strong); }
+  .sz-timeline > li:last-child { padding-right: 0; }
+  .sz-timeline .sz-dot {
+    position: absolute; top: -13px; left: 0; width: 24px; height: 24px; border-radius: 50%;
+    background: var(--cs-cream); border: 4px solid var(--cs-primary);
+  }
+  .sz-timeline > li.hl .sz-dot { background: var(--cs-accent-ink); border-color: var(--cs-accent-ink); }
+  .sz-timeline .when { display: block; font: 600 24px var(--cs-font-mono); letter-spacing: .04em; color: var(--cs-primary); }
+  .sz-timeline > li.hl .when { color: var(--cs-accent-ink); }
+  .sz-timeline h3 { margin: 12px 0 10px; font-size: 36px; line-height: 1.15; font-weight: 600; color: var(--cs-fg-1); }
+  .sz-timeline p { margin: 0; font-size: 24px; line-height: 1.4; color: var(--cs-fg-2); }
+
 
   /* Act marker — top-right step indicator on multi-step slides */
   .act-marker {
@@ -395,12 +541,25 @@
   .grad .act-marker { color: rgba(255,255,255,0.5); }
   .act-marker .step-num { color: var(--cs-fg-1); font-weight: 700; }
   .grad .act-marker .step-num { color: #fff; }
+  /* El total ("/3") va atenuado respecto al paso actual, pero sigue siendo
+     informacion legible, no decoracion. El inline `opacity:.4` que se usaba
+     antes dejaba --cs-muted en 1.7:1 sobre blanco: por debajo de cualquier
+     umbral. .8 lo deja en ~3.3:1, que es el minimo AA para 24px. */
   .act-marker .step-total { opacity: .8; }
 
-  /* Reduced motion — show everything immediately */
+  /* Reduced motion — sin desplazamientos ni animaciones en loop, pero los
+     pasos se siguen revelando con un fundido corto: mostrar todo de golpe
+     le quitaba al presentador el control del ritmo de la slide. */
   @media (prefers-reduced-motion: reduce) {
-    .reveal { opacity: 1 !important; transform: none !important; filter: none !important; clip-path: none !important; transition: none !important; }
-    *, *::before, *::after { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+    /* Solo la opacidad transiciona: el resto cambia de golpe mientras el
+       elemento todavia es invisible. Sin forzar transform:none, que
+       rompia los reveals centrados con translate(-50%). r-wipe/r-mask
+       ocultan con clip-path y no con opacidad: aca pasan a fundido. */
+    .reveal { transition: opacity 200ms ease !important; }
+    .reveal.r-wipe, .reveal.r-mask { opacity: 0; clip-path: none; }
+    .reveal.r-wipe.is-on, .reveal.r-mask.is-on { opacity: 1; }
+    .sz-chart .sz-bar, .sz-chart .sz-line, .sz-chart .sz-area, .sz-chart .sz-dot, .sz-chart .sz-value, .sz-chart .sz-name { transition-duration: 200ms !important; transition-delay: 0ms !important; }
+    *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; }
   }
 
   /* Print / PDF — el estado final de cada slide, no el estado inicial.
@@ -410,8 +569,14 @@
      El viewer chrome (barra de progreso, boton de fullscreen) es UI del
      reproductor, no contenido de la slide: no debe aparecer en el PDF. */
   @media print {
-    .reveal { opacity: 1 !important; transform: none !important; filter: none !important; clip-path: none !important; transition: none !important; }
+    /* Sin transform:none !important: finalizeForPrint ya pone .is-on, y
+       forzarlo aca borraba el translate(-50%) de los reveals centrados. */
+    .reveal { opacity: 1 !important; filter: none !important; clip-path: none !important; transition: none !important; }
     #progress-bar, #fs-btn { display: none !important; }
+    .sz-chart .sz-bar { transform: none !important; }
+    .sz-chart .sz-line { stroke-dashoffset: 0 !important; }
+    .sz-chart .sz-area { opacity: .12 !important; }
+    .sz-chart .sz-dot, .sz-chart .sz-value, .sz-chart .sz-name { opacity: 1 !important; }
     /* background-clip:text degrada mal al imprimir: Chrome dibuja la caja del
        gradiente como un recuadro visible alrededor de la palabra. En PDF la
        palabra de enfasis va en color solido. */
@@ -419,6 +584,14 @@
       background: none !important;
       -webkit-text-fill-color: var(--cs-primary) !important;
       color: var(--cs-primary) !important;
+    }
+    /* Sobre .grad el fondo sigue siendo el degradado (no se aplana en
+       print): degradar a --cs-primary ahi repite casi el mismo color del
+       fondo. Mayor especificidad que la regla de arriba, gana sin
+       depender del orden. */
+    .grad .grad-word {
+      -webkit-text-fill-color: #fff !important;
+      color: #fff !important;
     }
   }
 
@@ -468,12 +641,13 @@
      mockups, etc.) or animations.md (popup, SVG paths, packets) here.
      ============================================================ */
 
+
   /* Cifra + glosa (single stat) — media-and-data.md */
   .metrica { display: flex; flex-direction: column; gap: 12px; }
   .metrica .cifra {
     font-family: var(--cs-font-heading);
     font-size: 220px; line-height: .9; letter-spacing: -.03em;
-    color: var(--cs-accent); font-variant-numeric: tabular-nums;
+    color: var(--cs-accent-ink); font-variant-numeric: tabular-nums;
   }
   .metrica .cifra .unit { font-size: .5em; }
   .metrica .glosa { font-size: 32px; line-height: 1.4; color: var(--cs-body); max-width: 760px; }
@@ -518,32 +692,13 @@
   }
   .pipe-name { font-size: 22px; font-weight: 700; color: var(--cs-black); letter-spacing: -0.01em; }
   .pipe-arrow { font-size: 36px; color: var(--cs-muted); flex-shrink: 0; }
-
 </style>
 </head>
 <body>
 
 <deck-stage width="1920" height="1080">
-
-  <!-- ============================================================
-       INSERT SLIDES HERE
-       Each slide is a <section> with these conventions:
-       - data-label="NN Title"            (used for nav labels)
-       - data-steps="N" data-current-step="0"   (animated)
-         OR data-steps="1" data-current-step="1" (static)
-       - class="grad"                     (gradient bg, for cover)
-       - <div class="pad">                (standard padding frame)
-       - <div class="pad center">         (vertically centered, for transitions)
-       - <div class="footer">             (logo + speaker + slide num)
-
-       Catalog references:
-       - components.md  → layout patterns
-       - animations.md  → animation techniques
-       - icons.md       → SVG icons library
-       ============================================================ -->
-
-  <!-- ────────── 01 Cover ────────── -->
-  <section class="grad" data-label="01 Cover" data-steps="1" data-current-step="1">
+  
+    <section class="grad" data-label="01 Cover" data-steps="1" data-current-step="1">
     <div class="pad center">
       <div class="eyebrow">Product demo · 2026</div>
       <h1 class="cover">Nimbus</h1>
@@ -553,11 +708,10 @@
       <div class="left"></div>
       <div>Demo · slizdeck · <span class="num">01</span></div>
     </div>
+    <aside class="notes"><p>Nimbus reemplaza la reunión diaria de standup por notas de voz que se leen en dos minutos.</p></aside>
   </section>
 
-  <!-- ────────── 02 Problem (cifra + glosa, media-and-data.md) ────────── -->
-  <section data-label="02 Problem" data-steps="2" data-current-step="0">
-    <div class="sweep"></div>
+    <section data-label="02 Problem" data-steps="2" data-current-step="0">
     <div class="pad">
       <div class="act-marker"><span class="step-num">1</span><span class="step-total">/2</span></div>
       <div class="eyebrow reveal" data-step="1">The problem</div>
@@ -573,11 +727,10 @@
       <div class="left"></div>
       <div>Demo · slizdeck · <span class="num">02</span></div>
     </div>
+    <aside class="notes"><p>Cada equipo se sincroniza en vivo todos los días, haya o no algo que contar. Esos quince minutos se van en una reunión que nadie preparó.</p></aside>
   </section>
 
-  <!-- ────────── 03 Solution (flow-pipeline, components.md) ────────── -->
-  <section data-label="03 Solution" data-steps="2" data-current-step="0">
-    <div class="sweep"></div>
+    <section data-label="03 Solution" data-steps="2" data-current-step="0">
     <div class="pad">
       <div class="act-marker"><span class="step-num">1</span><span class="step-total">/2</span></div>
       <div class="eyebrow reveal" data-step="1">The solution</div>
@@ -604,11 +757,10 @@
       <div class="left"></div>
       <div>Demo · slizdeck · <span class="num">03</span></div>
     </div>
+    <aside class="notes"><p>Cada persona graba una nota de voz cuando le queda bien. Nimbus la transcribe y arma un resumen del equipo.</p></aside>
   </section>
 
-  <!-- ────────── 04 Before/Now (pq-card-2col, components.md) ────────── -->
-  <section data-label="04 Before and now" data-steps="3" data-current-step="0">
-    <div class="sweep"></div>
+    <section data-label="04 Before and now" data-steps="3" data-current-step="0">
     <div class="pad">
       <div class="act-marker"><span class="step-num">1</span><span class="step-total">/3</span></div>
       <div class="eyebrow reveal" data-step="1">What changes</div>
@@ -633,11 +785,10 @@
       <div class="left"></div>
       <div>Demo · slizdeck · <span class="num">04</span></div>
     </div>
+    <aside class="notes"><p>Antes: todos frenan a la misma hora, en todas las zonas horarias. Con Nimbus: el mismo contenido, leído en dos minutos a cualquier hora.</p></aside>
   </section>
 
-  <!-- ────────── 05 Traction (fila de métricas, media-and-data.md) ────────── -->
-  <section data-label="05 Traction" data-steps="2" data-current-step="0">
-    <div class="sweep"></div>
+    <section data-label="05 Traction" data-steps="2" data-current-step="0">
     <div class="pad">
       <div class="act-marker"><span class="step-num">1</span><span class="step-total">/2</span></div>
       <div class="eyebrow reveal" data-step="1">Traction</div>
@@ -653,10 +804,10 @@
       <div class="left"></div>
       <div>Demo · slizdeck · <span class="num">05</span></div>
     </div>
+    <aside class="notes"><p>En seis meses: cuarenta equipos, noventa y cuatro por ciento de adopción semanal, doce minutos ahorrados por día y por equipo.</p></aside>
   </section>
 
-  <!-- ────────── 06 Transition (frase sola, estática) ────────── -->
-  <section data-label="06 Payoff" data-steps="1" data-current-step="1">
+    <section data-label="06 Payoff" data-steps="1" data-current-step="1">
     <div class="pad center">
       <h1 class="ts-title">Meetings shrink. <span class="grad-word">Context</span> doesn't</h1>
     </div>
@@ -664,10 +815,10 @@
       <div class="left"></div>
       <div>Demo · slizdeck · <span class="num">06</span></div>
     </div>
+    <aside class="notes"><p>La reunión se achica; el contexto del equipo no se pierde.</p></aside>
   </section>
 
-  <!-- ────────── 07 Cierre ────────── -->
-  <section class="grad" data-label="07 Closing" data-steps="1" data-current-step="1">
+    <section class="grad" data-label="07 Closing" data-steps="1" data-current-step="1">
     <div class="pad center">
       <div class="eyebrow">Get started</div>
       <h1 class="cover-md">Try Nimbus with your team</h1>
@@ -677,6 +828,7 @@
       <div class="left"></div>
       <div>Demo · slizdeck · <span class="num">07</span></div>
     </div>
+    <aside class="notes"><p>Pueden probarlo hoy: es gratis para equipos de menos de diez personas.</p></aside>
   </section>
 
 </deck-stage>
@@ -699,8 +851,6 @@
     const DESIGN_W_DEFAULT = 1920;
     const DESIGN_H_DEFAULT = 1080;
     const OVERLAY_HIDE_MS = 1800;
-    const VALIDATE_ATTR = 'no_overflowing_text,no_overlapping_text,slide_sized_text';
-    const pad2 = (n) => String(n).padStart(2, '0');
 
     const stylesheet = `
       :host {
@@ -837,7 +987,7 @@
         canvas.appendChild(slot);
         stage.appendChild(canvas);
         const tapzones = document.createElement('div');
-        tapzones.className = 'tapzones export-hidden';
+        tapzones.className = 'tapzones';
         tapzones.setAttribute('aria-hidden', 'true');
         const tzBack = document.createElement('div'); tzBack.className = 'tapzone tapzone--back';
         const tzMid = document.createElement('div'); tzMid.className = 'tapzone tapzone--mid'; tzMid.style.pointerEvents = 'none';
@@ -846,7 +996,7 @@
         tzFwd.addEventListener('click', this._onTapForward);
         tapzones.append(tzBack, tzMid, tzFwd);
         const overlay = document.createElement('div');
-        overlay.className = 'overlay export-hidden';
+        overlay.className = 'overlay';
         overlay.setAttribute('role', 'toolbar');
         overlay.setAttribute('aria-label', 'Deck controls');
         overlay.innerHTML =
@@ -893,19 +1043,6 @@
           return tag !== 'TEMPLATE' && tag !== 'SCRIPT' && tag !== 'STYLE';
         });
         this._slides.forEach((slide, i) => {
-          const n = i + 1;
-          let label = slide.getAttribute('data-label');
-          if (!label) {
-            const existing = slide.getAttribute('data-screen-label');
-            if (existing) label = existing.replace(/^\s*\d+\s*/, '').trim() || existing;
-          }
-          if (!label) {
-            const h = slide.querySelector('h1, h2, h3, [data-title]');
-            if (h) label = (h.textContent || '').trim().slice(0, 40);
-          }
-          if (!label) label = 'Slide';
-          slide.setAttribute('data-screen-label', `${pad2(n)} ${label}`);
-          if (!slide.hasAttribute('data-om-validate')) slide.setAttribute('data-om-validate', VALIDATE_ATTR);
           slide.setAttribute('data-deck-slide', String(i));
         });
         if (this._totalEl) this._totalEl.textContent = String(this._slides.length || 1);
@@ -934,13 +1071,19 @@
         const prev = this._prevIndex == null ? -1 : this._prevIndex;
         const curr = this._index;
         try { history.replaceState(null, '', '#' + (curr + 1)); } catch (e) {}
-        this._slides.forEach((s, i) => {
+        const swap = () => this._slides.forEach((s, i) => {
           if (i === curr) s.setAttribute('data-deck-active', '');
           else s.removeAttribute('data-deck-active');
         });
+        // transition="fade" en <deck-stage>: fundido con View Transitions.
+        // Sin soporte, con movimiento reducido o en la entrada inicial, corte
+        // directo como siempre.
+        const fade = this.getAttribute('transition') === 'fade' && reason !== 'init' && prev >= 0 &&
+          typeof document.startViewTransition === 'function' &&
+          !(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+        if (fade) document.startViewTransition(swap); else swap();
         if (this._countEl) this._countEl.textContent = String(curr + 1);
         if (broadcast) {
-          try { window.postMessage({ slideIndexChanged: curr }, '*'); } catch (e) {}
           this.dispatchEvent(new CustomEvent('slidechange', {
             detail: {
               index: curr, previousIndex: prev,
@@ -1016,10 +1159,9 @@
 </script>
 
 <!-- ============================================================
-     Runtime: lucide icons + step controller + viewer chrome
+     Runtime: pasos, contadores, graficas, presentador y controles
      ============================================================ -->
 <script>
-  if (window.lucide) lucide.createIcons();
 
   const stage = document.querySelector('deck-stage');
 
@@ -1035,15 +1177,27 @@
 
   /* Formato compartido del contador: lo usan la animacion y el estado final
      de impresion, para que el PDF muestre exactamente la misma cifra. */
+  const LANG = document.documentElement.lang || 'en';
+  /* useGrouping 'min2': separador de miles solo desde 5 cifras, para que un
+     año (2026) no salga como "2,026". Navegadores sin soporte caen a true. */
+  function numberFormat(opts) {
+    try { return new Intl.NumberFormat(LANG, Object.assign({ useGrouping: 'min2' }, opts)); }
+    catch (e) { return new Intl.NumberFormat(LANG, opts); }
+  }
+  /* data-counter="4.5" respeta los decimales que trae (o data-decimals="N");
+     data-format="compact" abrevia (2.4 k, 1.2 M) segun el idioma del deck. */
   function counterParts(el) {
-    const target = parseInt(el.dataset.counter, 10);
+    const raw = String(el.dataset.counter || '0').trim();
+    const target = parseFloat(raw.replace(',', '.')) || 0;
+    const decimals = el.dataset.decimals != null
+      ? parseInt(el.dataset.decimals, 10)
+      : (raw.split(/[.,]/)[1] || '').length;
     const unitNode = el.querySelector('.unit');
     const unitHTML = unitNode ? unitNode.outerHTML : '';
-    const formatVal = (v) => {
-      if (target >= 100000) return (v / 1000).toFixed(0) + 'k';
-      if (target >= 1000)   return (v / 1000).toFixed(1) + 'k';
-      return Math.round(v).toString();
-    };
+    const nf = el.dataset.format === 'compact'
+      ? numberFormat({ notation: 'compact', maximumFractionDigits: 1 })
+      : numberFormat({ minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+    const formatVal = (v) => nf.format(v);
     return { target, unitHTML, formatVal };
   }
 
@@ -1056,7 +1210,12 @@
     const duration = 1400;
     el.innerHTML = formatVal(0) + unitHTML;
     const start = performance.now();
+    // Cada corrida lleva su id: si finalizeForPrint (PDF, export, capturas)
+    // deja la cifra final mientras la animacion sigue viva, el siguiente
+    // frame ya no la pisa con un valor intermedio.
+    const run = (el._counterRun = (el._counterRun || 0) + 1);
     const tick = (now) => {
+      if (el._counterRun !== run) return;
       const t = Math.min(1, (now - start) / duration);
       const eased = 1 - Math.pow(1 - t, 5);
       el.innerHTML = formatVal(target * eased) + unitHTML;
@@ -1068,11 +1227,308 @@
   function resetCounters(slide) {
     slide.querySelectorAll('[data-counter]').forEach((el) => {
       el.dataset.played = '';
-      const unitNode = el.querySelector('.unit');
-      const unitHTML = unitNode ? unitNode.outerHTML : '';
-      el.innerHTML = '0' + unitHTML;
+      el._counterRun = (el._counterRun || 0) + 1;
+      const { unitHTML, formatVal } = counterParts(el);
+      el.innerHTML = formatVal(0) + unitHTML;
     });
   }
+
+  /* ── Graficas declarativas (.sz-chart) ────────────────────────────────
+     Un <figure class="sz-chart"> con un bloque script type="application/json"
+     adentro, con los datos:
+         {"type":"bar","labels":["2023","2024","2025"],
+          "series":[{"name":"ARR","values":[0.4,1.2,3.1]}],
+          "unit":" M","prefix":"$","highlight":"last"}
+     (un cierre de etiqueta script literal en este comentario cortaria el
+     bloque: por eso el ejemplo completo vive en media-and-data.md).
+     type: bar | hbar | line | area. scale:"log" para ordenes de magnitud.
+     highlight: indice, "last", "max" o "min" (va en el color de acento).
+     Ver reference/media-and-data.md → "Datos".                          */
+  const SVGNS = 'http://www.w3.org/2000/svg';
+  const SUP = { '-': '⁻', 0: '⁰', 1: '¹', 2: '²', 3: '³', 4: '⁴', 5: '⁵', 6: '⁶', 7: '⁷', 8: '⁸', 9: '⁹' };
+  function svgEl(tag, attrs, parent) {
+    const e = document.createElementNS(SVGNS, tag);
+    for (const k in attrs) if (attrs[k] != null) e.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(e);
+    return e;
+  }
+  function svgText(parent, x, y, cls, text, anchor) {
+    const t = svgEl('text', { x, y, class: cls, 'text-anchor': anchor || 'start', 'dominant-baseline': 'middle' }, parent);
+    t.textContent = text;
+    return t;
+  }
+  function niceStep(range, count) {
+    const raw = (range || 1) / Math.max(1, count);
+    const mag = Math.pow(10, Math.floor(Math.log10(raw)));
+    const f = raw / mag;
+    return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10) * mag;
+  }
+  function chartSpec(fig) {
+    const tag = fig.querySelector('script[type="application/json"]');
+    try { return JSON.parse(tag ? tag.textContent : (fig.dataset.chart || '{}')); }
+    catch (e) { console.warn('sz-chart: JSON invalido', fig, e); return null; }
+  }
+  function renderChart(fig) {
+    const spec = chartSpec(fig);
+    if (!spec || !Array.isArray(spec.series) || !spec.series.length) return;
+    fig.querySelectorAll(':scope > svg').forEach((s) => s.remove());
+    const type = spec.type || 'bar';
+    const series = spec.series.map((s) => ({ name: s.name || '', values: (s.values || []).map(Number) }));
+    const n = Math.max(...series.map((s) => s.values.length));
+    const labels = (spec.labels || Array.from({ length: n }, (_, i) => String(i + 1))).map(String);
+    const W = fig.clientWidth || 1400, H = fig.clientHeight || 520;
+    const all = series.flatMap((s) => s.values).filter((v) => isFinite(v));
+    const decOf = (v) => Math.min(3, (String(v).split('.')[1] || '').length);
+    const log = spec.scale === 'log';
+    /* Cada cifra con la precision con la que viene en el JSON (3.4 → "3,4",
+       50 → "50"); spec.decimals la fija para todas. En escala log, notacion
+       cientifica: 5 × 10²⁵ en vez de 25 digitos. */
+    const fmtNum = (v, d) => {
+      if (log && Math.abs(v) >= 1e5) {
+        const e = Math.floor(Math.log10(Math.abs(v)));
+        const m = v / Math.pow(10, e);
+        const ms = Math.abs(m - 1) < 1e-9 ? '' : numberFormat({ maximumFractionDigits: 1 }).format(m) + ' × ';
+        return ms + '10' + String(e).split('').map((c) => SUP[c] || c).join('');
+      }
+      const dd = spec.decimals != null ? spec.decimals : d;
+      return numberFormat({ minimumFractionDigits: dd, maximumFractionDigits: dd }).format(v);
+    };
+    const fmt = (v, d = decOf(v)) => (spec.prefix || '') + fmtNum(v, d) + (spec.unit || '');
+    const hlIndex = (vals) => spec.highlight === 'last' ? vals.length - 1
+      : spec.highlight === 'max' ? vals.indexOf(Math.max(...vals))
+      : spec.highlight === 'min' ? vals.indexOf(Math.min(...vals))
+      : typeof spec.highlight === 'number' ? spec.highlight : -1;
+
+    /* Escala de valores */
+    let lo, hi, tickDec = 0; const ticks = [];
+    if (log) {
+      const pos = all.filter((v) => v > 0);
+      lo = Math.floor(Math.log10(spec.min || Math.min(...pos)));
+      hi = Math.ceil(Math.log10(spec.max || Math.max(...pos)));
+      if (hi === lo) hi = lo + 1;
+      const step = Math.max(1, Math.ceil((hi - lo) / 5));
+      hi = lo + step * Math.ceil((hi - lo) / step);   // que el tope caiga en una linea de la grilla
+      for (let e = lo; e <= hi; e += step) ticks.push(e);
+    } else {
+      const dMin = Math.min(0, ...all), dMax = Math.max(0, ...all);
+      const step = niceStep((spec.max ?? dMax) - (spec.min ?? dMin), 4);
+      lo = spec.min ?? Math.floor(dMin / step) * step;
+      hi = spec.max ?? Math.ceil(dMax / step) * step;
+      if (hi === lo) hi = lo + step;
+      tickDec = decOf(Number(step.toPrecision(6)));
+      for (let v = lo; v <= hi + step / 1e6; v += step) ticks.push(Number(v.toPrecision(12)));
+    }
+    const tv = (v) => (log ? Math.log10(Math.max(v, 1e-300)) : v);
+    const tickLabel = (t) => log ? '10' + String(t).split('').map((c) => SUP[c] || c).join('') : fmt(t, tickDec);
+
+    const svg = svgEl('svg', { viewBox: `0 0 ${W} ${H}`, width: W, height: H, role: 'img', 'aria-label': spec.title || labels.join(', ') });
+    fig.appendChild(svg);
+    const multi = series.length > 1;
+
+    if (type === 'hbar') {
+      /* Barras horizontales: rankings, "donde gana cada uno". */
+      const left = Math.min(W * 0.4, Math.max(...labels.map((l) => l.length)) * 14 + 28);
+      const right = Math.max(...all.map((v) => fmt(v).length)) * 16 + 24;
+      const x0 = left, x1 = W - right, band = H / n, bh = Math.min(64, band * 0.56);
+      const xs = (v) => x0 + ((tv(v) - (log ? lo : Math.min(lo, 0))) / (hi - (log ? lo : Math.min(lo, 0)))) * (x1 - x0);
+      svgEl('line', { x1: x0, x2: x0, y1: 0, y2: H, class: 'sz-axis' }, svg);
+      const vals = series[0].values, hl = hlIndex(vals);
+      vals.forEach((v, i) => {
+        const cy = band * i + band / 2;
+        const x = xs(v);
+        svgEl('rect', { x: x0, y: cy - bh / 2, width: Math.max(0, x - x0), height: bh, rx: 4,
+          class: `sz-bar sz-h ${i === hl ? 'sz-hl' : 'sz-s0'}`, style: `--i:${i}` }, svg);
+        svgText(svg, x0 - 18, cy, 'sz-cat', labels[i] || '', 'end');
+        svgText(svg, x + 14, cy, `sz-value ${i === hl ? 'sz-hl' : ''}`, fmt(v));
+      });
+      return svg;
+    }
+
+    const isLine = type === 'line' || type === 'area';
+    const legend = multi && !isLine;
+    const top = 48 + (legend ? 44 : 0);
+    const left = Math.max(...ticks.map((t) => tickLabel(t).length)) * 13.5 + 28;
+    const right = isLine ? (multi ? Math.max(...series.map((s, si) => s.name.length + (si === 0 ? 14 : 0))) * 13 + 40 : 32) : 12;
+    const bottom = 60;
+    const x0 = left, x1 = W - right, y0 = top, y1 = H - bottom;
+    const ys = (v) => y1 - ((tv(v) - lo) / (hi - lo)) * (y1 - y0);
+    const every = Math.max(1, Math.ceil(n / 12));
+
+    ticks.forEach((t) => {
+      const y = y1 - ((t - lo) / (hi - lo)) * (y1 - y0);
+      svgEl('line', { x1: x0, x2: x1, y1: y, y2: y, class: t === (log ? lo : 0) || (t === lo) ? 'sz-axis' : 'sz-grid' }, svg);
+      svgText(svg, x0 - 16, y, log ? 'sz-tick sz-exp' : 'sz-tick', tickLabel(t), 'end');
+    });
+
+    if (legend) {
+      let lx = x0;
+      series.forEach((s, si) => {
+        const g = svgEl('g', { class: `sz-s${si}` }, svg);
+        svgEl('rect', { x: lx, y: 8, width: 20, height: 20, rx: 4, class: 'sz-bar', style: 'transform:none' }, g);
+        const t = svgText(g, lx + 30, 18, 'sz-name', s.name);
+        t.style.opacity = 1;
+        lx += 30 + s.name.length * 13 + 40;
+      });
+    }
+
+    if (!isLine) {
+      const band = (x1 - x0) / n, groupW = band * (multi ? 0.72 : 0.62), bw = groupW / series.length;
+      const base = ys(log ? Math.pow(10, lo) : Math.max(lo, 0));
+      series.forEach((s, si) => {
+        const hl = multi ? -1 : hlIndex(s.values);
+        s.values.forEach((v, i) => {
+          const x = x0 + band * i + (band - groupW) / 2 + bw * si;
+          const y = ys(v);
+          svgEl('rect', { x: x + 2, y: Math.min(y, base), width: Math.max(0, bw - 4), height: Math.abs(base - y), rx: 4,
+            class: `sz-bar ${i === hl ? 'sz-hl' : 'sz-s' + si}`, style: `--i:${i}` }, svg);
+          if (!multi && (n <= 10 || i === hl)) svgText(svg, x + bw / 2, y - 22, `sz-value ${i === hl ? 'sz-hl' : ''}`, fmt(v), 'middle');
+        });
+      });
+      labels.forEach((l, i) => { if (i % every === 0) svgText(svg, x0 + band * i + band / 2, y1 + 34, 'sz-cat', l, 'middle'); });
+      return svg;
+    }
+
+    const px = (i) => (n === 1 ? (x0 + x1) / 2 : x0 + (i * (x1 - x0)) / (n - 1));
+    series.forEach((s, si) => {
+      const g = svgEl('g', { class: `sz-s${si}` }, svg);
+      const pts = s.values.map((v, i) => [px(i), ys(v)]).filter((p) => isFinite(p[1]));
+      if (!pts.length) return;
+      if (type === 'area') {
+        const d = `M${pts[0][0]},${y1} ` + pts.map((p) => `L${p[0]},${p[1]}`).join(' ') + ` L${pts[pts.length - 1][0]},${y1} Z`;
+        svgEl('path', { d, class: 'sz-area' }, g);
+      }
+      const path = svgEl('path', { d: 'M' + pts.map((p) => p.join(',')).join(' L'), class: 'sz-line' }, g);
+      const len = Math.ceil(path.getTotalLength ? path.getTotalLength() : 4000);
+      path.style.strokeDasharray = len;
+      path.style.strokeDashoffset = len;
+      const hl = si === 0 ? hlIndex(s.values) : -1;
+      pts.forEach((p, i) => {
+        if (n <= 12 || i === hl || i === pts.length - 1) {
+          svgEl('circle', { cx: p[0], cy: p[1], r: i === hl ? 10 : 7, class: `sz-dot ${i === hl ? 'sz-hl' : ''}` }, g);
+        }
+      });
+      const last = pts[pts.length - 1];
+      const hp = hl >= 0 ? pts[hl] : last;
+      if (!multi || (si === 0 && hl >= 0 && hl !== pts.length - 1)) {
+        svgText(g, hp[0], hp[1] - 30, `sz-value ${hl >= 0 ? 'sz-hl' : ''}`, fmt(s.values[hl >= 0 ? hl : pts.length - 1]), hl === pts.length - 1 || hl < 0 ? 'end' : 'middle');
+      }
+      if (multi) svgText(g, last[0] + 18, last[1], 'sz-name', s.name + (si === 0 ? '  ' + fmt(s.values[pts.length - 1]) : ''));
+    });
+    labels.forEach((l, i) => { if (i % every === 0 || i === n - 1) svgText(svg, px(i), y1 + 34, 'sz-cat', l, i === 0 && n > 1 ? 'start' : i === n - 1 && n > 1 ? 'end' : 'middle'); });
+    return svg;
+  }
+  function renderCharts() {
+    document.querySelectorAll('.sz-chart').forEach((fig) => {
+      try {
+        if (renderChart(fig)) {
+          fig.dataset.rendered = '1';
+          if (!fig.closest('.reveal')) fig.classList.add('sz-static');
+        }
+      } catch (e) { console.warn('sz-chart: no se pudo dibujar', fig, e); }
+    });
+  }
+  /* Timeline: el punto de cada paso es un elemento real, no un ::before. */
+  function enhanceTimelines() {
+    document.querySelectorAll('ol.sz-timeline > li').forEach((li) => {
+      if (li.querySelector(':scope > .sz-dot')) return;
+      const dot = document.createElement('span');
+      dot.className = 'sz-dot';
+      dot.setAttribute('aria-hidden', 'true');
+      li.prepend(dot);
+    });
+  }
+
+  /* ── Modo presentador (tecla P) ───────────────────────────────────────
+     Abre una ventana con las notas de la slide actual, la siguiente, el
+     paso en curso y un cronometro. Las flechas funcionan desde cualquiera
+     de las dos ventanas. Notas: <aside class="notes"> dentro de la slide,
+     o el JSON de <script id="speaker-notes"> (por indice).              */
+  let presenter = null;
+  let presenterStart = 0;
+  function slideNotes(slide, i) {
+    const aside = slide && slide.querySelector('aside.notes');
+    if (aside) return aside.innerHTML.trim();
+    const arr = stage._notes || [];
+    const n = arr[i];
+    if (typeof n !== 'string' || !n.trim()) return '';
+    return n.split(/\n\s*\n/).map((p) => '<p>' + p.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c])) + '</p>').join('');
+  }
+  function slideTitle(slide) {
+    if (!slide) return '';
+    const h = slide.querySelector('h1, h2, .ts-title');
+    const label = slide.getAttribute('data-label') || '';
+    return (h ? h.textContent.replace(/\s+/g, ' ').trim() : '') || label;
+  }
+  function updatePresenter() {
+    if (!presenter || presenter.closed) return;
+    const d = presenter.document;
+    const slides = Array.from(stage.querySelectorAll(':scope > section'));
+    const i = slides.findIndex((s) => s.hasAttribute('data-deck-active'));
+    const cur = slides[i], next = slides[i + 1];
+    const steps = cur ? parseInt(cur.dataset.steps || '1', 10) : 1;
+    const step = cur ? Math.max(1, parseInt(cur.dataset.currentStep || '1', 10)) : 1;
+    d.getElementById('pos').textContent = (i + 1) + ' / ' + slides.length + (steps > 1 ? '  ·  paso ' + step + ' / ' + steps : '');
+    d.getElementById('cur').textContent = slideTitle(cur);
+    d.getElementById('next').textContent = next ? slideTitle(next) : 'Fin del deck';
+    d.getElementById('notes').innerHTML = slideNotes(cur, i) || '<p class="empty">Esta slide no tiene notas.</p>';
+  }
+  function tickPresenter() {
+    if (!presenter || presenter.closed) return;
+    const s = Math.floor((Date.now() - presenterStart) / 1000);
+    const pad = (v) => String(v).padStart(2, '0');
+    presenter.document.getElementById('timer').textContent = pad(Math.floor(s / 60)) + ':' + pad(s % 60);
+    presenter.document.getElementById('clock').textContent = new Date().toLocaleTimeString(LANG, { hour: '2-digit', minute: '2-digit' });
+    setTimeout(tickPresenter, 500);
+  }
+  function openPresenter() {
+    if (presenter && !presenter.closed) { presenter.focus(); return; }
+    presenter = window.open('', 'slizdeck-presenter', 'width=1180,height=760');
+    if (!presenter) return;
+    presenterStart = Date.now();
+    const d = presenter.document;
+    /* Armado con el DOM, sin document.write de un HTML completo: una
+       etiqueta de cierre de body/head literal dentro de este script cortaria
+       la inyeccion de los scripts de la skill (que insertan su codigo antes
+       del cierre de body del deck). */
+    d.title = 'Presentador · ' + document.title;
+    d.documentElement.lang = LANG;
+    const css = d.createElement('style');
+    css.textContent =
+      'body{margin:0;background:#0A0B0C;color:#E8EAEC;font:20px/1.5 system-ui,-apple-system,sans-serif;display:grid;grid-template-rows:auto 1fr;height:100vh}' +
+      'header{display:flex;gap:40px;align-items:baseline;padding:22px 32px;border-bottom:1px solid #22262A}' +
+      '#timer{font:600 44px ui-monospace,Menlo,monospace;color:#fff}#clock,#pos{color:#8A9199;font-family:ui-monospace,Menlo,monospace}' +
+      'main{display:grid;grid-template-columns:2fr 1fr;min-height:0}' +
+      '#notes{padding:28px 36px;overflow:auto;font-size:28px;line-height:1.5;color:#F2F3F4}#notes p{margin:0 0 .8em}#notes .empty{color:#6B7278}' +
+      'aside{padding:28px 32px;border-left:1px solid #22262A;display:flex;flex-direction:column;gap:28px}' +
+      '.k{font:600 13px ui-monospace,Menlo,monospace;letter-spacing:.12em;text-transform:uppercase;color:#6B7278;margin-bottom:6px}' +
+      '#cur{font-size:26px;font-weight:600;color:#fff}#next{font-size:22px;color:#AEB4BA}.hint{margin-top:auto;color:#6B7278;font-size:15px}';
+    d.head.appendChild(css);
+    d.body.innerHTML =
+      '<header><span id="timer">00:00</span><span id="pos"></span><span id="clock"></span></header>' +
+      '<main><div id="notes"></div><aside><div><div class="k">Ahora</div><div id="cur"></div></div>' +
+      '<div><div class="k">Siguiente</div><div id="next"></div></div>' +
+      '<div class="hint">← → avanzan desde esta ventana · R reinicia el cronómetro · P la vuelve a enfocar</div></aside></main>';
+    d.addEventListener('keydown', (e) => {
+      if (e.key === 'r' || e.key === 'R') { presenterStart = Date.now(); return; }
+      if (['ArrowRight', 'ArrowLeft', ' ', 'PageDown', 'PageUp', 'Home', 'End'].includes(e.key)) {
+        e.preventDefault();
+        // Desde el body, como una tecla real: asi el controlador de pasos
+        // (capture en window) corre antes que el cambio de slide de
+        // deck-stage. Despachado directo en window, los dos corrian como
+        // "at target" en orden de registro y la flecha saltaba de slide sin
+        // revelar el paso siguiente.
+        document.body.dispatchEvent(new KeyboardEvent('keydown', { key: e.key, bubbles: true, cancelable: true }));
+      }
+    });
+    updatePresenter();
+    tickPresenter();
+  }
+  window.addEventListener('keydown', (e) => {
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    const t = e.target;
+    if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
+    if (e.key === 'p' || e.key === 'P') { e.preventDefault(); openPresenter(); }
+  });
 
   /* Apply current step: every .reveal whose data-step <= current gets .is-on. */
   function applyStep(slide, step) {
@@ -1087,16 +1543,27 @@
     });
     const marker = slide.querySelector('.act-marker .step-num');
     if (marker) marker.textContent = String(step);
+    updatePresenter();
   }
 
   /* Reset slide to step 0 (all reveals hidden), then advance to step 1
      so the first reveal animates in on entry. */
+  function afterFrame(fn) {
+    let done = false;
+    const once = () => { if (!done) { done = true; fn(); } };
+    requestAnimationFrame(() => setTimeout(once, 0));
+    setTimeout(once, 120);
+  }
+
   function resetAndEnter(slide) {
     if (!slide) return;
     slide.querySelectorAll('.reveal').forEach((el) => el.classList.remove('is-on'));
     resetCounters(slide);
     slide.dataset.currentStep = '0';
-    requestAnimationFrame(() => requestAnimationFrame(() => applyStep(slide, 1)));
+    // Un frame para que el navegador pinte el paso 0 y la entrada anime; con
+    // temporizador de respaldo, porque sin compositor (Chrome headless sin
+    // GPU) el rAF puede no llegar nunca y la slide quedaria en blanco.
+    afterFrame(() => applyStep(slide, 1));
   }
 
   /* Capture-phase keydown — runs BEFORE deck-stage's own handler. Advances
@@ -1126,10 +1593,9 @@
 
   /* On slide change: sync data-active, re-enter the new slide, update progress bar */
   stage.addEventListener('slidechange', (e) => {
-    requestAnimationFrame(() => {
-      syncActive();
-      resetAndEnter(e.detail.slide);
-    });
+    syncActive();
+    resetAndEnter(e.detail.slide);   // ya espera su propio frame
+    updatePresenter();
     const pct = (e.detail.index + 1) / e.detail.total;
     const bar = document.getElementById('progress-bar');
     if (bar) bar.style.transform = 'scaleX(' + pct + ')';
@@ -1142,7 +1608,7 @@
      .is-on. Sembramos el estado a mano una vez, ya con el DOM listo. */
   function enterInitialSlide() {
     const slide = stage.querySelector(':scope > section[data-deck-active]');
-    if (!slide) { requestAnimationFrame(enterInitialSlide); return; }
+    if (!slide) { setTimeout(enterInitialSlide, 16); return; }
     syncActive();
     resetAndEnter(slide);
     const total = stage.querySelectorAll(':scope > section').length || 1;
@@ -1150,29 +1616,54 @@
     const bar = document.getElementById('progress-bar');
     if (bar) bar.style.transform = 'scaleX(' + ((idx + 1) / total) + ')';
   }
-  requestAnimationFrame(enterInitialSlide);
+  renderCharts();
+  enhanceTimelines();
+  enterInitialSlide();
 
   /* Antes de imprimir / exportar a PDF: llevar TODAS las slides a su estado
      final, no solo la activa. El CSS de @media print ya revela los .reveal,
      pero los contadores [data-counter] necesitan JS: su valor lo calcula
      runCounter al llegar al paso objetivo, asi que sin esto un dato se
      imprime como "0" en vez de su cifra real. */
+  let beforePrint = null;
   function finalizeForPrint() {
+    if (!beforePrint) {
+      const live = stage.querySelector(':scope > section[data-deck-active]');
+      beforePrint = { slide: live, step: live ? parseInt(live.dataset.currentStep || '1', 10) : 1 };
+    }
     stage.querySelectorAll(':scope > section').forEach((slide) => {
+      // Los patrones que miran section[data-current-step="N"] (pulsos,
+      // magic-move) tambien llegan a su estado final.
+      slide.dataset.currentStep = slide.dataset.steps || '1';
       slide.querySelectorAll('.reveal').forEach((el) => el.classList.add('is-on'));
       slide.querySelectorAll('[data-counter]').forEach((el) => {
         const { target, unitHTML, formatVal } = counterParts(el);
         el.dataset.played = '1';
+        el._counterRun = (el._counterRun || 0) + 1;   // corta cualquier animacion en curso
         el.innerHTML = formatVal(target) + unitHTML;
       });
       const marker = slide.querySelector('.act-marker .step-num');
       if (marker) marker.textContent = slide.dataset.steps || '1';
     });
   }
+  /* Despues de imprimir, la slide en vivo vuelve al paso en que estaba (sin
+     esto, tras un Cmd+P quedaba todo revelado). */
+  function restoreAfterPrint() {
+    if (!beforePrint) return;
+    const { slide, step } = beforePrint;
+    beforePrint = null;
+    stage.querySelectorAll(':scope > section').forEach((s) => {
+      if (s === slide) return;
+      s.querySelectorAll('.reveal').forEach((el) => el.classList.remove('is-on'));
+      resetCounters(s);
+    });
+    if (slide) applyStep(slide, step);
+  }
   window.addEventListener('beforeprint', finalizeForPrint);
+  window.addEventListener('afterprint', restoreAfterPrint);
   if (window.matchMedia) {
     const mq = window.matchMedia('print');
-    if (mq.addEventListener) mq.addEventListener('change', (e) => { if (e.matches) finalizeForPrint(); });
+    if (mq.addEventListener) mq.addEventListener('change', (e) => { if (e.matches) finalizeForPrint(); else restoreAfterPrint(); });
   }
 
   /* Fullscreen button — toggle, hide while fullscreen */

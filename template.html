@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- slizdeck-engine-version: 2.2.0 — no borrar este comentario. scripts/doctor.mjs
+<!-- slizdeck-engine-version: 2.3.0 — no borrar este comentario. scripts/doctor.mjs
      lo lee para saber contra qué versión del engine se generó este deck y
      detectar si hay fixes de template.html posteriores que no llegaron acá
      (ver CHANGELOG.md). Se copia tal cual al generar un deck nuevo en build. -->
@@ -11,12 +11,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Slizdeck · [DECK NAME]</title>
 <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-<!-- Iconos lucide: opt-in. La mayoria de los decks no usa ninguno, y
-     cargarlo siempre es una peticion de red que no hace falta. Descomentar
-     solo si el deck usa <i data-lucide="nombre"> (ver reference/icons.md).
-     Version fijada a proposito: @latest ejecuta en el deck lo que haya
-     publicado el CDN ese dia. -->
-<!-- <script src="https://unpkg.com/lucide@0.469.0"></script> -->
 <style>
   /* ============================================================
      SLIZDECK DESIGN TOKENS
@@ -31,6 +25,10 @@
        mismo acento; un pack cuyo acento solo vive sobre el primario (el lima
        de committed) declara aca su version legible. */
     --cs-accent-ink:  var(--cs-accent);
+    /* Texto sobre un bloque de color primario solido (una card o barra en
+       --cs-primary). Blanco por default; un pack de primario claro (el ambar
+       de terminal) lo oscurece. */
+    --cs-on-primary:  #FFFFFF;
     --cs-cream:       #FFFFFF;
     --cs-cream-2:     #F4F5F6;
     --cs-black:       #0A0B0C;
@@ -73,12 +71,9 @@
     --cs-pad-top:     96px;
     --cs-pad-bottom:  120px;
 
-    --cs-shadow-1:    0 1px 2px rgba(0,0,0,0.04), 0 1px 1px rgba(0,0,0,0.03);
     --cs-shadow-2:    none;
-    --cs-shadow-3:    0 12px 32px rgba(0,0,0,0.08), 0 4px 10px rgba(0,0,0,0.05);
     --cs-fg-1:        var(--cs-black);
     --cs-fg-2:        var(--cs-body);
-    --cs-fg-3:        var(--cs-muted);
     --cs-ease-std:    cubic-bezier(0.22, 1, 0.36, 1);
   }
 
@@ -265,8 +260,10 @@
      negrita + color primario. Como maximo un .hl por slide (mismo cupo
      visual que el acento) — no es una alternativa al gradiente, es para
      las slides en --cs-cream que quieren un remate sin cambiar de fondo. */
-  .hl { font-weight: 700; color: var(--cs-primary); }
-  .hl-accent { font-weight: 700; color: var(--cs-accent); }
+  /* Solo en texto en linea: tr.hl, td.hl y li.hl de los patrones de datos
+     tienen su propio estilo y no deben heredar este. */
+  :is(span, strong, em, b).hl { font-weight: 700; color: var(--cs-primary); }
+  :is(span, strong, em, b).hl-accent { font-weight: 700; color: var(--cs-accent-ink); }
 
   /* Separador de seccion: mismo .ts-title/.ts-tagline centrado, pero sobre
      class="grad" (el mismo fondo invertido que cover/cierre) en vez de
@@ -347,9 +344,11 @@
      :root, no reglas fuera de :root) — cambiar de pack dejaba este badge
      con el color viejo mientras el resto del deck ya usaba el nuevo. */
   .badge-primary { background: color-mix(in srgb, var(--cs-primary) 10%, transparent); color: var(--cs-primary); }
-  .badge-green  { background: rgba(22, 163, 74, 0.12); color: #15803d; }
-  .badge-red    { background: rgba(220, 38, 38, 0.10); color: #b91c1c; }
-  .badge-orange { background: rgba(217, 119, 6, 0.12); color: #b45309; }
+  /* Color de estado mezclado con el color de texto del pack: sale mas oscuro
+     en packs claros y mas claro en packs oscuros, legible en los dos. */
+  .badge-green  { background: color-mix(in srgb, #16A34A 14%, transparent); color: color-mix(in srgb, #16A34A 62%, var(--cs-fg-1)); }
+  .badge-red    { background: color-mix(in srgb, #DC2626 14%, transparent); color: color-mix(in srgb, #DC2626 62%, var(--cs-fg-1)); }
+  .badge-orange { background: color-mix(in srgb, #D97706 14%, transparent); color: color-mix(in srgb, #D97706 62%, var(--cs-fg-1)); }
   .badge-muted  { background: var(--cs-scrim); color: var(--cs-muted); }
 
   /* ============================================================
@@ -434,6 +433,9 @@
   /* Transicion entre slides, opt-in: <deck-stage transition="fade">. El
      default sigue siendo corte directo (regla de voz 10). */
   ::view-transition-old(root), ::view-transition-new(root) { animation-duration: 320ms; }
+
+  /* Iconos de reference/icons.md: trazo del color del texto, sin relleno. */
+  svg.ic { width: 1em; height: 1em; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 
   /* ============================================================
      DATOS — graficas, tabla, timeline
@@ -524,8 +526,6 @@
   .sz-timeline h3 { margin: 12px 0 10px; font-size: 36px; line-height: 1.15; font-weight: 600; color: var(--cs-fg-1); }
   .sz-timeline p { margin: 0; font-size: 24px; line-height: 1.4; color: var(--cs-fg-2); }
 
-  /* Sweep no-op (legacy markup compatibility — keep div as harmless empty) */
-  .sweep { display: none; }
 
   /* Act marker — top-right step indicator on multi-step slides */
   .act-marker {
@@ -551,7 +551,13 @@
      pasos se siguen revelando con un fundido corto: mostrar todo de golpe
      le quitaba al presentador el control del ritmo de la slide. */
   @media (prefers-reduced-motion: reduce) {
-    .reveal { transform: none !important; filter: none !important; clip-path: none !important; transition: opacity 200ms ease !important; }
+    /* Solo la opacidad transiciona: el resto cambia de golpe mientras el
+       elemento todavia es invisible. Sin forzar transform:none, que
+       rompia los reveals centrados con translate(-50%). r-wipe/r-mask
+       ocultan con clip-path y no con opacidad: aca pasan a fundido. */
+    .reveal { transition: opacity 200ms ease !important; }
+    .reveal.r-wipe, .reveal.r-mask { opacity: 0; clip-path: none; }
+    .reveal.r-wipe.is-on, .reveal.r-mask.is-on { opacity: 1; }
     .sz-chart .sz-bar, .sz-chart .sz-line, .sz-chart .sz-area, .sz-chart .sz-dot, .sz-chart .sz-value, .sz-chart .sz-name { transition-duration: 200ms !important; transition-delay: 0ms !important; }
     *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; }
   }
@@ -563,7 +569,9 @@
      El viewer chrome (barra de progreso, boton de fullscreen) es UI del
      reproductor, no contenido de la slide: no debe aparecer en el PDF. */
   @media print {
-    .reveal { opacity: 1 !important; transform: none !important; filter: none !important; clip-path: none !important; transition: none !important; }
+    /* Sin transform:none !important: finalizeForPrint ya pone .is-on, y
+       forzarlo aca borraba el translate(-50%) de los reveals centrados. */
+    .reveal { opacity: 1 !important; filter: none !important; clip-path: none !important; transition: none !important; }
     #progress-bar, #fs-btn { display: none !important; }
     .sz-chart .sz-bar { transform: none !important; }
     .sz-chart .sz-line { stroke-dashoffset: 0 !important; }
@@ -674,7 +682,6 @@
 
   <!-- ────────── EXAMPLE 2: Content slide (cream, multi-step animated) ────────── -->
   <section data-label="02 Content example" data-steps="2" data-current-step="0">
-    <div class="sweep"></div>
     <div class="pad">
       <div class="act-marker"><span class="step-num">1</span><span class="step-total">/2</span></div>
       <div class="eyebrow reveal" data-step="1">Section eyebrow</div>
@@ -686,6 +693,9 @@
         <p>Card body. Replace this with real content. For richer card patterns (consequence cards, mockups, terminals), see components.md.</p>
       </div>
     </div>
+    <!-- Notas del presentador: el discurso de la slide. No se ve en el deck; lo
+         muestran el modo presentador (tecla P) y el campo de notas del PPTX. -->
+    <aside class="notes"><p>What the speaker says on this slide, in full sentences.</p></aside>
     <div class="footer">
       <div class="left"></div>
       <div>Speaker · Org · <span class="num">02</span></div>
@@ -724,8 +734,6 @@
     const DESIGN_W_DEFAULT = 1920;
     const DESIGN_H_DEFAULT = 1080;
     const OVERLAY_HIDE_MS = 1800;
-    const VALIDATE_ATTR = 'no_overflowing_text,no_overlapping_text,slide_sized_text';
-    const pad2 = (n) => String(n).padStart(2, '0');
 
     const stylesheet = `
       :host {
@@ -862,7 +870,7 @@
         canvas.appendChild(slot);
         stage.appendChild(canvas);
         const tapzones = document.createElement('div');
-        tapzones.className = 'tapzones export-hidden';
+        tapzones.className = 'tapzones';
         tapzones.setAttribute('aria-hidden', 'true');
         const tzBack = document.createElement('div'); tzBack.className = 'tapzone tapzone--back';
         const tzMid = document.createElement('div'); tzMid.className = 'tapzone tapzone--mid'; tzMid.style.pointerEvents = 'none';
@@ -871,7 +879,7 @@
         tzFwd.addEventListener('click', this._onTapForward);
         tapzones.append(tzBack, tzMid, tzFwd);
         const overlay = document.createElement('div');
-        overlay.className = 'overlay export-hidden';
+        overlay.className = 'overlay';
         overlay.setAttribute('role', 'toolbar');
         overlay.setAttribute('aria-label', 'Deck controls');
         overlay.innerHTML =
@@ -918,19 +926,6 @@
           return tag !== 'TEMPLATE' && tag !== 'SCRIPT' && tag !== 'STYLE';
         });
         this._slides.forEach((slide, i) => {
-          const n = i + 1;
-          let label = slide.getAttribute('data-label');
-          if (!label) {
-            const existing = slide.getAttribute('data-screen-label');
-            if (existing) label = existing.replace(/^\s*\d+\s*/, '').trim() || existing;
-          }
-          if (!label) {
-            const h = slide.querySelector('h1, h2, h3, [data-title]');
-            if (h) label = (h.textContent || '').trim().slice(0, 40);
-          }
-          if (!label) label = 'Slide';
-          slide.setAttribute('data-screen-label', `${pad2(n)} ${label}`);
-          if (!slide.hasAttribute('data-om-validate')) slide.setAttribute('data-om-validate', VALIDATE_ATTR);
           slide.setAttribute('data-deck-slide', String(i));
         });
         if (this._totalEl) this._totalEl.textContent = String(this._slides.length || 1);
@@ -972,7 +967,6 @@
         if (fade) document.startViewTransition(swap); else swap();
         if (this._countEl) this._countEl.textContent = String(curr + 1);
         if (broadcast) {
-          try { window.postMessage({ slideIndexChanged: curr }, '*'); } catch (e) {}
           this.dispatchEvent(new CustomEvent('slidechange', {
             detail: {
               index: curr, previousIndex: prev,
@@ -1048,10 +1042,9 @@
 </script>
 
 <!-- ============================================================
-     Runtime: lucide icons + step controller + viewer chrome
+     Runtime: pasos, contadores, graficas, presentador y controles
      ============================================================ -->
 <script>
-  if (window.lucide) lucide.createIcons();
 
   const stage = document.querySelector('deck-stage');
 
@@ -1382,7 +1375,11 @@
        del cierre de body del deck). */
     d.title = 'Presentador · ' + document.title;
     d.documentElement.lang = LANG;
+    // Tras recargar el deck, window.open devuelve la ventana ya abierta: se
+    // reemplaza su estilo y su atajo de teclado en vez de acumularlos.
+    d.querySelectorAll('style[data-sz-presenter]').forEach((el) => el.remove());
     const css = d.createElement('style');
+    css.setAttribute('data-sz-presenter', '');
     css.textContent =
       'body{margin:0;background:#0A0B0C;color:#E8EAEC;font:20px/1.5 system-ui,-apple-system,sans-serif;display:grid;grid-template-rows:auto 1fr;height:100vh}' +
       'header{display:flex;gap:40px;align-items:baseline;padding:22px 32px;border-bottom:1px solid #22262A}' +
@@ -1398,7 +1395,7 @@
       '<main><div id="notes"></div><aside><div><div class="k">Ahora</div><div id="cur"></div></div>' +
       '<div><div class="k">Siguiente</div><div id="next"></div></div>' +
       '<div class="hint">← → avanzan desde esta ventana · R reinicia el cronómetro · P la vuelve a enfocar</div></aside></main>';
-    d.addEventListener('keydown', (e) => {
+    d.onkeydown = (e) => {
       if (e.key === 'r' || e.key === 'R') { presenterStart = Date.now(); return; }
       if (['ArrowRight', 'ArrowLeft', ' ', 'PageDown', 'PageUp', 'Home', 'End'].includes(e.key)) {
         e.preventDefault();
@@ -1409,7 +1406,7 @@
         // revelar el paso siguiente.
         document.body.dispatchEvent(new KeyboardEvent('keydown', { key: e.key, bubbles: true, cancelable: true }));
       }
-    });
+    };
     updatePresenter();
     tickPresenter();
   }
@@ -1438,19 +1435,22 @@
 
   /* Reset slide to step 0 (all reveals hidden), then advance to step 1
      so the first reveal animates in on entry. */
+  function afterFrame(fn) {
+    let done = false;
+    const once = () => { if (!done) { done = true; fn(); } };
+    requestAnimationFrame(() => setTimeout(once, 0));
+    setTimeout(once, 120);
+  }
+
   function resetAndEnter(slide) {
     if (!slide) return;
     slide.querySelectorAll('.reveal').forEach((el) => el.classList.remove('is-on'));
     resetCounters(slide);
     slide.dataset.currentStep = '0';
-    // Un rAF + un macrotask, no un rAF anidado en otro: en Chrome headless
-    // sin GPU (shoot.mjs, check-*.mjs) un segundo rAF encadenado no llega a
-    // dispararse la mayoria de las veces (medido: ~90% de las corridas se
-    // quedan colgadas esperandolo). Eso dejaba los .reveal removidos por la
-    // linea de arriba sin nadie que los reponga: la slide se capturaba en
-    // blanco. setTimeout(0) no depende del compositor y no cambia nada
-    // visible para quien presenta en un navegador real.
-    requestAnimationFrame(() => setTimeout(() => applyStep(slide, 1), 0));
+    // Un frame para que el navegador pinte el paso 0 y la entrada anime; con
+    // temporizador de respaldo, porque sin compositor (Chrome headless sin
+    // GPU) el rAF puede no llegar nunca y la slide quedaria en blanco.
+    afterFrame(() => applyStep(slide, 1));
   }
 
   /* Capture-phase keydown — runs BEFORE deck-stage's own handler. Advances
@@ -1480,13 +1480,8 @@
 
   /* On slide change: sync data-active, re-enter the new slide, update progress bar */
   stage.addEventListener('slidechange', (e) => {
-    requestAnimationFrame(() => {
-      syncActive();
-      resetAndEnter(e.detail.slide);
-    });
-    // Sin esperar al rAF: con el foco en la ventana del presentador, el
-    // navegador frena los frames de la ventana del deck (queda detras) y
-    // las notas se quedaban en la slide anterior.
+    syncActive();
+    resetAndEnter(e.detail.slide);   // ya espera su propio frame
     updatePresenter();
     const pct = (e.detail.index + 1) / e.detail.total;
     const bar = document.getElementById('progress-bar');
@@ -1500,7 +1495,7 @@
      .is-on. Sembramos el estado a mano una vez, ya con el DOM listo. */
   function enterInitialSlide() {
     const slide = stage.querySelector(':scope > section[data-deck-active]');
-    if (!slide) { requestAnimationFrame(enterInitialSlide); return; }
+    if (!slide) { setTimeout(enterInitialSlide, 16); return; }
     syncActive();
     resetAndEnter(slide);
     const total = stage.querySelectorAll(':scope > section').length || 1;
@@ -1510,15 +1505,23 @@
   }
   renderCharts();
   enhanceTimelines();
-  requestAnimationFrame(enterInitialSlide);
+  enterInitialSlide();
 
   /* Antes de imprimir / exportar a PDF: llevar TODAS las slides a su estado
      final, no solo la activa. El CSS de @media print ya revela los .reveal,
      pero los contadores [data-counter] necesitan JS: su valor lo calcula
      runCounter al llegar al paso objetivo, asi que sin esto un dato se
      imprime como "0" en vez de su cifra real. */
+  let beforePrint = null;
   function finalizeForPrint() {
+    if (!beforePrint) {
+      const live = stage.querySelector(':scope > section[data-deck-active]');
+      beforePrint = { slide: live, step: live ? parseInt(live.dataset.currentStep || '1', 10) : 1 };
+    }
     stage.querySelectorAll(':scope > section').forEach((slide) => {
+      // Los patrones que miran section[data-current-step="N"] (pulsos,
+      // magic-move) tambien llegan a su estado final.
+      slide.dataset.currentStep = slide.dataset.steps || '1';
       slide.querySelectorAll('.reveal').forEach((el) => el.classList.add('is-on'));
       slide.querySelectorAll('[data-counter]').forEach((el) => {
         const { target, unitHTML, formatVal } = counterParts(el);
@@ -1530,10 +1533,24 @@
       if (marker) marker.textContent = slide.dataset.steps || '1';
     });
   }
+  /* Despues de imprimir, la slide en vivo vuelve al paso en que estaba (sin
+     esto, tras un Cmd+P quedaba todo revelado). */
+  function restoreAfterPrint() {
+    if (!beforePrint) return;
+    const { slide, step } = beforePrint;
+    beforePrint = null;
+    stage.querySelectorAll(':scope > section').forEach((s) => {
+      if (s === slide) return;
+      s.querySelectorAll('.reveal').forEach((el) => el.classList.remove('is-on'));
+      resetCounters(s);
+    });
+    if (slide) applyStep(slide, step);
+  }
   window.addEventListener('beforeprint', finalizeForPrint);
+  window.addEventListener('afterprint', restoreAfterPrint);
   if (window.matchMedia) {
     const mq = window.matchMedia('print');
-    if (mq.addEventListener) mq.addEventListener('change', (e) => { if (e.matches) finalizeForPrint(); });
+    if (mq.addEventListener) mq.addEventListener('change', (e) => { if (e.matches) finalizeForPrint(); else restoreAfterPrint(); });
   }
 
   /* Fullscreen button — toggle, hide while fullscreen */
