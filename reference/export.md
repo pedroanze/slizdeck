@@ -6,17 +6,16 @@ El HTML ya es el entregable principal (se presenta en vivo desde el navegador). 
 
 ## PDF
 
-Impresión nativa del navegador: `Cmd/Ctrl+P` → guardar como PDF. El template ya trae las reglas `@media print` que garantizan el **estado final** de cada slide: reveals visibles, contadores en su cifra real, sin el chrome del reproductor. No hace falta avanzar las animaciones a mano antes de imprimir.
-
-Para generarlo sin abrir el navegador (útil para verificar un cambio):
-
 ```bash
-"$(node scripts/lib/find-chrome.mjs)" \
-  --headless --disable-gpu --no-pdf-header-footer \
-  --print-to-pdf="deck.pdf" --virtual-time-budget=5000 "file://$PWD/deck.html"
+node scripts/export-pdf.mjs deck.html deck.pdf
 ```
 
-`find-chrome.mjs` detecta Chrome/Chromium automáticamente en macOS, Linux y Windows; si no está en una ruta típica, setear `CHROME_PATH` con la ruta completa al ejecutable.
+Una página por slide, en su **estado final** (reveals visibles, contadores en su cifra real, sin el chrome del reproductor), con Chrome headless. Dos diferencias deliberadas con imprimir a mano desde el navegador:
+
+- **Sin el grano de los fondos degradados.** Chrome lo rasteriza al imprimir y un deck de 18 slides pasaba de ~1 MB a 22 MB. `--grain` lo conserva si el usuario lo pide.
+- **Sin el marcador de pasos** (`3 / 3`), que es UI del reproductor en vivo.
+
+El script verifica que el PDF tenga tantas páginas como slides el deck (sale con código 1 si no) y avisa si pesa más de 10 MB. La impresión nativa (`Cmd/Ctrl+P` → guardar como PDF) sigue funcionando para el usuario que prefiera hacerlo a mano.
 
 ## PPTX editable
 
@@ -26,15 +25,23 @@ Para quien necesite el deck en PowerPoint o Google Slides:
 node scripts/export-pptx.mjs deck.html deck.pptx
 ```
 
-Reconstruye cada slide con cajas de texto y formas nativas (no imágenes), leyendo los design tokens del propio HTML. Si las dependencias no están instaladas, el script lo avisa e imprime el `npm install --prefix …` exacto a correr (una sola vez).
+Exporta **por geometría**: renderiza cada slide en Chrome en su estado final, mide lo que el navegador dibujó y lo reconstruye en PowerPoint en la misma posición. No depende de qué patrón de `components.md` use la slide: un layout nuevo se exporta igual.
 
-Advertir al usuario de las degradaciones inherentes al formato, que no son fallos del export:
-- **Sin animaciones**: PPTX no reproduce el sistema de reveals; se exporta el estado final.
-- **Fuentes sustituidas**: las fuentes web se mapean a fuentes seguras de Office (serif → Cambria, sans → Calibri) porque una fuente no instalada en la máquina del lector se sustituye sola y rompe el layout.
-- **Gradientes aplanados**: los fondos de cover/cierre se exportan en el color primario sólido.
-- **Imágenes como placeholder**: ninguna imagen real se incrusta (coherente con "cero imágenes, todo editable"); sale una forma con el alt como etiqueta.
+- **Texto**: cajas de texto nativas, con sus tramos de estilo (color, tamaño, peso, itálica, tracking), editables.
+- **Cards, barras, reglas, bordes**: formas nativas con su radio de borde.
+- **Imágenes**: embebidas de verdad, ya recortadas como las muestra el deck (`object-fit`, `border-radius`, filtros CSS).
+- **SVG** (íconos, diagramas, charts hechos a mano): imagen PNG a 2x; sus `<text>` (rótulos, ejes) viajan como texto editable encima.
+- **Fondos con degradado o grano** (cover, cierre, transiciones): una captura del fondo sin su contenido, como imagen de fondo.
+- **Speaker notes** (`<script id="speaker-notes">`): al campo nativo de notas de PowerPoint.
 
-Una limitación real que sigue existiendo, no una degradación aceptada: `export-pptx.mjs` reconoce un set cerrado de clases (ver el comentario de cabecera del script y `reference/media-and-data.md` para lo que sí cubre). Si el wireframe usa un patrón de layout nuevo de `reference/components.md` sin extender antes el script, ese contenido **no aparece en el `.pptx`**. El script lo detecta: lista cada texto que no viajó, marca el resultado como "EXPORT INCOMPLETO" y sale con código 1. Si el usuario va a necesitar el export a PPTX, avisar antes de generar si el deck usa algo fuera de lo documentado como soportado.
+Opciones: `--safe-fonts` (Arial/Georgia/Consolas en vez de las fuentes del pack), `--slides=1,3-5` (solo esas slides), `--legacy` (el exportador anterior por clases, se conserva una versión).
+
+Advertir al usuario de lo que el formato no puede llevar:
+- **Sin animaciones**: se exporta el estado final de cada slide.
+- **Fuentes**: el `.pptx` nombra las fuentes del pack. Si quien lo abre no las tiene instaladas (Google Fonts), PowerPoint pone una sustituta y los textos pueden cambiar de ancho. Si el `.pptx` va a circular, ofrecer `--safe-fonts`.
+- **Tablas HTML**: salen como cajas de texto alineadas, no como tabla nativa.
+
+Lo que no viaja se reporta siempre, nunca en silencio: el **texto generado por CSS** (`content: "…"` en `::before`/`::after`) no existe en el DOM y no se puede exportar; el script lo lista y sale con código 1. Si es contenido real, moverlo al HTML. Las decoraciones CSS en pseudo-elementos y los degradados de cajas (aplanados a su primer color) se avisan sin fallar.
 
 Si el usuario necesita fidelidad visual exacta, el PDF es el formato correcto; el PPTX es para cuando necesita **editar**.
 

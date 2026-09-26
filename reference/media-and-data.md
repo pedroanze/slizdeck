@@ -4,7 +4,7 @@ Patrones listos para las slides que llevan algo más que texto. Todo en CSS y SV
 
 Copiar el CSS al bloque de la slide y el HTML dentro del `.pad`.
 
-**Soporte en export a PPTX** (`scripts/export-pptx.mjs`): imagen a sangre/split, fila de métricas, barras comparativas y progreso/proporción se reconocen y se exportan como texto/formas nativas. La pantalla de inicio (`.standby`) no tiene soporte: su texto queda fuera del `.pptx` y el script lo reporta como export incompleto. Las barras se reconstruyen como rectángulos apilados proporcionales al `width%` original de cada segmento; la proporción usa el mismo valor `--v` que anima el `.fill` en HTML.
+**Soporte en export a PPTX** (`scripts/export-pptx.mjs`): desde 2.1 el export mide cada slide en Chrome y reconstruye lo que ve, así que todos los patrones de este archivo viajan sin soporte específico: imágenes ya recortadas como en el deck, métricas y barras como texto y formas nativas en su posición real. Lo único que no viaja es texto o decoración generados por CSS en `::before`/`::after`; el script lo reporta.
 
 **Un filtro CSS decorativo (`grayscale`, `sepia`, etc.) en una imagen nunca va en el mismo elemento que lleva `.reveal`.** El pipeline de impresión resetea `filter: none !important` sobre cualquier `.reveal` para quitar el `blur(14px)` de la animación al finalizar (ver `template.html` → `@media print`) — y como es el mismo shorthand, se lleva puesto cualquier otro filtro que el elemento tuviera, incluido uno que nada tenga que ver con la animación. Si una imagen necesita `.reveal` (para que aparezca en su paso) y además un filtro permanente, separarlos en dos elementos: el filtro va en el `<img>`, `.reveal`/`.r-blur` va en un `<div>` que lo envuelve.
 

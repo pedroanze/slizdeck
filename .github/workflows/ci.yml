@@ -76,8 +76,17 @@ jobs:
           node scripts/doctor.mjs examples/pitch-showcase.html
           node scripts/shoot.mjs examples/pitch-showcase.html --slides=1 --out=/tmp/ci-shots
 
-      - name: export-pptx.mjs y make-offline.mjs (cobertura del export)
+      - name: export-pptx.mjs, export-pdf.mjs y make-offline.mjs (cobertura del export)
+        env:
+          CHROME_PATH: ${{ steps.setup-chrome.outputs.chrome-path }}
         run: |
+          # Por geometria: los tres decks de prueba (que el exportador por
+          # clases perdia 30/116/100 textos) tienen que exportar sin perdidas.
+          for d in examples/test-0*/*.html; do
+            node scripts/export-pptx.mjs "$d" "/tmp/ci-$(basename "$d" .html).pptx"
+            node scripts/export-pdf.mjs "$d" "/tmp/ci-$(basename "$d" .html).pdf"
+          done
+          node scripts/export-pptx.mjs examples/pitch-showcase.html /tmp/ci-deck.pptx --legacy
           node scripts/export-pptx.mjs examples/pitch-showcase.html /tmp/ci-deck.pptx
           test -s /tmp/ci-deck.pptx || { echo "el .pptx salio vacio"; exit 1; }
           cp examples/pitch-showcase.html /tmp/ci-offline.html
@@ -91,6 +100,8 @@ jobs:
           diff -q examples/pitch-showcase.html /tmp/ci-renum.html || { echo "renumber modifico un deck que ya estaba en orden"; exit 1; }
 
       - name: Paquete npm e instalación con npx (tarball real)
+        env:
+          CHROME_PATH: ${{ steps.setup-chrome.outputs.chrome-path }}
         run: |
           # npm pack imprime el nombre del tarball en la ultima linea. Guardarlo
           # en una variable: un glob pegado a --package= no lo expande la shell.

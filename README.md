@@ -15,8 +15,8 @@ Es una [Agent Skill](https://agentskills.io), escrita contra el subconjunto port
 ## Qué produce
 
 - **Un archivo `.html` autónomo.** Sin build step, sin dependencias de toolchain. Lo abres en cualquier navegador y presentas: canvas 1920×1080, navegación por teclado (←/→/espacio), fullscreen, barra de progreso.
-- **Un PDF fiel**, vía impresión nativa del navegador (`Cmd/Ctrl+P`). El PDF exporta el **estado final** de cada slide: animaciones resueltas, contadores en su cifra real, sin el chrome del reproductor.
-- **Un PPTX editable** (`node scripts/export-pptx.mjs deck.html`), con texto y formas nativas de PowerPoint — no imágenes incrustadas. Se edita en PowerPoint o Google Slides.
+- **Un PDF fiel y liviano** (`node scripts/export-pdf.mjs deck.html`, o impresión nativa del navegador con `Cmd/Ctrl+P`). El PDF exporta el **estado final** de cada slide: animaciones resueltas, contadores en su cifra real, sin el chrome del reproductor.
+- **Un PPTX editable** (`node scripts/export-pptx.mjs deck.html`): cada texto y cada forma en la posición real que tiene en el deck, medida en Chrome. Texto y formas nativas de PowerPoint, imágenes reales, SVG como imagen con sus rótulos editables, speaker notes en el campo de notas. Se edita en PowerPoint o Google Slides.
 
 ## Cómo usarlo
 
@@ -131,7 +131,8 @@ Para desinstalar: `npx slizdeck uninstall`, `/plugin uninstall slizdeck@slizdeck
 | `scripts/check-overflow.mjs` | Verifica en Chrome headless que ningún texto desborde el canvas 1920×1080 ni se trunque en una línea que no cabe. |
 | `scripts/doctor.mjs` | Compara la versión de engine embebida en un deck contra `CHANGELOG.md` y avisa (sin reparar) si le falta algún fix conocido. |
 | `scripts/verify-hook.mjs` | Hook opcional de Claude Code que corre `audit.mjs` automáticamente después de editar un deck — ver `reference/hooks.md`. |
-| `scripts/export-pptx.mjs` | Exporta un deck a `.pptx` editable (texto y formas nativas, no imágenes). |
+| `scripts/export-pptx.mjs` | Exporta un deck a `.pptx` editable por geometría: mide cada slide en Chrome (`scripts/lib/measure-deck.mjs`) y reconstruye texto, formas, imágenes y SVG en su posición real. `--safe-fonts`, `--slides=`, `--legacy`. |
+| `scripts/export-pdf.mjs` | Exporta un deck a PDF con Chrome headless (una página por slide, estado final), sin el grano de los degradados que infla el archivo; verifica el número de páginas. `--grain` lo conserva. |
 | `scripts/make-offline.mjs` | Incrusta las fuentes como `data:` URI para presentar sin depender de red. |
 | `scripts/check-docs.mjs` | Verifica que la documentación siga alineada con el repo: scripts y referencias listados, links que resuelven, DESIGN.md ≡ design.json. |
 | `scripts/check-versions.mjs` | Verifica que la versión coincida en los seis sitios donde se declara (`package.json`, `SKILL.md`, `template.html`, `CHANGELOG.md`, `.claude-plugin/plugin.json` y `marketplace.json`). |
@@ -180,18 +181,18 @@ pdftoppm -png -r 72 deck.pdf pagina
 
 ## Limitaciones conocidas
 
-- **PPTX: set cerrado de patrones reconocidos.** `scripts/export-pptx.mjs` reconoce todos los patrones documentados en `reference/media-and-data.md` (imagen a sangre/split, fila de métricas, barras comparativas, progreso/proporción) y los de `reference/components.md` que ya tiene soporte explícito. Un patrón de layout nuevo que no se haya sumado al script **no aparece en el `.pptx` generado**; el script lo reporta (lista los textos perdidos y sale con código 1) — avisar antes de exportar si el deck usa algo fuera de lo ya soportado.
-- **PPTX: degradaciones inherentes al formato** (no son fallos del export, son el trade-off de "texto y formas nativas, cero imágenes incrustadas"): sin animaciones (se exporta el estado final), fuentes sustituidas por equivalentes seguros de Office, gradientes de cover/cierre aplanados a color sólido, imágenes reemplazadas por una forma con el `alt` como etiqueta.
-- **Speaker notes van a un `.md` aparte, no al campo nativo de notas de PowerPoint.** `[nombre-deck]-notes.md` con el discurso completo por slide — es una decisión de diseño (el PPTX ya no lleva ninguna otra lógica de contenido embebida), no algo pendiente de conectar.
+- **PPTX: lo que no viaja** (el script lo reporta siempre; sale con código 1 si se pierde texto): texto generado por CSS (`content: "…"` en `::before`/`::after`, que no existe en el DOM), decoraciones CSS en pseudo-elementos, y degradados de cajas, que se aplanan a su primer color. Los fondos de slide con degradado o grano sí viajan, como imagen de fondo.
+- **PPTX: degradaciones inherentes al formato**: sin animaciones (se exporta el estado final); una tabla HTML sale como cajas de texto alineadas, no como tabla nativa de PowerPoint; los SVG van como imagen (sus `<text>` sí quedan editables).
+- **PPTX: fuentes.** El `.pptx` nombra las fuentes del pack (Schibsted Grotesk, Public Sans…). Quien lo abra sin tenerlas instaladas ve una sustituta y el texto puede cambiar de ancho; para ese caso, `--safe-fonts` usa Arial/Georgia/Consolas.
 - **Los cuatro scripts que renderizan en Chrome headless (`check-contrast.mjs`, `check-overflow.mjs`, `check-reveal.mjs`, `shoot.mjs`) usaban un rAF anidado dentro de otro para esperar a que el layout se asiente.** En Chrome headless sin GPU (`--disable-gpu`, el modo en el que corren todos), un segundo `requestAnimationFrame` encadenado no llega a dispararse la gran mayoría de las veces (medido en esta máquina: ~90% de las corridas se quedan colgadas esperándolo, sin ningún error) — el harness nunca llegaba a marcar `.is-on`, y la slide se medía o capturaba en su estado inicial (oculto). Corregido reemplazando el segundo `rAF` por un `setTimeout(0)`, que no depende del compositor. `check-reveal.mjs` y `check-overflow.mjs` además reintentan automáticamente hasta 2 veces la invocación completa de Chrome, como segunda red de seguridad ante una contención de recursos real (otro proceso pesado compitiendo en la máquina), no como parche del bug de arriba.
 - **`check-overflow.mjs` mide el solape de texto por la caja real del texto (`Range`), no por la del elemento contenedor** — un `<div>` block ocupa todo el ancho de la slide aunque su texto sean 80px en una esquina, y comparar por bounding box daba falsos positivos en cada slide antes de este fix (v1.4.0). Un solape intencional (ej. un badge sobre una esquina) se marca con `data-overlap-ok` en el contenedor para excluirlo.
 - **`examples/demo-deck.html` no pasa `check-style-pack.mjs`.** Es el ejemplo heredado del fork original (ver `NOTICE.md`), preservado sin modificar — no usa el sistema de style packs de slizdeck, así que su paleta original no pasa la validación de contraste que sí aplica a un deck generado con esta skill. `examples/pitch-showcase.html` es el ejemplo que sí usa el sistema de packs actual y pasa todo limpio.
-- **`npm install` reporta 2 vulnerabilidades `high`** en `image-size`, una dependencia transitiva de `pptxgenjs` (DoS parseando imágenes malformadas). No hay fix sin downgrade breaking del export. El riesgo real acá es bajo: `export-pptx.mjs` no parsea imágenes (el export es de texto y formas, `ppt/media/` queda vacío) y solo procesa decks del propio usuario. Las deps además solo hacen falta para exportar a PPTX.
+- **`npm install` reporta 2 vulnerabilidades `high`** en `image-size`, una dependencia transitiva de `pptxgenjs` (DoS parseando imágenes malformadas). No hay fix sin downgrade breaking del export. El riesgo real acá es bajo: las imágenes que viajan al `.pptx` ya llegan rasterizadas por Chrome, y el export solo procesa decks del propio usuario. Las deps además solo hacen falta para exportar a PPTX.
 - **Documentación 100% en español**, por decisión de alcance (audiencia hispanohablante), no por traducción pendiente.
 
 ## Roadmap
 
-Lo que viene (instalación con `npx`, plugin de Claude Code, PPTX por geometría, editor visual) está en [ROADMAP.md](ROADMAP.md).
+Lo que viene (patrones de datos, modo presentador, editor visual) está en [ROADMAP.md](ROADMAP.md).
 
 ## Créditos y licencia
 

@@ -26,8 +26,8 @@ Hacia dónde va slizdeck. Es un plan vivo, medido en días de trabajo: se ajusta
 
 ## 2.1 · Exports — días 4 a 5
 
-- [ ] PPTX por geometría: cada texto y forma en su posición real medida en Chrome, imágenes reales, notas en el campo de PowerPoint
-- [ ] `slizdeck export pdf` con PDF liviano (sin el grano rasterizado ni el marcador de pasos)
+- [x] PPTX por geometría: cada texto y forma en su posición real medida en Chrome, imágenes reales, notas en el campo de PowerPoint
+- [x] `slizdeck export pdf` con PDF liviano (sin el grano rasterizado ni el marcador de pasos)
 
 ## 2.2 · Diseño y animación — días 6 a 8
 
