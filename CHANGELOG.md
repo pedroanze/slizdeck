@@ -4,6 +4,15 @@ Historial de cambios al engine (`template.html`) y a los scripts de la skill. Ca
 
 Una sola versión gobierna todo el proyecto y vive en seis sitios que deben coincidir siempre: `package.json`, el `metadata.version` de `SKILL.md`, el marcador `slizdeck-engine-version` de `template.html`, la primera entrada de este archivo, y el `version` de `.claude-plugin/plugin.json` y `.claude-plugin/marketplace.json`. `node scripts/check-versions.mjs` lo verifica y falla si alguno se desalinea.
 
+## 2.0.1
+
+Parche de la 2.0: la skill se instala liviana. El engine no cambia.
+
+- **Los exports y capturas de `examples/test-0*` salen del repo** (~83 MB de PDF, PPTX y PNG). Viven en el release [`examples`](https://github.com/pedroanze/slizdeck/releases/tag/examples) y las bitácoras los enlazan ahí. El plugin de Claude Code copia el repo entero, así que cada instalación descargaba 93 MB; ahora `examples/` pesa ~0,5 MB. Los decks HTML siguen en el repo.
+- **Fix: `slizdeck where` listaba dos veces la misma instalación** cuando se corría desde HOME (la carpeta global y la "de proyecto" coinciden).
+- **`repository.url` con el prefijo `git+`** que npm pedía al publicar.
+- **`release.yml` soporta trusted publishing de npm** (OIDC, sin token): actualiza npm a 11.5.1+ antes de publicar. Mientras no se configure en npmjs.com, sigue usando `NPM_TOKEN`.
+
 ## 2.0.0
 
 Instalación en un comando. El engine (`template.html`) no cambia de comportamiento: sube de major porque cambia cómo se instala y cómo se invocan los scripts.

@@ -85,3 +85,10 @@ test('un pack inexistente falla con la lista de packs', () => withHome((home) =>
   assert.notEqual(r.code, 0);
   assert.match(r.out, /terminal/);
 }));
+
+test('where corrido desde HOME no duplica la instalacion global', () => withHome((home) => {
+  cli(['install', '--agent', 'claude', '--no-deps'], { home });
+  const { code, out } = cli(['where'], { home, cwd: home });
+  assert.equal(code, 0, out);
+  assert.equal(out.trim().split('\n').filter((l) => l.includes('claude')).length, 1, out);
+}));

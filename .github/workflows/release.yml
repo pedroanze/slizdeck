@@ -1,8 +1,10 @@
 name: Release
 
 # Al hacer push de un tag vX.Y.Z: verifica, publica a npm y crea el Release.
-# Requiere el secret NPM_TOKEN (token "Automation" o granular con permiso
-# de publicar el paquete slizdeck).
+# Autenticacion: trusted publishing (npmjs.com → slizdeck → Settings →
+# Trusted publisher → GitHub Actions, workflow release.yml) o, mientras no
+# este configurado, el secret NPM_TOKEN (token granular con permiso de
+# publicar y "bypass 2FA").
 
 on:
   push:
@@ -23,6 +25,10 @@ jobs:
           node-version: '20'
           cache: npm
           registry-url: 'https://registry.npmjs.org'
+
+      # npm 11.5.1+ publica con trusted publishing (OIDC) si el paquete lo
+      # tiene configurado en npmjs.com, sin token; si no, usa NPM_TOKEN.
+      - run: npm install -g npm@latest
 
       - run: npm ci
 

@@ -1,6 +1,6 @@
 {
   "name": "slizdeck",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Genera decks de slides HTML animados desde tu design system, exportables a PDF y PPTX editable",
   "author": { "name": "Pedro Anze", "url": "https://github.com/pedroanze" },
   "homepage": "https://github.com/pedroanze/slizdeck#readme",
