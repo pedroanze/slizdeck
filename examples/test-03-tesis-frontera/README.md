@@ -4,14 +4,14 @@ Bitácora de una ejecución completa de la Agent Skill `slizdeck` (v1.4.0) sobre
 exigente, hecha por un agente que además hace de usuario simulado en los puntos donde el flujo
 se bloquea esperando confirmación humana.
 
-**Entregables de esta carpeta**
+**Entregables** (el PDF, el PPTX y las capturas viven en el [release `examples`](https://github.com/pedroanze/slizdeck/releases/tag/examples), fuera del repo por peso)
 
 | Archivo | Qué es |
 |---|---|
 | `tesis-frontera-modelos.html` | El deck. 18 `<section>` (1 standby + 17 numeradas), autónomo, sin dependencias externas |
-| `tesis-frontera-modelos.pdf` | Export PDF por impresión nativa de Chrome headless, 18 páginas |
-| `tesis-frontera-modelos.pptx` | Export PPTX editable, 18 slides (con pérdidas importantes, ver fase export) |
-| `.slizdeck-shots/` | 18 PNG 1920×1080 generados por `shoot.mjs` para la revisión visual |
+| [`tesis-frontera-modelos.pdf`](https://github.com/pedroanze/slizdeck/releases/download/examples/tesis-frontera-modelos.pdf) | Export PDF por impresión nativa de Chrome headless, 18 páginas |
+| [`tesis-frontera-modelos.pptx`](https://github.com/pedroanze/slizdeck/releases/download/examples/tesis-frontera-modelos.pptx) | Export PPTX editable, 18 slides (con pérdidas importantes, ver fase export) |
+| [`test-03-tesis-frontera-shots.zip`](https://github.com/pedroanze/slizdeck/releases/download/examples/test-03-tesis-frontera-shots.zip) | 18 PNG 1920×1080 generados por `shoot.mjs` para la revisión visual |
 | `README.md` | Este documento |
 
 ---

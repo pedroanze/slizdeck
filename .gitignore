@@ -9,3 +9,8 @@ node_modules/
 
 # macOS
 .DS_Store
+
+# Exports y capturas de los ejemplos: viven en el release "examples", no en git
+examples/**/*.pdf
+examples/**/*.pptx
+.slizdeck-shots/

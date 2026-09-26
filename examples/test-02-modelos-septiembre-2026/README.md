@@ -7,9 +7,9 @@ cada punto donde la skill se bloquea esperando confirmación humana).
 - **Fecha de la prueba:** 2026-09-06
 - **Versión de la skill:** 1.4.0 (`SKILL.md` / `template.html` / `CHANGELOG.md`)
 - **Deck generado:** [`frontier-septiembre-2026.html`](frontier-septiembre-2026.html)
-- **Exports:** [`frontier-septiembre-2026.pdf`](frontier-septiembre-2026.pdf) (14 págs, 16,1 MB) ·
-  [`frontier-septiembre-2026.pptx`](frontier-septiembre-2026.pptx) (14 slides, 178 KB)
-- **Capturas de la fase audit:** `.slizdeck-shots/` (14 PNG 1920×1080)
+- **Exports:** [`frontier-septiembre-2026.pdf`](https://github.com/pedroanze/slizdeck/releases/download/examples/frontier-septiembre-2026.pdf) (14 págs, 16,1 MB) ·
+  [`frontier-septiembre-2026.pptx`](https://github.com/pedroanze/slizdeck/releases/download/examples/frontier-septiembre-2026.pptx) (14 slides, 178 KB), en el [release `examples`](https://github.com/pedroanze/slizdeck/releases/tag/examples), fuera del repo por peso
+- **Capturas de la fase audit:** [`test-02-modelos-septiembre-2026-shots.zip`](https://github.com/pedroanze/slizdeck/releases/download/examples/test-02-modelos-septiembre-2026-shots.zip) (14 PNG 1920×1080)
 
 ---
 

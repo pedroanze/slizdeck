@@ -17,7 +17,7 @@
  */
 
 import {
-  existsSync, readFileSync, writeFileSync, mkdirSync, rmSync, cpSync, lstatSync, readdirSync,
+  existsSync, readFileSync, writeFileSync, mkdirSync, rmSync, cpSync, lstatSync, readdirSync, realpathSync,
 } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import path from 'node:path';
@@ -233,7 +233,11 @@ function uninstall(argv) {
 function where(argv) {
   const { flags } = parseFlags(argv);
   let any = false;
-  for (const project of flags.project ? [true] : [false, true]) {
+  // Corrido desde HOME, la instalacion global y la "de proyecto" son la misma
+  // carpeta: listarla una sola vez.
+  const cwdIsHome = realpathSync(process.cwd()) === realpathSync(home());
+  const scopes = flags.project ? [true] : cwdIsHome ? [false] : [false, true];
+  for (const project of scopes) {
     for (const agent of Object.keys(AGENTS)) {
       const dir = targetDir(agent, project);
       const state = inspect(dir);

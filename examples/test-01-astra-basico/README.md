@@ -5,8 +5,8 @@ por un agente que además hace de usuario simulado. Todo lo que aquí se llama "
 es una decisión que la skill le pide a un humano y que tomé yo, anotando el porqué.
 
 - **Deck:** [`astra-flash.html`](astra-flash.html)
-- **Exports:** [`astra-flash.pdf`](astra-flash.pdf) · [`astra-flash.pptx`](astra-flash.pptx)
-- **Capturas de la fase audit:** `.slizdeck-shots/` (7 PNG). La de la slide 02 se
+- **Exports:** [`astra-flash.pdf`](https://github.com/pedroanze/slizdeck/releases/download/examples/astra-flash.pdf) · [`astra-flash.pptx`](https://github.com/pedroanze/slizdeck/releases/download/examples/astra-flash.pptx) (en el [release `examples`](https://github.com/pedroanze/slizdeck/releases/tag/examples), fuera del repo por peso)
+- **Capturas de la fase audit:** [`test-01-astra-basico-shots.zip`](https://github.com/pedroanze/slizdeck/releases/download/examples/test-01-astra-basico-shots.zip) (7 PNG). La de la slide 02 se
   reemplazó por la de una corrida buena: la primera salió vacía por el Hallazgo 3,
   no por un defecto del deck.
 - **Fecha de la prueba:** 2026-09-06 · **Engine:** slizdeck 1.4.0
