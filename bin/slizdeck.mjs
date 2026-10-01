@@ -150,6 +150,11 @@ function inspect(dir) {
   return { kind: 'other' };
 }
 
+/** Version declarada en el SKILL.md de una carpeta (o de lo que apunta un symlink). */
+function skillVersion(dir) {
+  try { return /version:\s*["']?([0-9.]+)/.exec(readFileSync(path.join(dir, 'SKILL.md'), 'utf8'))?.[1] || null; } catch { return null; }
+}
+
 function fail(msg) {
   console.error(`✗ ${msg}`);
   process.exit(1);
@@ -168,7 +173,7 @@ function installDeps(dir) {
 function install(argv, { onlyExisting = false } = {}) {
   const { flags } = parseFlags(argv);
   const agents = resolveAgents(flags.agent, flags.project, { detect: !onlyExisting });
-  let done = 0;
+  let done = 0, present = 0, blocked = 0;
   let depsFailed = false;
 
   for (const agent of agents) {
@@ -177,11 +182,20 @@ function install(argv, { onlyExisting = false } = {}) {
 
     if (onlyExisting && state.kind !== 'cli') continue;
     if ((state.kind === 'git' || state.kind === 'symlink') && !flags.force) {
-      console.log(`  · ${agent}: ${dir} es un ${state.kind === 'git' ? 'clon de git' : 'symlink'} — no lo piso. Actualízalo con git pull, o usa --force.`);
+      // Ya hay una skill ahi, gestionada con git (un clon, o un symlink a uno,
+      // el setup tipico de quien desarrolla la skill). No es un error: se
+      // informa que hay y como se actualiza, y no se toca.
+      let where = dir;
+      try { where = realpathSync(dir); } catch {}
+      const v = skillVersion(dir);
+      const how = state.kind === 'symlink' ? `symlink a ${where}` : 'clon de git';
+      console.log(`  ✓ ${agent}: ya disponible (${how}${v ? `, versión ${v}` : ''}). Se actualiza con git pull${state.kind === 'symlink' ? ` en ${where}` : ''}.`);
+      present++;
       continue;
     }
     if (state.kind === 'other' && !flags.force) {
-      console.log(`  · ${agent}: ${dir} ya existe y no lo instaló este CLI — no lo piso. Usa --force para reemplazarlo.`);
+      console.log(`  ✗ ${agent}: ${dir} ya existe y no lo instaló este CLI: no lo piso. Usa --force para reemplazarlo.`);
+      blocked++;
       continue;
     }
 
@@ -206,10 +220,17 @@ function install(argv, { onlyExisting = false } = {}) {
   }
 
   if (!done) {
-    console.log(onlyExisting
-      ? '\nNo hay instalaciones hechas con este CLI para actualizar. Usa: npx slizdeck install'
-      : '\nNo se instaló nada.');
-    process.exit(onlyExisting ? 0 : 1);
+    if (onlyExisting) {
+      console.log('\nNo hay instalaciones hechas con este CLI para actualizar. Usa: npx slizdeck install');
+      process.exit(0);
+    }
+    if (present && !blocked) {
+      console.log(`\nslizdeck ya está disponible en ${present} agente(s); no hice cambios.`);
+      console.log(`Para reemplazar esas copias por la ${PKG.version} de npm: npx slizdeck install --force`);
+      process.exit(0);
+    }
+    console.log('\nNo se instaló nada.');
+    process.exit(1);
   }
   console.log(`\nListo. Pídele a tu agente: "hazme un pitch deck sobre …"`);
   if (depsFailed) process.exitCode = 1;

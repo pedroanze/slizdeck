@@ -161,10 +161,12 @@ function textRuns(item) {
 
 function addText(slide, item) {
   const lh = item.lineHeight || item.firstLineH;
-  // La caja medida es la del texto (Range); la linea completa arranca
-  // medio interlineado mas arriba, que es donde PowerPoint empieza a
-  // contar el espaciado exacto.
-  const top = item.y - Math.max(0, (lh - item.firstLineH) / 2);
+  // La caja medida es la del texto (Range); la linea completa arranca medio
+  // interlineado mas arriba, que es donde PowerPoint empieza a contar el
+  // espaciado exacto. Con interlineado mas ajustado que la letra (titulos a
+  // line-height .98) la diferencia es negativa y la caja baja: sin eso el
+  // titulo de la portada se montaba sobre el eyebrow.
+  const top = item.y - (lh - item.firstLineH) / 2;
   let x, w, wrap;
   if (item.lines <= 1) {
     // Una linea: sin ajuste de linea y con holgura, para que una fuente

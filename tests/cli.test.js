@@ -10,7 +10,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdtempSync, mkdirSync, rmSync, writeFileSync, readFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, mkdirSync, rmSync, writeFileSync, readFileSync, symlinkSync, lstatSync } from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import { fileURLToPath } from 'node:url';
@@ -92,3 +92,16 @@ test('where corrido desde HOME no duplica la instalacion global', () => withHome
   assert.equal(code, 0, out);
   assert.equal(out.trim().split('\n').filter((l) => l.includes('claude')).length, 1, out);
 }));
+
+test('install sobre un symlink (setup de desarrollo) informa que ya esta disponible, sale con 0 y no lo toca', () => withHome((home) => {
+  const target = path.join(home, 'repo-slizdeck');
+  mkdirSync(target);
+  writeFileSync(path.join(target, 'SKILL.md'), 'metadata:\n  version: "9.9.9"\n');
+  mkdirSync(path.join(home, '.claude', 'skills'), { recursive: true });
+  symlinkSync(target, skillDir(home, 'claude'));
+  const { code, out } = cli(['install', '--agent', 'claude', '--no-deps'], { home });
+  assert.equal(code, 0, out);
+  assert.match(out, /ya disponible \(symlink a .*versión 9\.9\.9\)/);
+  assert.ok(lstatSync(skillDir(home, 'claude')).isSymbolicLink(), 'el symlink tiene que seguir ahi');
+}));
+
