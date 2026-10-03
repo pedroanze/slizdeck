@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- slizdeck-engine-version: 2.3.1 — no borrar este comentario. scripts/doctor.mjs
+<!-- slizdeck-engine-version: 2.3.2 — no borrar este comentario. scripts/doctor.mjs
      lo lee para saber contra qué versión del engine se generó este deck y
      detectar si hay fixes de template.html posteriores que no llegaron acá
      (ver CHANGELOG.md). Se copia tal cual al generar un deck nuevo en build. -->
@@ -892,8 +892,8 @@
           '</button>' +
           '<span class="divider"></span>' +
           '<button class="btn reset" type="button" aria-label="Reset to first slide" title="Reset (R)">Reset<span class="kbd">R</span></button>';
-        overlay.querySelector('.prev').addEventListener('click', () => this._go(this._index - 1, 'click'));
-        overlay.querySelector('.next').addEventListener('click', () => this._go(this._index + 1, 'click'));
+        overlay.querySelector('.prev').addEventListener('click', () => this._navKey('ArrowLeft'));
+        overlay.querySelector('.next').addEventListener('click', () => this._navKey('ArrowRight'));
         overlay.querySelector('.reset').addEventListener('click', () => this._go(0, 'click'));
         this._root.append(style, stage, tapzones, overlay);
         this._canvas = canvas;
@@ -1000,8 +1000,15 @@
 
       _onResize() { this._fit(); }
       _onMouseMove() { this._flashOverlay(); }
-      _onTapBack(e) { e.preventDefault(); this._go(this._index - 1, 'tap'); }
-      _onTapForward(e) { e.preventDefault(); this._go(this._index + 1, 'tap'); }
+      _onTapBack(e) { e.preventDefault(); this._navKey('ArrowLeft'); }
+      _onTapForward(e) { e.preventDefault(); this._navKey('ArrowRight'); }
+
+      // Flechas en pantalla y zonas tactiles: misma ruta que el teclado. Desde
+      // el body (no desde window) para que el controlador de pasos, en capture
+      // sobre window, revele el paso siguiente antes de que se cambie de slide.
+      _navKey(key) {
+        document.body.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }));
+      }
 
       _onKey(e) {
         const t = e.target;

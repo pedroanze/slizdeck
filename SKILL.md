@@ -7,7 +7,7 @@ description: |
 license: MIT
 compatibility: Requiere un agente con capacidad de ejecutar comandos de shell (crear/copiar archivos, abrir el navegador) y búsqueda web. Probado en Claude Code; compatible con cualquier cliente del estándar Agent Skills (agentskills.io).
 metadata:
-  version: "2.3.1"
+  version: "2.3.2"
 allowed-tools: Bash, Read, Write, Edit, WebSearch, WebFetch
 # user-invocable / argument-hint: extensiones de Claude Code (tab-completion de /slizdeck).
 user-invocable: true
