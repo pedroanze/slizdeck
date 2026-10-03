@@ -4,6 +4,12 @@ Historial de cambios al engine (`template.html`) y a los scripts de la skill. Ca
 
 Una sola versión gobierna todo el proyecto y vive en seis sitios que deben coincidir siempre: `package.json`, el `metadata.version` de `SKILL.md`, el marcador `slizdeck-engine-version` de `template.html`, la primera entrada de este archivo, y el `version` de `.claude-plugin/plugin.json` y `.claude-plugin/marketplace.json`. `node scripts/check-versions.mjs` lo verifica y falla si alguno se desalinea.
 
+## 2.3.2
+
+Fix del engine encontrado presentando un deck real: las flechas en pantalla se saltaban los pasos.
+
+- **Fix: las flechas de la barra inferior (`‹` `›`) y las zonas táctiles de los costados cambiaban de slide sin revelar los pasos.** Llamaban directo a `_go()` de `<deck-stage>`, que cambia de slide, y nunca pasaban por el controlador de pasos, que solo escuchaba el teclado. En una slide con `data-steps="3"`, la flecha de la pantalla saltaba a la siguiente dejando dos pasos sin mostrar, y la de volver no retrocedía paso a paso. Ahora las dos (y los toques) despachan la tecla equivalente desde el `<body>` con `_navKey()`, la misma ruta que ya usaba el modo presentador: primero se recorren los pasos, después se cambia de slide. Los decks generados con 2.3.1 o antes necesitan reaplicar el cambio en su `<deck-stage>` (los listeners de `.prev`/`.next`, `_onTapBack`/`_onTapForward` y el método `_navKey`).
+
 ## 2.3.1
 
 Salida de la QA con un deck real (Opus 5.5 frente a GPT-6, pack editorial con colores de Anthropic sobre fondo oscuro). El engine no cambia.
