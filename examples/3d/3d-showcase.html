@@ -1789,35 +1789,39 @@
 
     function setupLights(THREE, scene, mode, primaryHex, accentHex, surfaceHex) {
       const m = mode || 'studio';
+      const lightCol = new THREE.Color(surfaceHex);
+      const hsl = { h: 0, s: 0, l: 0 };
+      lightCol.getHSL(hsl);
+      lightCol.setHSL(hsl.h, Math.min(hsl.s, 0.08), Math.max(hsl.l, 0.96));
       if (m === 'soft') {
-        scene.add(new THREE.HemisphereLight(surfaceHex, primaryHex, 1.8));
-        const key = new THREE.DirectionalLight(surfaceHex, 1.4);
-        key.position.set(2.8, 4.2, 3.8);
+        scene.add(new THREE.HemisphereLight(lightCol, primaryHex, 1.6));
+        const key = new THREE.DirectionalLight(lightCol, 1.3);
+        key.position.set(2.2, 4.2, 3.8);
         scene.add(key);
-        const side = new THREE.DirectionalLight(surfaceHex, 0.7);
-        side.position.set(-3.5, 1.5, 1.8);
+        const side = new THREE.DirectionalLight(lightCol, 0.65);
+        side.position.set(-3.2, 1.5, 2.2);
         scene.add(side);
       } else if (m === 'dramatic') {
-        scene.add(new THREE.HemisphereLight(surfaceHex, primaryHex, 0.85));
-        const key = new THREE.DirectionalLight(surfaceHex, 2.5);
-        key.position.set(3.5, 5.2, 3.2);
+        scene.add(new THREE.AmbientLight(lightCol, 0.95));
+        const key = new THREE.DirectionalLight(lightCol, 2.1);
+        key.position.set(1.2, 4.8, 3.2);
         scene.add(key);
-        const side = new THREE.DirectionalLight(surfaceHex, 1.1);
-        side.position.set(-4.0, 1.8, 2.2);
+        const side = new THREE.DirectionalLight(lightCol, 0.85);
+        side.position.set(4.2, 1.2, -1.0);
         scene.add(side);
-        const rim = new THREE.DirectionalLight(accentHex, 1.8);
-        rim.position.set(-2.5, 3.0, -3.5);
+        const rim = new THREE.DirectionalLight(accentHex, 0.9);
+        rim.position.set(-3.0, 2.5, -3.5);
         scene.add(rim);
       } else {
-        scene.add(new THREE.HemisphereLight(surfaceHex, primaryHex, 1.35));
-        const key = new THREE.DirectionalLight(surfaceHex, 2.1);
-        key.position.set(3.2, 4.8, 4.2);
+        scene.add(new THREE.AmbientLight(lightCol, 1.05));
+        const key = new THREE.DirectionalLight(lightCol, 1.85);
+        key.position.set(1.4, 4.6, 3.4);
         scene.add(key);
-        const fill = new THREE.DirectionalLight(surfaceHex, 1.05);
-        fill.position.set(-3.8, 2.0, 2.4);
+        const fill = new THREE.DirectionalLight(lightCol, 0.75);
+        fill.position.set(4.0, 1.4, -0.8);
         scene.add(fill);
-        const rim = new THREE.DirectionalLight(accentHex, 1.1);
-        rim.position.set(0, 3.5, -4.0);
+        const rim = new THREE.DirectionalLight(accentHex, 0.75);
+        rim.position.set(-2.5, 3.0, -3.5);
         scene.add(rim);
       }
     }
@@ -1829,35 +1833,34 @@
       return st.fig.querySelector('svg') || (st.slide && st.slide.querySelector('svg:not(.ic)')) || null;
     }
 
-    function buildLogoObject(THREE, SVGLoader, st, primaryHex, accentHex, surfaceHex) {
+    function buildLogoObject(THREE, SVGLoader, st, primaryHex, accentHex) {
       const svgElNode = findLogoSvg(st);
       if (!svgElNode) throw new Error('preset logo: no se encontro el SVG (' + (st.spec.svg || 'svg en la figura o slide') + ')');
       const parsed = new SVGLoader().parse(svgElNode.outerHTML);
       if (!parsed.paths || !parsed.paths.length) throw new Error('preset logo: el SVG no contiene trazos');
       const depth = typeof st.spec.depth === 'number' ? st.spec.depth : 28;
       const inner = new THREE.Group();
-      const surfCol = new THREE.Color(surfaceHex);
-      const primCol = new THREE.Color(primaryHex);
       parsed.paths.forEach((p, idx) => {
         const shapes = SVGLoader.createShapes(p);
         const node = p.userData && p.userData.node;
         const isAccent = (node && (node.hasAttribute('data-accent') || (node.classList && node.classList.contains('hl'))))
           || (idx === parsed.paths.length - 1 && parsed.paths.length > 1 && st.spec.accentLast !== false);
         const baseCol = new THREE.Color(isAccent ? accentHex : primaryHex);
-        const lum = 0.2126 * baseCol.r + 0.7152 * baseCol.g + 0.0722 * baseCol.b;
-        const frontCol = lum < 0.08 ? baseCol.clone().lerp(surfCol, 0.14) : baseCol;
-        const sideCol = lum < 0.5
-          ? baseCol.clone().lerp(surfCol, 0.42)
-          : baseCol.clone().lerp(primCol, 0.36);
-        const frontMat = new THREE.MeshStandardMaterial({
-          color: frontCol,
-          roughness: 0.45,
-          metalness: 0.0,
+        const hsl = { h: 0, s: 0, l: 0 };
+        baseCol.getHSL(hsl);
+        const sideCol = new THREE.Color();
+        if (hsl.l < 0.22) {
+          sideCol.setHSL(hsl.h, Math.min(hsl.s, 0.25), Math.min(0.36, hsl.l + 0.18));
+        } else {
+          sideCol.setHSL(hsl.h, Math.min(1, hsl.s * 1.05), Math.max(0.12, hsl.l * 0.56));
+        }
+        const frontMat = new THREE.MeshLambertMaterial({
+          color: baseCol,
+          emissive: baseCol,
+          emissiveIntensity: 0.34,
         });
-        const sideMat = new THREE.MeshStandardMaterial({
+        const sideMat = new THREE.MeshLambertMaterial({
           color: sideCol,
-          roughness: 0.36,
-          metalness: 0.0,
         });
         shapes.forEach((sh) => {
           const geom = new THREE.ExtrudeGeometry(sh, {
