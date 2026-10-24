@@ -99,6 +99,17 @@ jobs:
           node scripts/renumber.mjs /tmp/ci-renum.html
           diff -q examples/pitch-showcase.html /tmp/ci-renum.html || { echo "renumber modifico un deck que ya estaba en orden"; exit 1; }
 
+      - name: 3D
+        run: |
+          node scripts/audit.mjs examples/3d/3d-showcase.html
+          node scripts/check-3d.mjs examples/3d/3d-showcase.html
+          node scripts/export-pptx.mjs examples/3d/3d-showcase.html /tmp/ci-3d.pptx
+          node scripts/export-pdf.mjs examples/3d/3d-showcase.html /tmp/ci-3d.pdf
+          test -s /tmp/ci-3d.pptx && test -s /tmp/ci-3d.pdf || { echo "export 3D vacio"; exit 1; }
+          unzip -l /tmp/ci-3d.pptx | grep -q "ppt/media/image" || { echo "el .pptx no lleva los posters 3D"; exit 1; }
+          node scripts/make-offline.mjs examples/3d/3d-showcase.html /tmp/ci-3d-offline.html
+          ! grep -q "cdn.jsdelivr" /tmp/ci-3d-offline.html || { echo "quedo cdn.jsdelivr en el deck offline"; exit 1; }
+
       - name: Paquete npm e instalación con npx (tarball real)
         run: |
           # npm pack imprime el nombre del tarball en la ultima linea. Guardarlo

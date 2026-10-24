@@ -4,6 +4,20 @@ Historial de cambios al engine (`template.html`) y a los scripts de la skill. Ca
 
 Una sola versión gobierna todo el proyecto y vive en seis sitios que deben coincidir siempre: `package.json`, el `metadata.version` de `SKILL.md`, el marcador `slizdeck-engine-version` de `template.html`, la primera entrada de este archivo, y el `version` de `.claude-plugin/plugin.json` y `.claude-plugin/marketplace.json`. `node scripts/check-versions.mjs` lo verifica y falla si alguno se desalinea.
 
+## 2.4.0
+
+Escenas 3D opcionales con `three.js` (`.sz-3d`) y evento `stepchange` en el motor.
+
+**Engine (`template.html`)**
+- **Componente `.sz-3d` opt-in:** soporte para modelos `.glb` (cargados vía sidecar JS clásico en `window.__szModels`) y dos presets procedimentales sin archivo externo (`logo` con `SVGLoader` + `ExtrudeGeometry` y `particles` con convergencia por step). Si el deck no contiene `.sz-3d`, el runtime retorna de inmediato sin red, sin WebGL y sin globals nuevos.
+- **Evento `stepchange` (`{ slide, step }`):** emitido por `applyStep()` cada vez que cambia el paso activo de una slide. El runtime 3D lo usa para interpolar cámara y transformaciones (600 ms) y hacer crossfade de clips de animación (`AnimationMixer`, 0,4 s).
+- **Póster por defecto y ciclo de vida WebGL:** el póster `<img class="sz-3d-poster">` es visible hasta que el primer frame se dibuja de forma síncrona (`data-sz-3d="live"`), sirve de fallback ante falta de red o WebGL2 (`data-sz-3d="fallback"`), y se fuerza en `finalizeForPrint` y `@media print` (`sz-3d--poster`). El loop solo corre en la slide activa y se hace `dispose()` completo a distancia `> 1`. Con `prefers-reduced-motion` renderiza un frame estático y corta entre steps sin giro continuo.
+
+**Scripts y CLI**
+- **`scripts/lib/three-pin.mjs`:** fija `three@0.186.1` y los hashes `sha384` reales del grafo completo de módulos (`three.module.js`, `three.core.js`, `GLTFLoader.js`, `BufferGeometryUtils.js`, `SkeletonUtils.js`, `SVGLoader.js`).
+- **`slizdeck 3d add|poster|check` (`scripts/add-3d.mjs`, `poster-3d.mjs`, `check-3d.mjs`):** inserta el importmap con SRI y genera el sidecar `assets/3d/<id>.glb.js` listando sus clips; renderiza los pósters PNG del paso final en Chrome headless con SwiftShader; y verifica la carga de `three`, el primer frame no vacío, la existencia de clips, la similitud del póster y que `__sz3d.live()` vuelva a 0 al salir de la slide.
+- **`audit.mjs`, `make-offline.mjs`, `measure-deck.mjs` y `doctor.mjs`:** validación estática de importmap/SRI/póster/sidecars y bloqueo de `<script type="module">` con imports remotos estáticos; incrustación offline de `three.js` (reescribiendo imports relativos a URLs absolutas mapeadas a `data:` URIs tras verificar `sha384`), sidecars y pósters; y reporte de `<canvas>` WebGL sueltos en el export a PPTX.
+
 ## 2.3.2
 
 Fix del engine encontrado presentando un deck real: las flechas en pantalla se saltaban los pasos.
