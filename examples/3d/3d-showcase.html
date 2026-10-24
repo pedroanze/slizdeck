@@ -658,6 +658,34 @@
      mockups, etc.) or animations.md (popup, SVG paths, packets) here.
      ============================================================ */
 
+  .split-3d {
+    display: grid;
+    grid-template-columns: 1fr 1.15fr;
+    gap: 64px;
+    align-items: start;
+  }
+  .lead-3d {
+    font-size: 32px;
+    line-height: 1.4;
+    color: var(--cs-body);
+    margin: 0 0 36px;
+    max-width: 720px;
+  }
+  .step-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  .step-item {
+    font-size: 28px;
+    line-height: 1.45;
+    color: var(--cs-fg-1);
+    margin: 0;
+  }
+  .split-3d .card p {
+    font-size: 28px;
+    line-height: 1.45;
+  }
 </style>
 </head>
 <body>
@@ -671,7 +699,7 @@
     <div class="pad">
       <div class="eyebrow">Slizdeck 2.4 · 3D opcional</div>
       <h1 class="cover">Escenas 3D con three.js</h1>
-      <p class="lead" style="max-width:1100px;margin-top:32px;color:rgba(255,255,255,0.88)">Modelos GLB y geometría procedimental sincronizados con cada step, con póster estático automático.</p>
+      <div class="subtitle">Modelos GLB y geometría procedimental sincronizados con cada step, con póster estático automático</div>
     </div>
     <aside class="notes"><p>Presentar el soporte opcional para escenas 3D interactivas con three.js en Slizdeck 2.4.</p></aside>
     <div class="footer"><div class="left"></div><div>3D · slizdeck · <span class="num">01</span></div></div>
@@ -681,12 +709,14 @@
     <div class="pad">
       <div class="act-marker"><span class="step-num">1</span><span class="step-total">/3</span></div>
       <div class="eyebrow reveal" data-step="1">Personaje GLB</div>
-      <h2 class="title reveal" data-step="1">Clips y cámara en cada step</h2>
-      <div style="display:grid;grid-template-columns:1fr 1.2fr;gap:64px;margin-top:36px;align-items:center;flex:1;min-height:0">
+      <h2 class="title tight reveal" data-step="1">Clips y cámara en cada step</h2>
+      <div class="split-3d">
         <div>
-          <p class="lead reveal" data-step="1" style="margin:0 0 28px">El modelo inicia en reposo con encuadre automático y responde a los steps declarados en JSON.</p>
-          <p class="reveal" data-step="2" style="font-size:26px;margin:0 0 16px;color:var(--cs-fg-1)"><strong>Step 2:</strong> mezcla suave de <code>Idle</code> a <code>Wave</code>.</p>
-          <p class="reveal" data-step="3" style="font-size:26px;margin:0;color:var(--cs-fg-1)"><strong>Step 3:</strong> giro y acercamiento de cámara.</p>
+          <p class="lead-3d reveal" data-step="1">El modelo inicia en reposo con encuadre automático y responde a los steps declarados en JSON.</p>
+          <div class="step-list">
+            <p class="step-item reveal" data-step="2"><strong>Step 2:</strong> mezcla suave de <code>Idle</code> a <code>Wave</code>.</p>
+            <p class="step-item reveal" data-step="3"><strong>Step 3:</strong> giro y acercamiento de cámara.</p>
+          </div>
         </div>
         <figure class="sz-3d reveal" data-step="1" data-id="robot" style="height:560px">
           <img class="sz-3d-poster" src="assets/3d/robot-poster.png" alt="Robot expresivo 3D saludando de cuerpo entero en el estado final">
@@ -702,18 +732,18 @@
     <div class="pad">
       <div class="act-marker"><span class="step-num">1</span><span class="step-total">/2</span></div>
       <div class="eyebrow reveal" data-step="1">Preset logo</div>
-      <h2 class="title reveal" data-step="1">Un SVG extruido en volumen</h2>
+      <h2 class="title tight reveal" data-step="1">Un SVG extruido en volumen</h2>
       <svg id="logo-mark" viewBox="0 0 120 120" width="0" height="0" style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true">
         <path d="M18 18 L62 18 L62 102 L18 102 Z"/>
         <path d="M72 18 L102 18 L102 54 L72 54 Z"/>
         <path d="M72 66 L102 66 L102 102 L72 102 Z"/>
       </svg>
-      <div style="display:grid;grid-template-columns:1fr 1.2fr;gap:64px;margin-top:36px;align-items:center;flex:1;min-height:0">
+      <div class="split-3d">
         <div class="card reveal" data-step="1">
           <div class="card-eyebrow">GEOMETRÍA SVG</div>
           <h3>Volumen desde vectores</h3>
           <p>Toma un vector inline del deck y genera geometría con bisel y colores del pack.</p>
-          <p class="reveal" data-step="2" style="margin-top:16px;color:var(--cs-fg-1)"><strong>Step 2:</strong> rotación de cámara para destacar el relieve.</p>
+          <p class="reveal" data-step="2" style="margin-top:20px;color:var(--cs-fg-1)"><strong>Step 2:</strong> rotación de cámara para destacar el relieve.</p>
         </div>
         <figure class="sz-3d reveal" data-step="1" data-id="logo" style="height:560px">
           <img class="sz-3d-poster" src="assets/3d/logo-poster.png" alt="Isotipo geométrico extruido en tres dimensiones con relieve biselado">
@@ -729,12 +759,14 @@
     <div class="pad">
       <div class="act-marker"><span class="step-num">1</span><span class="step-total">/3</span></div>
       <div class="eyebrow reveal" data-step="1">Preset partículas</div>
-      <h2 class="title reveal" data-step="1">Del caos a una esfera ordenada</h2>
-      <div style="display:grid;grid-template-columns:1fr 1.2fr;gap:64px;margin-top:36px;align-items:center;flex:1;min-height:0">
+      <h2 class="title tight reveal" data-step="1">Del caos a una esfera ordenada</h2>
+      <div class="split-3d">
         <div>
-          <p class="lead reveal" data-step="1" style="margin:0 0 28px">Nube de puntos determinista que converge hacia su forma final en cada step.</p>
-          <p class="reveal" data-step="2" style="font-size:26px;margin:0 0 16px;color:var(--cs-fg-1)"><strong>Step 2:</strong> convergencia intermedia.</p>
-          <p class="reveal" data-step="3" style="font-size:26px;margin:0;color:var(--cs-fg-1)"><strong>Step 3:</strong> esfera completa en equilibrio.</p>
+          <p class="lead-3d reveal" data-step="1">Nube de puntos determinista que converge hacia su forma final en cada step.</p>
+          <div class="step-list">
+            <p class="step-item reveal" data-step="2"><strong>Step 2:</strong> convergencia intermedia.</p>
+            <p class="step-item reveal" data-step="3"><strong>Step 3:</strong> esfera completa en equilibrio.</p>
+          </div>
         </div>
         <figure class="sz-3d reveal" data-step="1" data-id="particles" style="height:560px">
           <img class="sz-3d-poster" src="assets/3d/particles-poster.png" alt="Esfera 3D formada por partículas ordenadas en su estado final">
@@ -749,8 +781,8 @@
   <section data-label="05 Cierre" class="grad" data-steps="1" data-current-step="1">
     <div class="pad center">
       <div class="eyebrow">Degradación elegante</div>
-      <h2 class="title" style="max-width:1200px">Vivo en el navegador, póster nítido en PDF y PowerPoint</h2>
-      <p class="lead" style="max-width:960px;margin-top:24px;color:rgba(255,255,255,0.88)">Si no hay red o WebGL, el deck muestra el póster automáticamente y nunca se rompe.</p>
+      <h2 class="title" style="max-width:1200px;margin-bottom:0">Vivo en el navegador, póster nítido en PDF y PowerPoint</h2>
+      <div class="subtitle">Si no hay red o WebGL, el deck muestra el póster automáticamente y nunca se rompe</div>
     </div>
     <aside class="notes"><p>Cerrar recordando que el póster garantiza compatibilidad con PDF, PowerPoint y entornos sin GPU.</p></aside>
     <div class="footer"><div class="left"></div><div>3D · slizdeck · <span class="num">05</span></div></div>
@@ -1739,6 +1771,7 @@
       }
       if (st.renderer) {
         try {
+          if (st.renderer.forceContextLoss) st.renderer.forceContextLoss();
           st.renderer.dispose();
           if (st.renderer.domElement && st.renderer.domElement.parentNode === st.fig) {
             st.renderer.domElement.remove();
@@ -1757,59 +1790,84 @@
     function setupLights(THREE, scene, mode, primaryHex, accentHex, surfaceHex) {
       const m = mode || 'studio';
       if (m === 'soft') {
-        scene.add(new THREE.HemisphereLight(surfaceHex, primaryHex, 1.7));
-        const key = new THREE.DirectionalLight('#ffffff', 1.1);
-        key.position.set(2.5, 4, 3.5);
+        scene.add(new THREE.HemisphereLight(surfaceHex, primaryHex, 1.8));
+        const key = new THREE.DirectionalLight(surfaceHex, 1.4);
+        key.position.set(2.8, 4.2, 3.8);
         scene.add(key);
+        const side = new THREE.DirectionalLight(surfaceHex, 0.7);
+        side.position.set(-3.5, 1.5, 1.8);
+        scene.add(side);
       } else if (m === 'dramatic') {
-        scene.add(new THREE.AmbientLight(surfaceHex, 0.45));
-        const key = new THREE.DirectionalLight('#ffffff', 2.4);
-        key.position.set(3.5, 5, 3);
+        scene.add(new THREE.HemisphereLight(surfaceHex, primaryHex, 0.85));
+        const key = new THREE.DirectionalLight(surfaceHex, 2.5);
+        key.position.set(3.5, 5.2, 3.2);
         scene.add(key);
-        const rim = new THREE.DirectionalLight(accentHex, 1.6);
-        rim.position.set(-3, 2.5, -3.5);
+        const side = new THREE.DirectionalLight(surfaceHex, 1.1);
+        side.position.set(-4.0, 1.8, 2.2);
+        scene.add(side);
+        const rim = new THREE.DirectionalLight(accentHex, 1.8);
+        rim.position.set(-2.5, 3.0, -3.5);
         scene.add(rim);
       } else {
-        scene.add(new THREE.HemisphereLight('#ffffff', primaryHex, 1.2));
-        const key = new THREE.DirectionalLight('#ffffff', 1.8);
-        key.position.set(3, 5, 4);
+        scene.add(new THREE.HemisphereLight(surfaceHex, primaryHex, 1.35));
+        const key = new THREE.DirectionalLight(surfaceHex, 2.1);
+        key.position.set(3.2, 4.8, 4.2);
         scene.add(key);
-        const fill = new THREE.DirectionalLight(surfaceHex, 0.75);
-        fill.position.set(-3, 2, 2);
+        const fill = new THREE.DirectionalLight(surfaceHex, 1.05);
+        fill.position.set(-3.8, 2.0, 2.4);
         scene.add(fill);
-        const rim = new THREE.DirectionalLight(accentHex, 0.9);
-        rim.position.set(0, 3, -4);
+        const rim = new THREE.DirectionalLight(accentHex, 1.1);
+        rim.position.set(0, 3.5, -4.0);
         scene.add(rim);
       }
     }
 
-    function buildLogoObject(THREE, SVGLoader, st, primaryHex, accentHex) {
-      const sel = st.spec.svg || 'svg';
-      const svgElNode = document.querySelector(sel) || st.fig.querySelector('svg') || (st.slide && st.slide.querySelector('svg:not(.ic)'));
-      if (!svgElNode) throw new Error('preset logo: no se encontro el SVG (' + sel + ')');
+    function findLogoSvg(st) {
+      if (typeof st.spec.svg === 'string' && st.spec.svg.trim()) {
+        return document.querySelector(st.spec.svg.trim());
+      }
+      return st.fig.querySelector('svg') || (st.slide && st.slide.querySelector('svg:not(.ic)')) || null;
+    }
+
+    function buildLogoObject(THREE, SVGLoader, st, primaryHex, accentHex, surfaceHex) {
+      const svgElNode = findLogoSvg(st);
+      if (!svgElNode) throw new Error('preset logo: no se encontro el SVG (' + (st.spec.svg || 'svg en la figura o slide') + ')');
       const parsed = new SVGLoader().parse(svgElNode.outerHTML);
       if (!parsed.paths || !parsed.paths.length) throw new Error('preset logo: el SVG no contiene trazos');
       const depth = typeof st.spec.depth === 'number' ? st.spec.depth : 28;
       const inner = new THREE.Group();
+      const surfCol = new THREE.Color(surfaceHex);
+      const primCol = new THREE.Color(primaryHex);
       parsed.paths.forEach((p, idx) => {
         const shapes = SVGLoader.createShapes(p);
         const node = p.userData && p.userData.node;
         const isAccent = (node && (node.hasAttribute('data-accent') || (node.classList && node.classList.contains('hl'))))
           || (idx === parsed.paths.length - 1 && parsed.paths.length > 1 && st.spec.accentLast !== false);
-        const mat = new THREE.MeshStandardMaterial({
-          color: new THREE.Color(isAccent ? accentHex : primaryHex),
-          roughness: 0.3,
-          metalness: 0.18,
+        const baseCol = new THREE.Color(isAccent ? accentHex : primaryHex);
+        const lum = 0.2126 * baseCol.r + 0.7152 * baseCol.g + 0.0722 * baseCol.b;
+        const frontCol = lum < 0.08 ? baseCol.clone().lerp(surfCol, 0.14) : baseCol;
+        const sideCol = lum < 0.5
+          ? baseCol.clone().lerp(surfCol, 0.42)
+          : baseCol.clone().lerp(primCol, 0.36);
+        const frontMat = new THREE.MeshStandardMaterial({
+          color: frontCol,
+          roughness: 0.45,
+          metalness: 0.0,
+        });
+        const sideMat = new THREE.MeshStandardMaterial({
+          color: sideCol,
+          roughness: 0.36,
+          metalness: 0.0,
         });
         shapes.forEach((sh) => {
           const geom = new THREE.ExtrudeGeometry(sh, {
             depth,
             bevelEnabled: true,
-            bevelThickness: Math.max(1, depth * 0.08),
-            bevelSize: Math.max(0.8, depth * 0.06),
+            bevelThickness: Math.max(1.5, depth * 0.1),
+            bevelSize: Math.max(1.2, depth * 0.08),
             bevelSegments: 2,
           });
-          inner.add(new THREE.Mesh(geom, mat));
+          inner.add(new THREE.Mesh(geom, [frontMat, sideMat]));
         });
       });
       inner.scale.y = -1;
@@ -1846,8 +1904,7 @@
 
       let logoPoints = null;
       if (st.spec.shape === 'logo' && SVGLoader) {
-        const sel = st.spec.svg || '#logo-mark';
-        const svgNode = document.querySelector(sel) || st.fig.querySelector('svg');
+        const svgNode = findLogoSvg(st);
         if (svgNode) {
           const parsed = new SVGLoader().parse(svgNode.outerHTML);
           const shapes = parsed.paths.flatMap((p) => SVGLoader.createShapes(p));
@@ -1989,7 +2046,7 @@
               });
             }
           } else if (st.spec.preset === 'logo') {
-            rootObj = buildLogoObject(THREE, svgMod.SVGLoader, st, primaryHex, accentHex);
+            rootObj = buildLogoObject(THREE, svgMod.SVGLoader, st, primaryHex, accentHex, surfaceHex);
           } else if (st.spec.preset === 'particles') {
             rootObj = buildParticlesObject(THREE, svgMod ? svgMod.SVGLoader : null, st, primaryHex, accentHex);
           }

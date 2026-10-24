@@ -1713,6 +1713,7 @@
       }
       if (st.renderer) {
         try {
+          if (st.renderer.forceContextLoss) st.renderer.forceContextLoss();
           st.renderer.dispose();
           if (st.renderer.domElement && st.renderer.domElement.parentNode === st.fig) {
             st.renderer.domElement.remove();
@@ -1731,59 +1732,84 @@
     function setupLights(THREE, scene, mode, primaryHex, accentHex, surfaceHex) {
       const m = mode || 'studio';
       if (m === 'soft') {
-        scene.add(new THREE.HemisphereLight(surfaceHex, primaryHex, 1.7));
-        const key = new THREE.DirectionalLight('#ffffff', 1.1);
-        key.position.set(2.5, 4, 3.5);
+        scene.add(new THREE.HemisphereLight(surfaceHex, primaryHex, 1.8));
+        const key = new THREE.DirectionalLight(surfaceHex, 1.4);
+        key.position.set(2.8, 4.2, 3.8);
         scene.add(key);
+        const side = new THREE.DirectionalLight(surfaceHex, 0.7);
+        side.position.set(-3.5, 1.5, 1.8);
+        scene.add(side);
       } else if (m === 'dramatic') {
-        scene.add(new THREE.AmbientLight(surfaceHex, 0.45));
-        const key = new THREE.DirectionalLight('#ffffff', 2.4);
-        key.position.set(3.5, 5, 3);
+        scene.add(new THREE.HemisphereLight(surfaceHex, primaryHex, 0.85));
+        const key = new THREE.DirectionalLight(surfaceHex, 2.5);
+        key.position.set(3.5, 5.2, 3.2);
         scene.add(key);
-        const rim = new THREE.DirectionalLight(accentHex, 1.6);
-        rim.position.set(-3, 2.5, -3.5);
+        const side = new THREE.DirectionalLight(surfaceHex, 1.1);
+        side.position.set(-4.0, 1.8, 2.2);
+        scene.add(side);
+        const rim = new THREE.DirectionalLight(accentHex, 1.8);
+        rim.position.set(-2.5, 3.0, -3.5);
         scene.add(rim);
       } else {
-        scene.add(new THREE.HemisphereLight('#ffffff', primaryHex, 1.2));
-        const key = new THREE.DirectionalLight('#ffffff', 1.8);
-        key.position.set(3, 5, 4);
+        scene.add(new THREE.HemisphereLight(surfaceHex, primaryHex, 1.35));
+        const key = new THREE.DirectionalLight(surfaceHex, 2.1);
+        key.position.set(3.2, 4.8, 4.2);
         scene.add(key);
-        const fill = new THREE.DirectionalLight(surfaceHex, 0.75);
-        fill.position.set(-3, 2, 2);
+        const fill = new THREE.DirectionalLight(surfaceHex, 1.05);
+        fill.position.set(-3.8, 2.0, 2.4);
         scene.add(fill);
-        const rim = new THREE.DirectionalLight(accentHex, 0.9);
-        rim.position.set(0, 3, -4);
+        const rim = new THREE.DirectionalLight(accentHex, 1.1);
+        rim.position.set(0, 3.5, -4.0);
         scene.add(rim);
       }
     }
 
-    function buildLogoObject(THREE, SVGLoader, st, primaryHex, accentHex) {
-      const sel = st.spec.svg || 'svg';
-      const svgElNode = document.querySelector(sel) || st.fig.querySelector('svg') || (st.slide && st.slide.querySelector('svg:not(.ic)'));
-      if (!svgElNode) throw new Error('preset logo: no se encontro el SVG (' + sel + ')');
+    function findLogoSvg(st) {
+      if (typeof st.spec.svg === 'string' && st.spec.svg.trim()) {
+        return document.querySelector(st.spec.svg.trim());
+      }
+      return st.fig.querySelector('svg') || (st.slide && st.slide.querySelector('svg:not(.ic)')) || null;
+    }
+
+    function buildLogoObject(THREE, SVGLoader, st, primaryHex, accentHex, surfaceHex) {
+      const svgElNode = findLogoSvg(st);
+      if (!svgElNode) throw new Error('preset logo: no se encontro el SVG (' + (st.spec.svg || 'svg en la figura o slide') + ')');
       const parsed = new SVGLoader().parse(svgElNode.outerHTML);
       if (!parsed.paths || !parsed.paths.length) throw new Error('preset logo: el SVG no contiene trazos');
       const depth = typeof st.spec.depth === 'number' ? st.spec.depth : 28;
       const inner = new THREE.Group();
+      const surfCol = new THREE.Color(surfaceHex);
+      const primCol = new THREE.Color(primaryHex);
       parsed.paths.forEach((p, idx) => {
         const shapes = SVGLoader.createShapes(p);
         const node = p.userData && p.userData.node;
         const isAccent = (node && (node.hasAttribute('data-accent') || (node.classList && node.classList.contains('hl'))))
           || (idx === parsed.paths.length - 1 && parsed.paths.length > 1 && st.spec.accentLast !== false);
-        const mat = new THREE.MeshStandardMaterial({
-          color: new THREE.Color(isAccent ? accentHex : primaryHex),
-          roughness: 0.3,
-          metalness: 0.18,
+        const baseCol = new THREE.Color(isAccent ? accentHex : primaryHex);
+        const lum = 0.2126 * baseCol.r + 0.7152 * baseCol.g + 0.0722 * baseCol.b;
+        const frontCol = lum < 0.08 ? baseCol.clone().lerp(surfCol, 0.14) : baseCol;
+        const sideCol = lum < 0.5
+          ? baseCol.clone().lerp(surfCol, 0.42)
+          : baseCol.clone().lerp(primCol, 0.36);
+        const frontMat = new THREE.MeshStandardMaterial({
+          color: frontCol,
+          roughness: 0.45,
+          metalness: 0.0,
+        });
+        const sideMat = new THREE.MeshStandardMaterial({
+          color: sideCol,
+          roughness: 0.36,
+          metalness: 0.0,
         });
         shapes.forEach((sh) => {
           const geom = new THREE.ExtrudeGeometry(sh, {
             depth,
             bevelEnabled: true,
-            bevelThickness: Math.max(1, depth * 0.08),
-            bevelSize: Math.max(0.8, depth * 0.06),
+            bevelThickness: Math.max(1.5, depth * 0.1),
+            bevelSize: Math.max(1.2, depth * 0.08),
             bevelSegments: 2,
           });
-          inner.add(new THREE.Mesh(geom, mat));
+          inner.add(new THREE.Mesh(geom, [frontMat, sideMat]));
         });
       });
       inner.scale.y = -1;
@@ -1820,8 +1846,7 @@
 
       let logoPoints = null;
       if (st.spec.shape === 'logo' && SVGLoader) {
-        const sel = st.spec.svg || '#logo-mark';
-        const svgNode = document.querySelector(sel) || st.fig.querySelector('svg');
+        const svgNode = findLogoSvg(st);
         if (svgNode) {
           const parsed = new SVGLoader().parse(svgNode.outerHTML);
           const shapes = parsed.paths.flatMap((p) => SVGLoader.createShapes(p));
@@ -1963,7 +1988,7 @@
               });
             }
           } else if (st.spec.preset === 'logo') {
-            rootObj = buildLogoObject(THREE, svgMod.SVGLoader, st, primaryHex, accentHex);
+            rootObj = buildLogoObject(THREE, svgMod.SVGLoader, st, primaryHex, accentHex, surfaceHex);
           } else if (st.spec.preset === 'particles') {
             rootObj = buildParticlesObject(THREE, svgMod ? svgMod.SVGLoader : null, st, primaryHex, accentHex);
           }

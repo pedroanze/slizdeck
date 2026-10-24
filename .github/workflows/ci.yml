@@ -106,7 +106,8 @@ jobs:
           node scripts/export-pptx.mjs examples/3d/3d-showcase.html /tmp/ci-3d.pptx
           node scripts/export-pdf.mjs examples/3d/3d-showcase.html /tmp/ci-3d.pdf
           test -s /tmp/ci-3d.pptx && test -s /tmp/ci-3d.pdf || { echo "export 3D vacio"; exit 1; }
-          unzip -l /tmp/ci-3d.pptx | grep -q "ppt/media/image" || { echo "el .pptx no lleva los posters 3D"; exit 1; }
+          unzip -l /tmp/ci-3d.pptx > /tmp/ci-3d.list
+          grep -q "ppt/media/image" /tmp/ci-3d.list || { echo "el .pptx no lleva los posters 3D"; exit 1; }
           node scripts/make-offline.mjs examples/3d/3d-showcase.html /tmp/ci-3d-offline.html
           ! grep -q "cdn.jsdelivr" /tmp/ci-3d-offline.html || { echo "quedo cdn.jsdelivr en el deck offline"; exit 1; }
 
