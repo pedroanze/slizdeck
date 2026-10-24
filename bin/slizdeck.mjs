@@ -63,6 +63,9 @@ const SCRIPTS = {
   'make-offline': 'make-offline.mjs',
   'smoke-test': 'smoke-test.mjs',
   score: 'score-deck.mjs',
+  'add-3d': 'add-3d.mjs',
+  'poster-3d': 'poster-3d.mjs',
+  'check-3d': 'check-3d.mjs',
 };
 
 const HELP = `slizdeck ${PKG.version} — decks de slides HTML animados (Agent Skill)
@@ -78,12 +81,16 @@ Instalación
   env                                  Verifica Node, Chrome y dependencias del export
 
 Deck
-  audit <deck>              Validación estática (contraste, balance, voz, assets)
-  check <deck>              audit + check-reveal + check-overflow + check-contrast
+  audit <deck>              Validación estática (contraste, balance, voz, assets, 3D)
+  check <deck>              audit + check-reveal + check-overflow + check-contrast (+ 3d check si hay .sz-3d)
   check-reveal <deck>       Cascada de .reveal en Chrome
   check-overflow <deck>     Desbordes y solapes de texto en Chrome
   check-contrast <deck>     Contraste medido por nodo en Chrome
   check-style-pack <pack|deck>
+  3d add <deck> [--model <x.glb> --id <id>]
+                            Inserta importmap con SRI y genera assets/3d/<id>.glb.js
+  3d poster <deck>          Renderiza los pósters PNG de cada .sz-3d en su paso final
+  3d check <deck>           Verifica en Chrome con WebGL (SwiftShader) cada .sz-3d
   shoot <deck> [--slides=1,3] [--out=dir] [--clean]
   doctor <deck>             Fixes del engine que le faltan a un deck viejo
   renumber <deck>
@@ -360,12 +367,24 @@ async function main() {
     case 'new': process.exitCode = newDeck(args); return;
     case 'check': {
       if (!args[0]) fail('uso: slizdeck check <deck.html>');
+      const list = ['audit.mjs', 'check-reveal.mjs', 'check-overflow.mjs', 'check-contrast.mjs'];
+      if (existsSync(args[0])) {
+        const deckHtml = readFileSync(args[0], 'utf8').replace(/<!--[\s\S]*?-->/g, '');
+        if (/\bclass=["'][^"']*\bsz-3d\b/.test(deckHtml)) list.push('check-3d.mjs');
+      }
       let worst = 0;
-      for (const s of ['audit.mjs', 'check-reveal.mjs', 'check-overflow.mjs', 'check-contrast.mjs']) {
+      for (const s of list) {
         console.log(`\n── ${s.replace('.mjs', '')} ──`);
         worst = Math.max(worst, runScript(s, args));
       }
       process.exitCode = worst;
+      return;
+    }
+    case '3d': {
+      const [sub, ...rest] = args;
+      const file = { add: 'add-3d.mjs', poster: 'poster-3d.mjs', check: 'check-3d.mjs' }[sub];
+      if (!file) fail('uso: slizdeck 3d add|poster|check <deck.html> [...]');
+      process.exitCode = runScript(file, rest);
       return;
     }
     case 'export': {

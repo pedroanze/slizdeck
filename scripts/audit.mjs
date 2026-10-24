@@ -24,6 +24,7 @@ import { execFileSync } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { slides as parseSlides } from './lib/deck-html.mjs';
+import { THREE_VERSION, THREE_IMPORTS, THREE_INTEGRITY } from './lib/three-pin.mjs';
 
 const file = process.argv[2];
 if (!file) {
@@ -150,6 +151,159 @@ for (let i = 2; i < slides.length; i++) {
 }
 if (!runs.length) ok('variedad de layout (ninguna racha de 3 slides seguidas con la misma estructura)');
 else caution('3 o más slides seguidas con la misma estructura: variar el layout (reference/design-guidelines.md)', runs.join('\n      '));
+
+// 12. <script type="module"> con import estatico de red (bloquea DOMContentLoaded y cuelga Chrome headless)
+const staticNetModules = [];
+for (const m of stripped.matchAll(/<script\b([^>]*\btype=["']module["'][^>]*)>([\s\S]*?)<\/script>/gi)) {
+  const [, attrs, body] = m;
+  const srcMatch = /\bsrc=["'](https?:\/\/[^"']+)["']/i.exec(attrs);
+  if (srcMatch) staticNetModules.push(srcMatch[1]);
+  const cleanBody = body.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(?:^|\s)\/\/.*$/gm, '');
+  for (const im of cleanBody.matchAll(/\b(?:import|export)\s+(?:[\s\S]*?\s+from\s+)?["'](https?:\/\/[^"']+)["']/g)) {
+    staticNetModules.push(im[1]);
+  }
+}
+if (staticNetModules.length) {
+  bad('<script type="module"> con import estático de red (bloquea DOMContentLoaded; usar import() dinámico con importmap)', staticNetModules.join('\n      '));
+}
+
+// 13. Escenas 3D (.sz-3d): importmap fijado con SRI, poster con alt, JSON valido y sidecars
+const figs3d = [...stripped.matchAll(/<figure\b([^>]*\bclass=["'][^"']*\bsz-3d\b[^"']*["'][^>]*)>([\s\S]*?)<\/figure>/gi)];
+if (figs3d.length) {
+  const deckDir = path.dirname(path.resolve(file));
+  const mapMatch = /<script\b[^>]*\btype=["']importmap["'][^>]*>([\s\S]*?)<\/script>/i.exec(stripped);
+  let netThree = false;
+  if (!mapMatch) {
+    bad('.sz-3d sin <script type="importmap"> en <head>', `ejecuta: node scripts/add-3d.mjs ${file}`);
+  } else {
+    let mapJson = null;
+    try { mapJson = JSON.parse(mapMatch[1]); } catch (e) {
+      bad('<script type="importmap"> con JSON inválido', e.message);
+    }
+    if (mapJson) {
+      const imp = mapJson.imports || {};
+      const threeUrl = imp.three;
+      const addonsUrl = imp['three/addons/'];
+      const isOfflineData = typeof threeUrl === 'string' && threeUrl.startsWith('data:');
+      if (!threeUrl) {
+        bad('importmap sin entrada "three"');
+      } else if (!isOfflineData) {
+        netThree = /^https?:\/\//i.test(threeUrl);
+        if (threeUrl !== THREE_IMPORTS.three || addonsUrl !== THREE_IMPORTS['three/addons/']) {
+          bad(
+            `three.js sin versión exacta fijada o distinta del pin (${THREE_VERSION})`,
+            `esperado: ${THREE_IMPORTS.three} (encontrado: ${threeUrl})`,
+          );
+        } else {
+          ok(`importmap three@${THREE_VERSION} fijado exactamente`);
+        }
+        const integ = mapJson.integrity;
+        if (!integ || typeof integ !== 'object') {
+          bad('importmap sin bloque "integrity" (SRI requerido para three.js)');
+        } else {
+          const missingSri = Object.entries(THREE_INTEGRITY)
+            .filter(([u, hash]) => integ[u] !== hash)
+            .map(([u]) => u.split('/').pop());
+          if (missingSri.length) {
+            bad('importmap con hashes de integrity (SRI) ausentes o distintos del pin', missingSri.join(', '));
+          } else {
+            ok('importmap con hashes SRI (sha384) verificados');
+          }
+        }
+      } else {
+        ok('importmap 3D incrustado como data: URI (offline)');
+      }
+    }
+  }
+
+  let posterIssues = 0;
+  let jsonIssues = 0;
+  let sidecarIssues = 0;
+  for (let i = 0; i < figs3d.length; i++) {
+    const [, attrs, inner] = figs3d[i];
+    const id = /\bdata-id=["']([^"']+)["']/i.exec(attrs)?.[1] || `sz-3d #${i + 1}`;
+    const imgMatch = /<img\b([^>]*\bclass=["'][^"']*\bsz-3d-poster\b[^"']*["'][^>]*)>/i.exec(inner);
+    if (!imgMatch) {
+      posterIssues++;
+      bad(`.sz-3d (${id}) sin póster <img class="sz-3d-poster">`, `ejecuta: node scripts/poster-3d.mjs ${file}`);
+    } else {
+      const imgAttrs = imgMatch[1];
+      const src = /\bsrc=["']([^"']*)["']/i.exec(imgAttrs)?.[1]?.trim();
+      const alt = /\balt=["']([^"']*)["']/i.exec(imgAttrs)?.[1]?.trim();
+      if (!src) {
+        posterIssues++;
+        bad(`.sz-3d (${id}) con póster sin atributo src`);
+      } else if (!src.startsWith('data:') && !/^https?:\/\//i.test(src) && !existsSync(path.resolve(deckDir, src))) {
+        posterIssues++;
+        bad(`.sz-3d (${id}) apunta a un póster que no existe: ${src}`, `ejecuta: node scripts/poster-3d.mjs ${file}`);
+      }
+      if (!alt) {
+        posterIssues++;
+        bad(`.sz-3d (${id}) con póster sin atributo alt descriptivo`);
+      }
+    }
+
+    const specMatch = /<script\b[^>]*\btype=["']application\/json["'][^>]*>([\s\S]*?)<\/script>/i.exec(inner);
+    if (!specMatch) {
+      jsonIssues++;
+      bad(`.sz-3d (${id}) sin bloque <script type="application/json">`);
+    } else {
+      let spec = null;
+      try {
+        spec = JSON.parse(specMatch[1]);
+      } catch (e) {
+        jsonIssues++;
+        bad(`.sz-3d (${id}) con JSON inválido`, e.message);
+      }
+      if (spec) {
+        const validModel = typeof spec.model === 'string' && spec.model.trim().length > 0;
+        const validPreset = spec.preset === 'logo' || spec.preset === 'particles';
+        if (!validModel && !validPreset) {
+          jsonIssues++;
+          bad(`.sz-3d (${id}) con JSON sin "model" ni "preset" válido ("logo"|"particles")`);
+        } else if (validModel) {
+          const mId = spec.model.trim();
+          const escId = mId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          const sidecarTag = new RegExp(`<script\\b[^>]*\\bsrc=["']([^"']*\\b${escId}\\.glb\\.js)["'][^>]*>`, 'i').exec(stripped);
+          const inlinedModel = new RegExp(`__szModels\\s*(?:\\[\\s*["']${escId}["']\\s*\\]|\\.\\s*${escId})\\s*=`).test(stripped);
+          if (sidecarTag) {
+            const sidecarPath = path.resolve(deckDir, sidecarTag[1]);
+            if (!existsSync(sidecarPath)) {
+              sidecarIssues++;
+              bad(`.sz-3d (${id}) sin archivo sidecar en disco: ${sidecarTag[1]}`);
+            }
+          } else if (!inlinedModel) {
+            sidecarIssues++;
+            bad(`.sz-3d (${id}) sin sidecar <script src="assets/3d/${mId}.glb.js" defer> para el modelo "${mId}"`);
+          }
+        }
+      }
+    }
+  }
+  if (!posterIssues) ok(`pósters .sz-3d presentes y con atributo alt (${figs3d.length}/${figs3d.length})`);
+  if (!jsonIssues && !sidecarIssues) ok('configuración JSON y sidecars .sz-3d válidos');
+
+  if (figs3d.length > 2) {
+    caution(`${figs3d.length} figuras .sz-3d en el deck (recomendado: 1 o 2 por deck para cuidar memoria y GPU)`);
+  }
+  const special3d = [];
+  for (const m of stripped.matchAll(/<section\b([^>]*)>([\s\S]*?)<\/section>/gi)) {
+    const [, sAttrs, sInner] = m;
+    if (!/\bsz-3d\b/.test(sInner)) continue;
+    const isCoverOrTrans = (/\bclass=["'][^"']*\bgrad\b/.test(sAttrs) && /<h1\b[^>]*\bclass=["'][^"']*\bcover\b/.test(sInner))
+      || (/data-steps=["']1["']/.test(sAttrs) && /\bclass=["'][^"']*\bts-title\b/.test(sInner));
+    if (isCoverOrTrans) {
+      const lbl = /data-label=["']([^"']*)["']/.exec(sAttrs)?.[1] || 'slide';
+      special3d.push(lbl);
+    }
+  }
+  if (special3d.length) {
+    caution(`.sz-3d en slide de portada o transición (${special3d.join(', ')}): recomendado solo en slides de contenido`);
+  }
+  if (netThree) {
+    caution(`el deck 3D carga three.js desde la red (si no hay wifi se verá el póster; para presentar offline: npx slizdeck export offline ${file})`);
+  }
+}
 
 console.log(`\n${fail ? `✗ ${fail} categoría(s) con fallos` : '✓ audit OK'}${warn ? ` · ${warn} aviso(s)` : ''}\n`);
 process.exit(fail ? 1 : 0);

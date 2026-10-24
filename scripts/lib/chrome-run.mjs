@@ -67,20 +67,37 @@ export const unescapeHtml = (s) => s
 
 export function externalScripts(html) {
   const masked = html.replace(/<!--[\s\S]*?-->/g, (c) => ' '.repeat(c.length));
-  return [...masked.matchAll(/<script\b[^>]*\bsrc=["'](https?:\/\/[^"']+)["']/gi)].map((x) => x[1]);
+  const out = [...masked.matchAll(/<script\b[^>]*\bsrc=["'](https?:\/\/[^"']+)["']/gi)].map((x) => x[1]);
+  for (const m of masked.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)) {
+    const [, attrs, body] = m;
+    if (/\btype=["']importmap["']/i.test(attrs)) {
+      try {
+        const parsed = JSON.parse(body);
+        for (const v of Object.values(parsed?.imports || {})) {
+          if (typeof v === 'string' && /^https?:\/\//i.test(v)) out.push(`importmap: ${v}`);
+        }
+      } catch {}
+    } else if (/\btype=["']module["']/i.test(attrs)) {
+      const clean = body.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(?:^|\s)\/\/.*$/gm, '');
+      for (const im of clean.matchAll(/\b(?:import|export)\s+(?:[\s\S]*?\s+from\s+)?["'](https?:\/\/[^"']+)["']/g)) {
+        out.push(`module import: ${im[1]}`);
+      }
+    }
+  }
+  return out;
 }
 
-/** Por que Chrome no termino: casi siempre un script externo que no responde. */
+/** Por que Chrome no termino: casi siempre un script o modulo de red que bloquea. */
 export function explainHang(html, attempts) {
   console.error(`No se pudo leer el resultado tras ${attempts} intento(s): Chrome headless no termino.`);
   const ext = externalScripts(html);
   if (ext.length) {
-    console.error(`\n  Causa mas probable: el deck carga ${ext.length} script(s) externo(s) bloqueante(s):`);
+    console.error(`\n  Causa mas probable: el deck declara ${ext.length} script(s), importmap o modulo(s) de red:`);
     for (const u of ext) console.error(`    ${u}`);
-    console.error('  DOMContentLoaded espera a los scripts sincronos: si esa URL no responde, el chequeo no termina.');
-    console.error('  Fix: comentar o quitar ese <script src> del deck (template.html lo trae comentado).');
+    console.error('  DOMContentLoaded espera a los <script src> sincronos y a los <script type="module"> con imports estaticos de red.');
+    console.error('  Fix: quitar los <script src> o <script type="module"> de red; para 3D usar import("three") dinamico con .sz-3d.');
   } else {
-    console.error('  El deck no tiene scripts externos: revisar que Chrome headless funcione en esta maquina.');
+    console.error('  El deck no tiene scripts ni modulos externos: revisar que Chrome headless funcione en esta maquina.');
   }
 }
 
