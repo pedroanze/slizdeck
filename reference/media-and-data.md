@@ -1,8 +1,8 @@
 # Imágenes, métricas y gráficos
 
-Índice: [imágenes](#imagen-a-sangre-completa) · [métricas](#métrica-grande) · [barras y proporción](#barras-comparativas) · [pantalla de inicio](#pantalla-de-inicio) · **[datos: gráficas, tabla y timeline](#datos-gráficas-tabla-y-timeline)**
+Índice: [imágenes](#imagen-a-sangre-completa) · [métricas](#métrica-grande) · [barras y proporción](#barras-comparativas) · [pantalla de inicio](#pantalla-de-inicio) · **[datos: gráficas, tabla y timeline](#datos-gráficas-tabla-y-timeline)** · [escenas 3D](3d.md)
 
-Patrones listos para las slides que llevan algo más que texto. Todo en CSS y SVG inline: **ninguno requiere librería externa ni build step**, y todos sobreviven al export a PDF.
+Patrones listos para las slides que llevan algo más que texto. Todo en CSS y SVG inline: **ninguno requiere librería externa ni build step (excepto 3D opcional en [reference/3d.md](3d.md))**, y todos sobreviven al export a PDF.
 
 Copiar el CSS al bloque de la slide y el HTML dentro del `.pad`.
 

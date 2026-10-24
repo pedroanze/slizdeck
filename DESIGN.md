@@ -180,7 +180,7 @@ El movimiento es opt-in por pasos (`.reveal` + `data-step`), y **la entrada var�
 | `r-wipe` | Barras y reglas |
 | `r-mask` | Remates |
 
-Un contenedor con `.stagger` escalona sus hijos automáticamente (hasta 12). Cuatro niveles por deck: NONE, LIGHT (pasos), MEDIUM (además, los datos se animan: gráficas que se dibujan, contadores, barras) y HEAVY (además, técnicas SVG de `animations.md`), ver `reference/deck-schema.md`. Entre slides, corte directo; `<deck-stage transition="fade">` es opt-in. Con `prefers-reduced-motion` solo transiciona la opacidad. Las superficies con gradiente llevan grano (`--cs-grain`), sin `mix-blend-mode`: `overlay` es invisible sobre fondos oscuros.
+Un contenedor con `.stagger` escalona sus hijos automáticamente (hasta 12). Cuatro niveles por deck: NONE, LIGHT (pasos), MEDIUM (además, los datos se animan: gráficas que se dibujan, contadores, barras) y HEAVY (además, técnicas SVG de `animations.md` o escenas 3D `.sz-3d` de `reference/3d.md`), ver `reference/deck-schema.md`. Entre slides, corte directo; `<deck-stage transition="fade">` es opt-in. Con `prefers-reduced-motion` solo transiciona la opacidad (y en `.sz-3d` se muestra un frame estático con corte directo entre steps). Las superficies con gradiente llevan grano (`--cs-grain`), sin `mix-blend-mode`: `overlay` es invisible sobre fondos oscuros.
 
 Los tres tokens de gradiente (`--cs-grad-radial`, `--cs-grad-linear`, `--cs-grad-text`) interpolan en **OKLCH** (`linear-gradient(135deg in oklch, ...)`), no en RGB: dos colores de matiz distinto (ej. cobalto → navy) mezclados en RGB pasan por un punto medio grisáceo y apagado; en OKLCH el color se mantiene vivo en todo el recorrido. Requiere Chrome 111+/Safari 16.4+/Firefox 128+ — ya asumido por el resto del sistema (el pipeline de PDF usa Chrome headless). Un pack nuevo debe declarar sus gradientes con `in oklch` desde el inicio.
 
@@ -229,7 +229,7 @@ Indicador de paso ("1/2") en la esquina superior derecha de slides multi-paso, e
 
 El export a PDF es impresión nativa del navegador (`Cmd/Ctrl+P`), y el estado que se imprime **no** es el estado inicial de la slide sino el final: todos los `.reveal` visibles, todos los contadores en su cifra real, el marcador de paso en su último paso. Cuatro defectos del motor heredado se corrigieron para que esto se cumpla (ver `design.json` → `printPipeline`); si alguna vez un deck exporta slides en blanco, contadores en cero, o el chrome del reproductor encima del contenido, la causa está ahí.
 
-**The Final-State Rule.** Lo que se imprime es la slide terminada, nunca un fotograma intermedio de su animación. Cualquier patrón de animación nuevo que se agregue a `animations.md` debe tener su estado final garantizado bajo `@media print`.
+**The Final-State Rule.** Lo que se imprime es la slide terminada, nunca un fotograma intermedio de su animación. Cualquier patrón de animación nuevo que se agregue a `animations.md` debe tener su estado final garantizado bajo `@media print` (y toda escena `.sz-3d` debe llevar su póster PNG del paso final en `<img class="sz-3d-poster">`, que `beforeprint` y `@media print` activan con `.sz-3d--poster`).
 
 ## Do's and Don'ts
 

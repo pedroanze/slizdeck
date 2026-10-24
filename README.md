@@ -30,7 +30,7 @@ Háblale a tu agente:
 
 Te consulta el estilo, el público y los datos antes de generar, y valida contraste, desbordes y texto antes de entregar.
 
-**Recibes** un `.html` que se presenta en cualquier navegador (con modo presentador: tecla `P`), un PDF liviano y un PowerPoint editable.
+**Recibes** un `.html` que se presenta en cualquier navegador (con modo presentador: tecla `P`), un PDF liviano y un PowerPoint editable. Soporta además escenas 3D opcionales con `three.js` (modelos `.glb` y presets animados por step, con póster estático para PDF y PPTX).
 
 ## Cinco estilos
 

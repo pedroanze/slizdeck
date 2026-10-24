@@ -12,3 +12,8 @@ Son 100% de `slizdeck`, sin equivalente en el original:
 - Los cinco `styles/*.md` (style packs) y su índice.
 - Todos los scripts en `scripts/` (aplicar/validar packs, auditoría, export a PPTX, verificación de reveals, versionado/drift, hook de Claude Code, etc.).
 - `CHANGELOG.md`, `DESIGN.md`, `PRODUCT.md`, la CI (`.github/workflows/`).
+
+## Créditos de activos de ejemplo
+
+- `examples/3d/` (`RobotExpressive.glb`, empaquetado en `examples/3d/assets/3d/robot.glb.js`) — modelo original de [Tomás Laulhé](https://www.patreon.com/quaternius) (Quaternius), con modificaciones y clips de animación de [Don McCurdy](https://www.donmccurdy.com/), distribuido bajo licencia [CC0 1.0 Universal (Dominio Público)](https://creativecommons.org/publicdomain/zero/1.0/) en el repositorio [`mrdoob/three.js`](https://github.com/mrdoob/three.js/tree/r186/examples/models/gltf/RobotExpressive).
+

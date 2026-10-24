@@ -3,11 +3,11 @@ name: slizdeck
 description: |
   Genera decks de slides HTML animados a partir de un design system propio — enfocado en pitch decks de startup (minimalista, poco texto, mucha imagen/gráfica), pero también sirve para charlas, demos y recaps de evento. Arquitectura deck-stage 1920×1080 con navegación por teclado, pensado para presentar en vivo. Trae cinco style packs listos (terminal oscuro, blanco puro, color dominante, denso en datos, editorial), cada uno con paleta, tipografía y reglas de composición validadas contra contraste WCAG y clichés visuales de IA. El design system se define de forma guiada —elegir un pack, inyectar los colores de la marca del usuario, o generar una paleta a medida— y nunca requiere que el usuario escriba CSS/JSON a mano. El contenido se construye investigando en internet antes de proponer un wireframe que el usuario aprueba. Salida: archivo HTML autónomo (sin build step) con modo presentador, exportable a PDF liviano y a PPTX editable (texto y formas nativas de PowerPoint; imágenes, SVG y fondos degradados como imagen).
 
-  DISPARADORES: crea un pitch deck, hazme un deck, presentación para X, slides para X, deck de startup, prepara una presentación, build slides, crea slides.
+  DISPARADORES: crea un pitch deck, hazme un deck, presentación para X, slides para X, deck de startup, prepara una presentación, build slides, crea slides, modelo 3D, personaje 3D, escena 3D, objeto girando, three.js.
 license: MIT
 compatibility: Requiere un agente con capacidad de ejecutar comandos de shell (crear/copiar archivos, abrir el navegador) y búsqueda web. Probado en Claude Code; compatible con cualquier cliente del estándar Agent Skills (agentskills.io).
 metadata:
-  version: "2.3.2"
+  version: "2.4.0"
 allowed-tools: Bash, Read, Write, Edit, WebSearch, WebFetch
 # user-invocable / argument-hint: extensiones de Claude Code (tab-completion de /slizdeck).
 user-invocable: true
@@ -32,17 +32,19 @@ Fork/adaptación de [`claude-slides`](https://github.com/marcogalluccio/claude-s
 | `reference/design-guidelines.md` | Principios de diseño y anti-clichés. Aplicar en el wireframe y al generar. |
 | `reference/components.md` | Catálogo de layouts (cards, grids, mockups, diagramas). **Ir directo al patrón que pide el wireframe.** |
 | `reference/media-and-data.md` | Imágenes, métricas y **datos**: gráficas `.sz-chart`, tabla `.sz-table`, timeline `.sz-timeline`, contadores. |
+| `reference/3d.md` | Escenas 3D opcionales con `three.js` (`.sz-3d`): modelos `.glb` (`3d-model`), presets (`3d-logo`, `3d-particles`), flujo imagen → GLB, pósters y export. |
 | `reference/animations.md` | Modelo de pasos, stagger, contadores y técnicas SVG para HEAVY, con sus gotchas. |
 | `reference/icons.md` | Íconos SVG en línea (`svg.ic`). |
 | `reference/design-tokens-schema.md` | Qué hace cada token `--cs-*` (para inyectar colores de marca). |
 | `reference/hooks.md` | Hook opcional de Claude Code que audita el deck después de cada edición (`scripts/verify-hook.mjs`). |
 | `styles/index.md` | Catálogo de los 5 style packs: **lo único que hay que leer para elegir estilo.** `styles/<pack>.md` trae los tokens y reglas de uno. |
-| `examples/pitch-showcase.html` · `examples/datos-showcase.html` | Decks de referencia: un pitch completo y los patrones de datos. |
+| `examples/pitch-showcase.html` · `examples/datos-showcase.html` · `examples/3d/3d-showcase.html` | Decks de referencia: un pitch completo, los patrones de datos y las escenas 3D opcionales. |
 | `bin/slizdeck.mjs` | Atajo a todos los scripts; acepta packs por nombre. |
 | `scripts/apply-style-pack.mjs` | Aplica un pack a un deck (fusiona tokens; al cambiar de pack devuelve al default los del anterior). |
 | `scripts/check-style-pack.mjs` | Contrastes de los tokens, distinción primario/acento, clichés de IA. |
-| `scripts/audit.mjs` | Validación estática: contraste, balance HTML, reglas de voz, assets pendientes, texto de más, emojis, layouts repetidos. |
+| `scripts/audit.mjs` | Validación estática: contraste, balance HTML, reglas de voz, assets pendientes, texto de más, emojis, layouts repetidos, configuración 3D y SRI. |
 | `scripts/check-reveal.mjs` · `scripts/check-overflow.mjs` · `scripts/check-contrast.mjs` | Validación en Chrome: cascada de `.reveal`, texto que desborda o se superpone, contraste medido sobre el fondo real. |
+| `scripts/add-3d.mjs` · `scripts/poster-3d.mjs` · `scripts/check-3d.mjs` | 3D opcional: inserta importmap fijado y sidecar `.glb.js`, genera los pósters PNG y verifica el render WebGL en Chrome. |
 | `scripts/shoot.mjs` | PNG de cada slide en su estado final, para **mirar** el deck en `audit`. |
 | `scripts/doctor.mjs` | Avisa si un deck se generó con un engine anterior a algún fix (lee `CHANGELOG.md`). |
 | `scripts/renumber.mjs` | Renumera `data-label` y footers en orden de documento. Siempre después de insertar una slide. |
@@ -114,3 +116,4 @@ Si `export-pptx.mjs` avisa que faltan dependencias, correr el `npm install --pre
 - **`reference/animations.md` tiene los gotchas** de cada técnica: leerlos antes de usar nivel HEAVY.
 - **Probar siempre en el navegador.** Abrir, verificar que el mensaje pasa, iterar.
 - **Animar cuesta tokens.** Respetar el nivel elegido; si el usuario pide "esta slide debe ser WOW", subir de nivel solo esa slide, no todo el deck.
+- **3D (`.sz-3d`) es una técnica HEAVY opcional de 1 o 2 slides por deck.** Si el brief o el usuario menciona "3D", "modelo 3D", "personaje 3D", "three.js" u "objeto girando", cargar [reference/3d.md](reference/3d.md).

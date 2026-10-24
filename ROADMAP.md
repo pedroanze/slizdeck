@@ -38,6 +38,14 @@ Hacia dónde va slizdeck. Es un plan vivo, medido en días de trabajo: se ajusta
 - [x] Nivel de animación MEDIUM, transiciones opcionales entre slides, contadores con decimales
 - [x] Modo presentador con speaker notes, slide siguiente y timer
 
+## 2.4 · Escenas 3D opcionales con three.js
+
+- [x] Componente `.sz-3d` opt-in con `three.js` fijado por versión y SRI (`sha384`), evento `stepchange` y ciclo de vida perezoso de contextos WebGL
+- [x] Modelos `.glb` empaquetados como sidecar JS clásico (`3d add`), más presets `logo` (SVG extruido) y `particles`
+- [x] Pósters PNG automáticos (`3d poster`) para degradación sin red/WebGL y exportación a PDF y PPTX
+- [x] Verificación en Chrome con SwiftShader (`3d check`) y modo autónomo sin red (`export offline`)
+- [ ] Modelos 3D nativos en PPTX cuando `pptxgenjs` lo soporte
+
 ## 3.0 · Slizdeck Studio — días 9 a 12
 
 - [ ] Editor visual local (`npx slizdeck studio deck.html`): editar texto sobre la slide y dejar comentarios
