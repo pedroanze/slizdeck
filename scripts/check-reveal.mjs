@@ -34,11 +34,10 @@
  *
  * El harness espera `DOMContentLoaded`, no `load`, para no depender de que
  * carguen imagenes o iframes. OJO: eso NO evita el cuelgue por un <script
- * src> externo bloqueante (ej. Lucide sin comentar, en vez del default de
- * template.html), porque `DOMContentLoaded` tambien espera a los scripts
- * sincronos. Por eso, si el chequeo no termina, primero se reporta si el
- * deck tiene scripts externos: esa es la causa mucho mas probable que un
- * problema de Chrome en la maquina.
+ * src> externo bloqueante o un <script type="module"> con imports estaticos
+ * de red, porque `DOMContentLoaded` espera a ambos. Por eso, si el chequeo
+ * no termina, primero se reporta si el deck tiene scripts o modulos de red:
+ * esa es la causa mucho mas probable que un problema de Chrome en la maquina.
  */
 
 import { readFileSync, existsSync } from 'node:fs';

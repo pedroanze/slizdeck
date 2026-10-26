@@ -6,7 +6,7 @@ Cómo saber si una versión de slizdeck genera **mejores** decks que la anterior
 
 | | |
 |---|---|
-| [`briefs/`](briefs/) | 8 pedidos fijos que cubren los tipos de deck de la skill. No se editan entre versiones: si cambian, los puntajes dejan de ser comparables. |
+| [`briefs/`](briefs/) | 9 pedidos fijos que cubren los tipos de deck de la skill. No se editan entre versiones: si cambian, los puntajes dejan de ser comparables. |
 | [`rubric.md`](rubric.md) | Rúbrica visual (6 criterios, 1 a 5) para revisar las capturas de cada deck. |
 | `scripts/score-deck.mjs` | Puntaje automático de 0 a 100: validaciones, texto en pantalla, variedad de layout, slides con elemento visual, notas del presentador. |
 | [`results/`](results/) | Un JSON por versión con los puntajes automáticos y la rúbrica. |

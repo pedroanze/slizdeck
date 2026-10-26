@@ -14,6 +14,7 @@ Una página por slide, en su **estado final** (reveals visibles, contadores en s
 
 - **Sin el grano de los fondos degradados.** Chrome lo rasteriza al imprimir y un deck de 18 slides pasaba de ~1 MB a 22 MB. `--grain` lo conserva si el usuario lo pide.
 - **Sin el marcador de pasos** (`3 / 3`), que es UI del reproductor en vivo.
+- **Escenas 3D (`.sz-3d`)**: se activa el modo póster (`sz-3d--poster`), se oculta el `<canvas>` y se imprime el póster estático PNG del estado final (`assets/3d/<id>-poster.png`).
 
 El script verifica que el PDF tenga tantas páginas como slides el deck (sale con código 1 si no) y avisa si pesa más de 10 MB. La impresión nativa (`Cmd/Ctrl+P` → guardar como PDF) sigue funcionando para el usuario que prefiera hacerlo a mano.
 
@@ -34,6 +35,7 @@ Exporta **por geometría**: renderiza cada slide en Chrome en su estado final, m
 - **Fondos con degradado o grano** (cover, cierre, transiciones): una captura del fondo sin su contenido, como imagen de fondo.
 - **Speaker notes** (`<aside class="notes">` de cada slide, o el JSON de `<script id="speaker-notes">`): al campo nativo de notas de PowerPoint.
 - **Gráficas `.sz-chart`**: imagen fiel con sus rótulos y ejes editables. `--charts=native` las arma como gráfica nativa de PowerPoint con los datos editables (experimental: Keynote y Quick Look no las dibujan).
+- **Escenas 3D `.sz-3d`**: viaja el póster estático PNG del estado final como imagen en la posición exacta de la figura (`pptxgenjs` no soporta modelos 3D nativos).
 
 Opciones: `--safe-fonts` (Arial/Georgia/Consolas en vez de las fuentes del pack), `--slides=1,3-5` (solo esas slides).
 
@@ -48,13 +50,13 @@ Si el usuario necesita fidelidad visual exacta, el PDF es el formato correcto; e
 
 ## Deck sin red (opcional)
 
-Si el deck se va a presentar sin garantía de wifi (la mayoría de las charlas en sala), incrustar las fuentes como `data:` URI para que no dependa de Google Fonts en el momento de presentar:
+Si el deck se va a presentar sin garantía de wifi (la mayoría de las charlas en sala), incrustar las fuentes —y, si el deck usa `.sz-3d`, también los módulos de `three.js` verificados por SRI (`sha384`), los sidecars `.glb.js` y los pósters— como `data:` URI para que no dependa de la red en el momento de presentar:
 
 ```bash
 node scripts/make-offline.mjs deck.html
 ```
 
-Corre esto **con anticipación**, no el mismo día del evento: descarga las fuentes en el momento de ejecutarlo, así que necesita red entonces aunque el deck final no la necesite después.
+Corre esto **con anticipación**, no el mismo día del evento: descarga las fuentes y módulos 3D en el momento de ejecutarlo (con caché local de `three.js` en `~/.cache/slizdeck/`), así que necesita red entonces aunque el deck final no la necesite después.
 
 ## Speaker notes y modo presentador
 

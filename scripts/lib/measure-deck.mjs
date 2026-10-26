@@ -497,8 +497,29 @@ const firstGradientColor = (bgImage) => {
         return;
       }
       if (el.tagName === 'CANVAS') {
+        if (el.closest('.sz-3d')) return;
         const vis = intersect(box, clip);
-        try { if (vis && !hidden) items.push({ type: 'image', ...box, data: el.toDataURL('image/png'), op }); } catch (e) { stats.rasterFailed.push('canvas'); }
+        if (vis && !hidden) {
+          try {
+            const is2d = !!el.getContext('2d');
+            const sc = document.createElement('canvas');
+            sc.width = sc.height = 16;
+            const scx = sc.getContext('2d', { willReadFrequently: true });
+            scx.drawImage(el, 0, 0, 16, 16);
+            const pxData = scx.getImageData(0, 0, 16, 16).data;
+            let hasPixels = false;
+            for (let pi = 3; pi < pxData.length; pi += 4) {
+              if (pxData[pi] > 0) { hasPixels = true; break; }
+            }
+            if (!is2d || !hasPixels) {
+              stats.rasterFailed.push('canvas WebGL o en blanco (posible pérdida: para 3D usa .sz-3d con póster)');
+            } else {
+              items.push({ type: 'image', ...box, data: el.toDataURL('image/png'), op });
+            }
+          } catch (e) {
+            stats.rasterFailed.push('canvas');
+          }
+        }
         return;
       }
 

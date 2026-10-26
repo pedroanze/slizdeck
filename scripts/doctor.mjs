@@ -80,6 +80,11 @@ if (!m) {
 }
 
 const deckVersion = m[1];
+const strippedHtml = html.replace(/<!--[\s\S]*?-->/g, '');
+const uses3D = /\bclass=["'][^"']*\bsz-3d\b/.test(strippedHtml);
+if (uses3D && compareVersions(deckVersion, '2.4.0') < 0) {
+  console.log(`  ⚠ este deck usa .sz-3d pero su engine es ${deckVersion} (< 2.4.0): el runtime 3D y el evento stepchange se agregaron en 2.4.0.\n`);
+}
 if (compareVersions(deckVersion, current) >= 0) {
   console.log(`  ✓ generado con la versión ${deckVersion}, al día con el engine actual (${current}).\n`);
   process.exit(0);

@@ -6,7 +6,7 @@ web
 
 ## Stack
 
-Estático: HTML/CSS/JS vanilla, sin frameworks ni build tools. Sin librerías de animación externas (no Motion/Framer Motion) — animaciones vía CSS y Web Animations API, para que cada deck generado sea un único archivo `.html` autónomo, abrible en cualquier navegador sin paso de compilación.
+Estático: HTML/CSS/JS vanilla, sin frameworks ni build tools. Sin librerías de animación externas (no Motion/Framer Motion) — animaciones vía CSS y Web Animations API, para que cada deck generado sea un único archivo `.html` autónomo, abrible en cualquier navegador sin paso de compilación. Única excepción acotada: `three.js` como capacidad opt-in solo en los decks que declaran escenas `.sz-3d` (nunca en el `template.html` base), con versión fijada, verificación SRI e imagen póster estática de respaldo.
 
 ## Users
 
@@ -39,12 +39,12 @@ El design system se define por deck (por proyecto/marca del usuario), no es fijo
 
 ## Evidence on Hand
 
-Sin testimonios ni casos de estudio de terceros todavía. La evidencia disponible es la del propio repo: los decks de referencia (`examples/pitch-showcase.html`, `examples/datos-showcase.html`), tres decks generados de punta a punta por la skill (`examples/test-0*`), la batería de validación en CI, y la línea base de los evals (`evals/results/`, 65/100 con los decks de prueba). No inventar métricas de adopción ni testimonios.
+Sin testimonios ni casos de estudio de terceros todavía. La evidencia disponible es la del propio repo: los decks de referencia (`examples/pitch-showcase.html`, `examples/datos-showcase.html`, `examples/3d/3d-showcase.html`), tres decks generados de punta a punta por la skill (`examples/test-0*`), la batería de validación en CI, y la línea base de los evals (`evals/results/`, 65/100 con los decks de prueba). No inventar métricas de adopción ni testimonios.
 
 ## Product Principles
 
 1. Nunca pedirle al usuario que escriba CSS/JSON a mano — el design system se define por conversación guiada o detectando tokens existentes.
-2. Un archivo HTML autónomo, sin build step, siempre presentable con solo abrirlo en el navegador.
+2. Un archivo HTML autónomo, sin build step, siempre presentable con solo abrirlo en el navegador (en los decks con escenas `.sz-3d`, el póster estático garantiza que sea presentable de inmediato incluso sin red o sin WebGL, y `export offline` incrusta `three.js` y los modelos dentro del propio HTML).
 3. Diseño anti-genérico por default: un color domina, un acento con cuentagotas, cada slide con elemento visual, nunca solo texto/bullets.
 4. Ninguna validación miente: si un script no puede verificar algo, lo dice; si un export deja contenido afuera, lo reporta. Nunca un ✓ que sugiera más de lo comprobado.
 5. Portabilidad multi-herramienta como restricción de diseño desde el día uno, no como afterthought.

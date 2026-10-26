@@ -22,6 +22,7 @@ El modelo de steps, el stagger y los contadores sirven para todos los niveles an
 - SVG packets animados a lo largo de un path (loop continuo)
 - Anillos pulsantes (ping concéntrico)
 - Magic-move: archivos que vuelan
+- Escenas 3D con `three.js` (`.sz-3d`: giro, clips por step y cámara) — ver [reference/3d.md](3d.md)
 - Cuidados críticos (transversales)
 
 ---

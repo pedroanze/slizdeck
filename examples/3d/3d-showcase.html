@@ -1,0 +1,2447 @@
+<!doctype html>
+<!-- slizdeck-engine-version: 2.4.0 — no borrar este comentario. scripts/doctor.mjs
+     lo lee para saber contra qué versión del engine se generó este deck y
+     detectar si hay fixes de template.html posteriores que no llegaron acá
+     (ver CHANGELOG.md). Se copia tal cual al generar un deck nuevo en build. -->
+<!-- lang: ajustar al idioma del deck (es, en, pt...). Afecta la
+     hifenizacion, el corrector y como lo lee un lector de pantalla. -->
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Slizdeck · escenas 3D</title>
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.186.1/examples/jsm/"},"integrity":{"https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.module.js":"sha384-m8JoFX52V6NGv2usipnlLJKnJfL7IE8dbniPDDCSGSQv3Hm4n6PjfV6syVwfuoRc","https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.core.js":"sha384-mdKeCwPEcbDvzaxwhm+MVuLoMou+E7jQqrs4tmu/n8HBYPGI1kZt0MkJxlMR4zFM","https://cdn.jsdelivr.net/npm/three@0.186.1/examples/jsm/loaders/GLTFLoader.js":"sha384-jmhN0si8z6E7+h0t9KiwQ71oyrC3PhTpols1FXeN/vODuFa/L4bPIe9sLbOlhjq7","https://cdn.jsdelivr.net/npm/three@0.186.1/examples/jsm/utils/BufferGeometryUtils.js":"sha384-Rm97j4mcjlLkGsYC2LX3nZG9VU2R8lgK0QE+DmBr4thue+H7J+SHm+68If2ZLBVg","https://cdn.jsdelivr.net/npm/three@0.186.1/examples/jsm/utils/SkeletonUtils.js":"sha384-Pozn8j5+YFr3ak8Pm90ayqDrGYn/DV7vVs/YIIqzJhzeJT0LQksoS1fZQ5lfsYlw","https://cdn.jsdelivr.net/npm/three@0.186.1/examples/jsm/loaders/SVGLoader.js":"sha384-kjEHr+WzxvIznprG0mIWROae4RI64aqDDQR3h4hOi0GARly6NsJqGmSSQqYMKNqg"}}</script>
+<script src="assets/3d/robot.glb.js" defer></script>
+<style>
+  /* ============================================================
+     SLIZDECK DESIGN TOKENS
+     ============================================================ */
+  :root {
+    /* --- Colores: primario/secundario dominan, acento se usa con cuentagotas --- */
+    --cs-primary:     #16181A;
+    --cs-secondary:   #5A6169;
+    --cs-accent:      #E23D1E;
+    /* El acento cuando resalta sobre el fondo (la cifra clave de una grafica,
+       la celda .hl de una tabla, el hito .hl de un timeline). Por default el
+       mismo acento; un pack cuyo acento solo vive sobre el primario (el lima
+       de committed) declara aca su version legible. */
+    --cs-accent-ink:  var(--cs-accent);
+    /* Texto sobre un bloque de color primario solido (una card o barra en
+       --cs-primary). Blanco por default; un pack de primario claro (el ambar
+       de terminal) lo oscurece. */
+    --cs-on-primary:  #FFFFFF;
+    --cs-cream:       #FFFFFF;
+    --cs-cream-2:     #F4F5F6;
+    --cs-black:       #0A0B0C;
+    --cs-body:        #3A4046;
+    --cs-muted:       #6B7278;
+    --cs-white:       #FFFFFF;
+    /* Superficie de cards/paneles y fondo del letterbox. Separados de
+       --cs-white/--cs-black para que un style pack oscuro pueda invertirlos
+       sin tocar el resto del sistema. */
+    --cs-surface:     #FAFBFB;
+    --cs-void:        #0A0B0C;
+    --cs-border:      rgba(0,0,0,0.10);
+    --cs-border-strong: rgba(0,0,0,0.18);
+    --cs-scrim:       rgba(0,0,0,0.05);
+    --cs-grain:       .09;
+    --cs-grad-radial: radial-gradient(112% 150% at 0% 100% in oklch, #16181A 0%, #000000 100%);
+    --cs-grad-linear: linear-gradient(135deg in oklch, #16181A 0%, #000000 100%);
+    --cs-grad-text:   linear-gradient(135deg in oklch, #16181A 0%, #3A4046 50%, #16181A 100%);
+
+    /* --- Tipografía. Estos defaults son los del pack paper-white (validado
+       con check-style-pack.mjs); build siempre aplica el pack elegido encima
+       con apply-style-pack.mjs. --- */
+    --cs-font-sans:   'Schibsted Grotesk', ui-sans-serif, system-ui, sans-serif;
+    --cs-font-heading: 'Schibsted Grotesk', ui-sans-serif, system-ui, sans-serif;
+    --cs-font-mono:   ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+    /* Peso de los titulos grandes (cover, h2.title, transition). Un pack
+       cuya fuente de heading solo trae un peso (ej. Young Serif en
+       `editorial`, 400 unicamente) declara este token en 400: pedirle 600
+       a una fuente que no lo tiene fuerza negrita sintetica del navegador,
+       que en un display serif se ve visiblemente peor que el peso real. */
+    --cs-weight-heading: 600;
+
+    /* --- Radios: escala corta, todo el sistema de componentes usa estos 3 --- */
+    --cs-radius-sm:   12px;
+    --cs-radius-md:   20px;
+    --cs-radius-lg:   26px;
+
+    /* --- Padding del frame estándar de cada slide (.pad) --- */
+    --cs-pad-x:       120px;
+    --cs-pad-top:     96px;
+    --cs-pad-bottom:  120px;
+
+    --cs-shadow-2:    none;
+    --cs-fg-1:        var(--cs-black);
+    --cs-fg-2:        var(--cs-body);
+    --cs-ease-std:    cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  /* ============================================================
+     BASE
+     ============================================================ */
+  * { box-sizing: border-box; }
+  html, body { background: var(--cs-void); margin: 0; padding: 0; }
+  body {
+    font-family: var(--cs-font-sans);
+    color: var(--cs-fg-2);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* ============================================================
+     SECTION = single slide canvas (1920×1080 default)
+     deck-stage scales the canvas to fit viewport, letterboxed.
+     ============================================================ */
+  deck-stage > section {
+    background: var(--cs-cream);
+    color: var(--cs-fg-2);
+    overflow: hidden;
+    position: relative;
+    transition: opacity 120ms ease;
+  }
+
+  /* Surface helpers */
+  .grad   { background: var(--cs-grad-radial) !important; color: #fff !important; }
+  .cream  { background: var(--cs-cream); color: var(--cs-body); }
+
+  /* Grano sobre el degradado.
+     Un degradado puro se lee digital y plano, sobre todo proyectado: el
+     banding se nota en las transiciones suaves. Una capa de ruido finisimo
+     lo rompe y le da textura de impresion. El ruido es un SVG inline
+     (feTurbulence), asi que no hay archivo externo ni peticion de red y el
+     deck sigue siendo autonomo.
+     Sin mix-blend-mode a proposito: `overlay` es practicamente invisible
+     sobre fondos oscuros, porque el ruido gris medio apenas desplaza el
+     color. Comprobado renderizando las dos variantes.
+     Intensidad: --cs-grain (0 lo apaga, .09 default, .16 es marcado). */
+  .grad::before {
+    content: "";
+    position: absolute; inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    opacity: var(--cs-grain, .09);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 140px 140px;
+  }
+  /* El contenido va por encima del grano */
+  .grad > * { position: relative; z-index: 1; }
+
+  /* Standard frame inside a slide */
+  .pad {
+    padding: var(--cs-pad-top) var(--cs-pad-x) var(--cs-pad-bottom);
+    height: 100%;
+    box-sizing: border-box;
+    display: flex; flex-direction: column;
+    justify-content: flex-start;
+    position: relative;
+  }
+  .pad.center { justify-content: center; align-items: center; text-align: center; }
+  /* Centrado vertical conservando la alineacion a la izquierda. Para slides
+     de contenido con poco material, donde alinear arriba deja el tercio
+     inferior vacio y el conjunto se lee sin terminar. */
+  .pad.mid { justify-content: center; }
+
+  /* ============================================================
+     TYPOGRAPHY
+     ============================================================ */
+  .eyebrow {
+    font-size: 24px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--cs-primary);
+    margin: 0 0 36px;
+  }
+  .grad .eyebrow { color: rgba(255,255,255,.9); }
+
+  h1.cover {
+    font-family: var(--cs-font-heading);
+    font-size: 168px; line-height: 0.98;
+    letter-spacing: -0.02em;
+    margin: 0; font-weight: var(--cs-weight-heading); color: #fff;
+  }
+  h1.cover-md {
+    font-family: var(--cs-font-heading);
+    font-size: 132px; line-height: 1.0;
+    letter-spacing: -0.02em;
+    margin: 0; font-weight: var(--cs-weight-heading); color: #fff;
+  }
+  h2.title {
+    font-family: var(--cs-font-heading);
+    font-size: 76px; line-height: 1.05;
+    letter-spacing: -0.015em;
+    margin: 0 0 56px;
+    font-weight: var(--cs-weight-heading); color: var(--cs-black);
+  }
+  h2.title.tight { margin-bottom: 40px; }
+
+  .subtitle {
+    font-size: 36px; line-height: 1.4;
+    font-weight: 300;
+    color: rgba(255,255,255,.86);
+    max-width: 1300px;
+    margin-top: 48px;
+  }
+
+  .payoff {
+    font-size: 30px; line-height: 1.4;
+    color: var(--cs-black); font-weight: 600;
+    margin-top: 56px; max-width: 1500px;
+  }
+  .payoff em { font-style: normal; }
+
+  /* Cita de fuente para una cifra o afirmación: "Fuente: X, fecha".
+     export-pptx.mjs ya la reconoce (rol "caption"); antes no existia
+     ningun patron que la produjera, asi que cada deck la reinventaba con
+     un nombre distinto que el export no reconocia. Lleva punto final
+     (regla de voz 2: los captions sí cierran con punto). */
+  .stat-source {
+    font-size: 22px; line-height: 1.4;
+    color: var(--cs-muted);
+    margin-top: 24px;
+  }
+
+  /* Gradient word — wrap a span/em inside any heading */
+  .grad-word {
+    background: var(--cs-grad-text);
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent; color: transparent;
+    font-style: normal;
+  }
+
+  /* Mono helper */
+  .mono { font-family: var(--cs-font-mono); }
+
+  /* Transition slide title (cream + huge centered title) */
+  .ts-title {
+    font-family: var(--cs-font-heading);
+    font-size: 168px; line-height: 0.98;
+    letter-spacing: -0.02em;
+    margin: 0; font-weight: var(--cs-weight-heading); color: var(--cs-black);
+    text-align: center;
+  }
+  .ts-title .grad-word { font-weight: var(--cs-weight-heading); }
+  .ts-tagline {
+    margin-top: 36px;
+    font-size: 36px; line-height: 1.4;
+    font-weight: 300;
+    color: var(--cs-body);
+    text-align: center;
+    max-width: 1300px;
+  }
+
+  /* .ts-title a 168px asume una frase corta (menos de ~45 caracteres): a
+     ese tamano, una oracion mas larga se parte en 3-4 lineas y deja de
+     leerse como un remate. Elegir el tamano por longitud del texto, no
+     usar siempre el default:
+       < 45 caracteres  -> .ts-title    (168px, 1 linea)
+       45-80 caracteres -> .ts-title-md (96px,  1-2 lineas)
+       80-120 caracteres -> .ts-title-sm (64px, 2-3 lineas)
+       > 120 caracteres  -> no usar este patron: acortar la frase o pasarla
+                            a una slide de contenido con cuerpo de texto. */
+  .ts-title-md {
+    font-family: var(--cs-font-heading);
+    font-size: 96px; line-height: 1.08;
+    letter-spacing: -0.015em;
+    margin: 0; font-weight: var(--cs-weight-heading); color: var(--cs-black);
+    text-align: center;
+  }
+  .ts-title-sm {
+    font-family: var(--cs-font-heading);
+    font-size: 64px; line-height: 1.15;
+    letter-spacing: -0.01em;
+    margin: 0; font-weight: var(--cs-weight-heading); color: var(--cs-black);
+    text-align: center;
+  }
+  .ts-title-md .grad-word, .ts-title-sm .grad-word { font-weight: var(--cs-weight-heading); }
+
+  /* Resaltar una palabra o frase suelta sin necesitar un fondo degradado:
+     negrita + color primario. Como maximo un .hl por slide (mismo cupo
+     visual que el acento) — no es una alternativa al gradiente, es para
+     las slides en --cs-cream que quieren un remate sin cambiar de fondo. */
+  /* Solo en texto en linea: tr.hl, td.hl y li.hl de los patrones de datos
+     tienen su propio estilo y no deben heredar este. */
+  :is(span, strong, em, b).hl { font-weight: 700; color: var(--cs-primary); }
+  :is(span, strong, em, b).hl-accent { font-weight: 700; color: var(--cs-accent-ink); }
+
+  /* Separador de seccion: mismo .ts-title/.ts-tagline centrado, pero sobre
+     class="grad" (el mismo fondo invertido que cover/cierre) en vez de
+     --cs-cream. La diferenciacion es el fondo, no un numero de fondo
+     (probado: un "01" gigante detras del titulo choca contra las letras
+     a estos tamanos). .ts-title/.ts-tagline son negro por default; sobre
+     .grad necesitan pasar a blanco, igual que ya hace .eyebrow arriba. */
+  .grad .ts-title, .grad .ts-tagline { color: #fff; }
+  /* .grad-word clava su color en el mismo degradado de marca que .grad ya
+     usa de fondo (--cs-grad-text vs --cs-grad-linear/-radial son la misma
+     paleta) — la palabra "resaltada" queda casi invisible contra su propio
+     fondo. Sobre .grad degrada a blanco solido, igual que el resto del
+     titulo a su alrededor: aqui el highlight es el fondo mismo, no hace
+     falta un segundo degradado encima. */
+  .grad .grad-word {
+    background: none;
+    -webkit-background-clip: initial; background-clip: initial;
+    -webkit-text-fill-color: #fff; color: #fff;
+  }
+
+  /* ============================================================
+     FOOTER (always present on every slide)
+     ============================================================ */
+  .footer {
+    position: absolute;
+    left: 120px; right: 120px; bottom: 48px;
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 24px; letter-spacing: 0.06em;
+    color: var(--cs-muted); font-weight: 500;
+  }
+  .footer img { height: 22px; display: block; }
+  .footer .left { display: flex; align-items: center; gap: 18px; }
+  .footer .num {
+    font-variant-numeric: tabular-nums; font-weight: 600;
+    color: var(--cs-fg-1); opacity: .55;
+  }
+  .grad .footer { color: rgba(255,255,255,.6); }
+  .grad .footer .num { color: #fff; opacity: .8; }
+
+  /* ============================================================
+     COMMON COMPONENTS — baseline only
+     For richer patterns (.pq-card, terminals, mockups, mini-diagrams)
+     copy from components.md. For animation snippets (popup, SVG path
+     drawing, packets) copy from animations.md.
+     ============================================================ */
+
+  .card {
+    background: var(--cs-surface);
+    border: 1px solid var(--cs-border);
+    border-radius: var(--cs-radius-lg);
+    padding: 40px 44px;
+    box-shadow: var(--cs-shadow-2);
+  }
+  .card .card-eyebrow {
+    font-size: 24px; letter-spacing: 0.22em;
+    text-transform: uppercase; font-weight: 700;
+    color: var(--cs-muted); margin-bottom: 18px;
+  }
+  .card h3 {
+    font-size: 32px; line-height: 1.15;
+    letter-spacing: -0.01em;
+    color: var(--cs-black); font-weight: 700;
+    margin: 0 0 14px;
+  }
+  .card p {
+    font-size: 24px; line-height: 1.5;
+    color: var(--cs-body); margin: 0;
+  }
+
+  .badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 20px; font-weight: 700;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    padding: 7px 14px; border-radius: 999px;
+  }
+  /* color-mix, no un rgba() fijo: un rgba hardcodeado congela el teal del
+     pack por default y sobrevive a apply-style-pack.mjs (que solo fusiona
+     :root, no reglas fuera de :root) — cambiar de pack dejaba este badge
+     con el color viejo mientras el resto del deck ya usaba el nuevo. */
+  .badge-primary { background: color-mix(in srgb, var(--cs-primary) 10%, transparent); color: var(--cs-primary); }
+  /* Color de estado mezclado con el color de texto del pack: sale mas oscuro
+     en packs claros y mas claro en packs oscuros, legible en los dos. */
+  .badge-green  { background: color-mix(in srgb, #16A34A 14%, transparent); color: color-mix(in srgb, #16A34A 62%, var(--cs-fg-1)); }
+  .badge-red    { background: color-mix(in srgb, #DC2626 14%, transparent); color: color-mix(in srgb, #DC2626 62%, var(--cs-fg-1)); }
+  .badge-orange { background: color-mix(in srgb, #D97706 14%, transparent); color: color-mix(in srgb, #D97706 62%, var(--cs-fg-1)); }
+  .badge-muted  { background: var(--cs-scrim); color: var(--cs-muted); }
+
+  /* ============================================================
+     ANIMATION SYSTEM — opt-in
+     Add `class="reveal" data-step="N"` to elements you want to
+     reveal at step N. Add `data-steps="N" data-current-step="0"`
+     to the section. The step controller (in <script> below)
+     intercepts ←/→/space and toggles `.is-on` per step.
+
+     For STATIC slides: don't add `.reveal` anywhere. Set
+     `data-steps="1" data-current-step="1"` on the section.
+     ============================================================ */
+
+  .reveal {
+    opacity: 0;
+    transform: translateY(16px);
+    transition:
+      opacity 520ms var(--cs-ease-std),
+      transform 520ms var(--cs-ease-std),
+      filter 520ms var(--cs-ease-std),
+      clip-path 720ms var(--cs-ease-std);
+    transition-delay: var(--d, 0ms);
+    will-change: opacity, transform;
+  }
+  /* ── Variantes de entrada ──────────────────────────────────────────
+     Se combinan con .reveal: class="reveal r-rise". Un deck que revela
+     todo con el mismo fade-up se siente mecanico; variar la entrada
+     segun el tipo de elemento es lo que le da intencion.
+
+       r-rise    sube mas y con mas recorrido — titulos
+       r-fade    solo opacidad, sin desplazamiento — texto largo
+       r-scale   entra creciendo desde 96% — cifras, datos
+       r-blur    desenfoque que se resuelve — imagenes, citas
+       r-left    entra desde la izquierda — listas, pasos
+       r-wipe    se descubre de izquierda a derecha — barras, reglas
+       r-mask    el texto emerge desde abajo de su propia linea — remates
+  */
+  .reveal.r-rise  { transform: translateY(44px); }
+  .reveal.r-fade  { transform: none; }
+  .reveal.r-scale { transform: scale(.96); transform-origin: left center; }
+  .pad.center .reveal.r-scale { transform-origin: center; }
+  .reveal.r-blur  { filter: blur(14px); transform: scale(1.02); }
+  .reveal.r-left  { transform: translateX(-36px); }
+  .reveal.r-wipe  { opacity: 1; clip-path: inset(0 100% 0 0); transform: none; }
+  .reveal.r-wipe.is-on { clip-path: inset(0 0 0 0); }
+  .reveal.r-mask  { opacity: 1; clip-path: inset(0 0 110% 0); transform: none; }
+  .reveal.r-mask.is-on { clip-path: inset(-20% 0 -20% 0); }
+
+  /* .reveal.is-on tiene que ganar la cascada sobre CUALQUIER variante
+     r-rise/r-scale/r-blur/r-left de arriba: misma especificidad (dos
+     clases), asi que el orden de aparicion decide, y por eso esta regla
+     va deliberadamente DESPUES de todas ellas. Declarada antes (como
+     estaba originalmente), el elemento revelado se quedaba con el
+     transform de su animacion aplicado para siempre en la vista en vivo
+     — se notaba como texto corrido a la izquierda en cualquier .r-left
+     ya revelado. El @media print de mas abajo lo tapaba con !important,
+     por eso el PDF salia bien pero la vista en vivo no. */
+  .reveal.is-on { opacity: 1; transform: none; filter: none; }
+
+  /* Escalonado automatico: en un contenedor con .stagger, cada hijo
+     .reveal del mismo paso entra 90ms despues del anterior, sin tener
+     que escribir --d a mano en cada uno. */
+  .stagger > .reveal:nth-child(1) { --d: 0ms; }
+  .stagger > .reveal:nth-child(2) { --d: 90ms; }
+  .stagger > .reveal:nth-child(3) { --d: 180ms; }
+  .stagger > .reveal:nth-child(4) { --d: 270ms; }
+  .stagger > .reveal:nth-child(5) { --d: 360ms; }
+  .stagger > .reveal:nth-child(6) { --d: 450ms; }
+  .stagger > .reveal:nth-child(7) { --d: 540ms; }
+  .stagger > .reveal:nth-child(8) { --d: 630ms; }
+  .stagger > .reveal:nth-child(9) { --d: 720ms; }
+  .stagger > .reveal:nth-child(10) { --d: 810ms; }
+  .stagger > .reveal:nth-child(11) { --d: 900ms; }
+  .stagger > .reveal:nth-child(12) { --d: 990ms; }
+
+  /* Notas del presentador dentro de la propia slide: viajan con ella al
+     reordenar o insertar slides (el JSON de #speaker-notes va por indice y
+     se desalinea). Nunca se ven en el deck; las lee el modo presentador
+     (tecla P) y el export a PPTX. */
+  aside.notes { display: none !important; }
+
+  /* Transicion entre slides, opt-in: <deck-stage transition="fade">. El
+     default sigue siendo corte directo (regla de voz 10). */
+  ::view-transition-old(root), ::view-transition-new(root) { animation-duration: 320ms; }
+
+  /* Iconos de reference/icons.md: trazo del color del texto, sin relleno. */
+  svg.ic { width: 1em; height: 1em; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+  /* ============================================================
+     DATOS — graficas, tabla, timeline
+     Patrones de primera clase (reference/media-and-data.md → "Datos").
+     Las graficas son declarativas: el deck trae los datos en JSON y el
+     runtime de abajo dibuja el SVG (ejes, grilla, etiquetas) con el
+     tamaño real de la figura. El agente nunca calcula coordenadas.
+     ============================================================ */
+  .sz-chart { position: relative; display: block; width: 100%; height: 520px; margin: 0; }
+  .sz-chart > svg { display: block; width: 100%; height: 100%; overflow: visible; }
+  .sz-chart .sz-grid  { stroke: var(--cs-border); stroke-width: 1.5; }
+  .sz-chart .sz-axis  { stroke: var(--cs-border-strong); stroke-width: 2; }
+  .sz-chart .sz-tick  { fill: var(--cs-muted); font: 500 22px var(--cs-font-mono); }
+  .sz-chart .sz-cat   { fill: var(--cs-muted); font: 500 24px var(--cs-font-sans); }
+  .sz-chart .sz-value { fill: var(--cs-fg-1); font: 700 28px var(--cs-font-sans); }
+  .sz-chart .sz-name  { fill: var(--c); font: 600 24px var(--cs-font-sans); }
+  .sz-chart .sz-s0 { --c: var(--cs-primary); }
+  /* Segunda serie en --cs-muted y no en --cs-secondary: muted esta validado
+     como texto sobre el fondo en todos los packs, secondary no (en terminal
+     es un gris oscuro sobre casi negro, 2.1:1). */
+  .sz-chart .sz-s1 { --c: var(--cs-muted); }
+  .sz-chart .sz-s2 { --c: var(--cs-secondary); }
+  .sz-chart .sz-s3 { --c: var(--cs-border-strong); }
+  .sz-chart .sz-hl { --c: var(--cs-accent-ink); }
+  .sz-chart .sz-value.sz-hl { fill: var(--cs-accent-ink); }
+  /* Exponentes (10²⁵): en sans, porque las monoespaciadas del sistema no
+     traen los superindices y el navegador los compone con otra fuente
+     dejando huecos entre digitos. */
+  .sz-chart .sz-tick.sz-exp { font-family: var(--cs-font-sans); }
+  .sz-chart .sz-bar {
+    fill: var(--c);
+    transform-box: fill-box; transform-origin: 50% 100%; transform: scaleY(0);
+    transition: transform 900ms var(--cs-ease-std); transition-delay: calc(var(--i, 0) * 70ms);
+  }
+  .sz-chart .sz-bar.sz-h { transform-origin: 0 50%; transform: scaleX(0); }
+  .sz-chart .sz-line {
+    fill: none; stroke: var(--c); stroke-width: 5; stroke-linecap: round; stroke-linejoin: round;
+    transition: stroke-dashoffset 1400ms var(--cs-ease-std);
+  }
+  .sz-chart .sz-area { fill: var(--c); opacity: 0; transition: opacity 900ms ease 500ms; }
+  .sz-chart .sz-dot  { fill: var(--cs-cream); stroke: var(--c); stroke-width: 4; opacity: 0; transition: opacity 300ms ease 1100ms; }
+  .sz-chart .sz-value, .sz-chart .sz-name { opacity: 0; transition: opacity 400ms ease 900ms; }
+  /* Estado final: al revelarse el .reveal que la contiene (o de entrada si
+     la grafica no esta dentro de ninguno: sz-static lo pone el runtime). */
+  .sz-static .sz-bar, .reveal.is-on .sz-bar,
+  .sz-static .sz-bar.sz-h, .reveal.is-on .sz-bar.sz-h { transform: none; }
+  .sz-static .sz-line, .reveal.is-on .sz-line { stroke-dashoffset: 0 !important; }
+  .sz-static .sz-area, .reveal.is-on .sz-area { opacity: .12; }
+  .sz-static .sz-dot, .reveal.is-on .sz-dot,
+  .sz-static .sz-value, .reveal.is-on .sz-value,
+  .sz-static .sz-name, .reveal.is-on .sz-name { opacity: 1; }
+
+  table.sz-table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+  .sz-table th {
+    text-align: left; padding: 0 32px 18px 0;
+    font: 600 20px var(--cs-font-mono); letter-spacing: .08em; text-transform: uppercase;
+    color: var(--cs-muted); border-bottom: 2px solid var(--cs-border-strong);
+  }
+  .sz-table td {
+    padding: 22px 32px 22px 0; vertical-align: middle;
+    font-size: 30px; line-height: 1.2; color: var(--cs-fg-2);
+    border-bottom: 1px solid var(--cs-border);
+  }
+  .sz-table tbody tr:last-child td { border-bottom: none; }
+  .sz-table .num { text-align: right; font-family: var(--cs-font-mono); }
+  .sz-table th:last-child, .sz-table td:last-child { padding-right: 0; }
+  .sz-table td strong, .sz-table td.lead { color: var(--cs-fg-1); font-weight: 600; }
+  .sz-table .sub { display: block; margin-top: 4px; font-size: 22px; color: var(--cs-muted); font-weight: 400; }
+  .sz-table tr.hl td { color: var(--cs-fg-1); font-weight: 600; background: var(--cs-cream-2); }
+  .sz-table td.hl, .sz-table tr.hl td.hl { color: var(--cs-accent-ink); font-weight: 700; }
+  /* Sobre el fondo de la fila resaltada --cs-muted queda por debajo de AA
+     (4.47:1 en paper-white, medido con check-contrast): un paso mas oscuro. */
+  .sz-table tr.hl .sub { color: var(--cs-fg-2); }
+
+  /* Timeline horizontal. La linea es el borde superior de cada paso y el
+     punto un elemento real (lo inserta el runtime): nada de ::before, que no
+     viaja al export a PPTX. */
+  ol.sz-timeline { list-style: none; margin: 0; padding: 0; display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; }
+  .sz-timeline > li { position: relative; padding: 44px 40px 0 0; border-top: 2px solid var(--cs-border-strong); }
+  .sz-timeline > li:last-child { padding-right: 0; }
+  .sz-timeline .sz-dot {
+    position: absolute; top: -13px; left: 0; width: 24px; height: 24px; border-radius: 50%;
+    background: var(--cs-cream); border: 4px solid var(--cs-primary);
+  }
+  .sz-timeline > li.hl .sz-dot { background: var(--cs-accent-ink); border-color: var(--cs-accent-ink); }
+  .sz-timeline .when { display: block; font: 600 24px var(--cs-font-mono); letter-spacing: .04em; color: var(--cs-primary); }
+  .sz-timeline > li.hl .when { color: var(--cs-accent-ink); }
+  .sz-timeline h3 { margin: 12px 0 10px; font-size: 36px; line-height: 1.15; font-weight: 600; color: var(--cs-fg-1); }
+  .sz-timeline p { margin: 0; font-size: 24px; line-height: 1.4; color: var(--cs-fg-2); }
+
+  /* Escena 3D opcional (.sz-3d, reference/3d.md). El poster es el estado
+     visible por defecto; el canvas se monta encima y aparece con fundido
+     solo despues del primer frame (data-sz-3d="live"). En print, export y
+     medicion (.sz-3d--poster) vuelve al poster estatico. */
+  .sz-3d { position: relative; display: block; width: 100%; height: 520px; margin: 0; }
+  .sz-3d > .sz-3d-poster { display: block; width: 100%; height: 100%; object-fit: contain; transition: opacity 260ms var(--cs-ease-std); }
+  .sz-3d > canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; opacity: 0; pointer-events: none; transition: opacity 260ms var(--cs-ease-std); }
+  .sz-3d[data-sz-3d="live"] > canvas { opacity: 1; }
+  .sz-3d[data-sz-3d="live"] > .sz-3d-poster { opacity: 0; }
+  .sz-3d.sz-3d--poster > canvas, .sz-3d--poster .sz-3d > canvas { display: none !important; opacity: 0 !important; }
+  .sz-3d.sz-3d--poster > .sz-3d-poster, .sz-3d--poster .sz-3d > .sz-3d-poster { display: block !important; opacity: 1 !important; }
+
+
+  /* Act marker — top-right step indicator on multi-step slides */
+  .act-marker {
+    position: absolute;
+    top: 96px; right: 120px;
+    display: flex; align-items: center; gap: 10px;
+    font-family: var(--cs-font-mono);
+    font-size: 24px;
+    color: var(--cs-muted);
+    letter-spacing: 0.08em;
+    z-index: 2;
+  }
+  .grad .act-marker { color: rgba(255,255,255,0.5); }
+  .act-marker .step-num { color: var(--cs-fg-1); font-weight: 700; }
+  .grad .act-marker .step-num { color: #fff; }
+  /* El total ("/3") va atenuado respecto al paso actual, pero sigue siendo
+     informacion legible, no decoracion. El inline `opacity:.4` que se usaba
+     antes dejaba --cs-muted en 1.7:1 sobre blanco: por debajo de cualquier
+     umbral. .8 lo deja en ~3.3:1, que es el minimo AA para 24px. */
+  .act-marker .step-total { opacity: .8; }
+
+  /* Reduced motion — sin desplazamientos ni animaciones en loop, pero los
+     pasos se siguen revelando con un fundido corto: mostrar todo de golpe
+     le quitaba al presentador el control del ritmo de la slide. */
+  @media (prefers-reduced-motion: reduce) {
+    /* Solo la opacidad transiciona: el resto cambia de golpe mientras el
+       elemento todavia es invisible. Sin forzar transform:none, que
+       rompia los reveals centrados con translate(-50%). r-wipe/r-mask
+       ocultan con clip-path y no con opacidad: aca pasan a fundido. */
+    .reveal { transition: opacity 200ms ease !important; }
+    .reveal.r-wipe, .reveal.r-mask { opacity: 0; clip-path: none; }
+    .reveal.r-wipe.is-on, .reveal.r-mask.is-on { opacity: 1; }
+    .sz-chart .sz-bar, .sz-chart .sz-line, .sz-chart .sz-area, .sz-chart .sz-dot, .sz-chart .sz-value, .sz-chart .sz-name { transition-duration: 200ms !important; transition-delay: 0ms !important; }
+    .sz-3d > canvas, .sz-3d > .sz-3d-poster { transition: opacity 200ms ease !important; }
+    *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; }
+  }
+
+  /* Print / PDF — el estado final de cada slide, no el estado inicial.
+     Sin esto, exportar a PDF un deck animado produce slides en blanco:
+     los elementos .reveal nacen con opacity 0 y solo el step controller
+     (que no corre al imprimir) les pone .is-on.
+     El viewer chrome (barra de progreso, boton de fullscreen) es UI del
+     reproductor, no contenido de la slide: no debe aparecer en el PDF. */
+  @media print {
+    /* Sin transform:none !important: finalizeForPrint ya pone .is-on, y
+       forzarlo aca borraba el translate(-50%) de los reveals centrados. */
+    .reveal { opacity: 1 !important; filter: none !important; clip-path: none !important; transition: none !important; }
+    #progress-bar, #fs-btn { display: none !important; }
+    .sz-chart .sz-bar { transform: none !important; }
+    .sz-chart .sz-line { stroke-dashoffset: 0 !important; }
+    .sz-chart .sz-area { opacity: .12 !important; }
+    .sz-chart .sz-dot, .sz-chart .sz-value, .sz-chart .sz-name { opacity: 1 !important; }
+    .sz-3d > canvas { display: none !important; opacity: 0 !important; }
+    .sz-3d > .sz-3d-poster { display: block !important; opacity: 1 !important; }
+    /* background-clip:text degrada mal al imprimir: Chrome dibuja la caja del
+       gradiente como un recuadro visible alrededor de la palabra. En PDF la
+       palabra de enfasis va en color solido. */
+    .grad-word {
+      background: none !important;
+      -webkit-text-fill-color: var(--cs-primary) !important;
+      color: var(--cs-primary) !important;
+    }
+    /* Sobre .grad el fondo sigue siendo el degradado (no se aplana en
+       print): degradar a --cs-primary ahi repite casi el mismo color del
+       fondo. Mayor especificidad que la regla de arriba, gana sin
+       depender del orden. */
+    .grad .grad-word {
+      -webkit-text-fill-color: #fff !important;
+      color: #fff !important;
+    }
+  }
+
+  /* ============================================================
+     VIEWER CHROME — fullscreen button + progress bar
+     Outside deck-stage, fixed to viewport.
+     ============================================================ */
+
+  #fs-btn {
+    position: fixed;
+    top: 18px; right: 18px;
+    z-index: 2147483647;
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.2);
+    background: rgba(0,0,0,0.5);
+    color: rgba(255,255,255,0.85);
+    cursor: pointer;
+    display: grid; place-items: center;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    transition: opacity 200ms ease, background 200ms ease, color 200ms ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+  #fs-btn:hover { background: rgba(0,0,0,0.7); color: #fff; }
+  #fs-btn:focus { outline: none; }
+  #fs-btn:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(255,255,255,0.9); }
+  #fs-btn svg { width: 18px; height: 18px; display: block; }
+  #fs-btn[data-fs="1"] { opacity: 0; pointer-events: none; }
+
+  #progress-bar {
+    position: fixed;
+    top: 0; left: 0;
+    height: 3px;
+    width: 100%;
+    background: var(--cs-grad-linear);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 240ms cubic-bezier(0.22, 1, 0.36, 1);
+    z-index: 2147483646;
+    pointer-events: none;
+  }
+
+  /* ============================================================
+     INSERT SLIDE-SPECIFIC CSS BELOW
+     Copy snippets from components.md (layouts: .pq-card, terminal,
+     mockups, etc.) or animations.md (popup, SVG paths, packets) here.
+     ============================================================ */
+
+  .split-3d {
+    display: grid;
+    grid-template-columns: 1fr 1.15fr;
+    gap: 64px;
+    align-items: start;
+  }
+  .lead-3d {
+    font-size: 32px;
+    line-height: 1.4;
+    color: var(--cs-body);
+    margin: 0 0 36px;
+    max-width: 720px;
+  }
+  .step-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  .step-item {
+    font-size: 28px;
+    line-height: 1.45;
+    color: var(--cs-fg-1);
+    margin: 0;
+  }
+  .split-3d .card p {
+    font-size: 28px;
+    line-height: 1.45;
+  }
+</style>
+</head>
+<body>
+
+<deck-stage width="1920" height="1080">
+  <!-- Ejemplo de referencia de escenas 3D opcionales con three.js (reference/3d.md):
+       modelo GLB con clips y camara por step, preset logo (SVG extruido) y preset
+       particles (nube que converge). Lo valida y exporta el CI. -->
+
+  <section data-label="01 Portada" class="grad" data-steps="1" data-current-step="1">
+    <div class="pad">
+      <div class="eyebrow">Slizdeck 2.4 · 3D opcional</div>
+      <h1 class="cover">Escenas 3D con three.js</h1>
+      <div class="subtitle">Modelos GLB y geometría procedimental sincronizados con cada step, con póster estático automático</div>
+    </div>
+    <aside class="notes"><p>Presentar el soporte opcional para escenas 3D interactivas con three.js en Slizdeck 2.4.</p></aside>
+    <div class="footer"><div class="left"></div><div>3D · slizdeck · <span class="num">01</span></div></div>
+  </section>
+
+  <section data-label="02 Modelo GLB" data-steps="3" data-current-step="0">
+    <div class="pad">
+      <div class="act-marker"><span class="step-num">1</span><span class="step-total">/3</span></div>
+      <div class="eyebrow reveal" data-step="1">Personaje GLB</div>
+      <h2 class="title tight reveal" data-step="1">Clips y cámara en cada step</h2>
+      <div class="split-3d">
+        <div>
+          <p class="lead-3d reveal" data-step="1">El modelo inicia en reposo con encuadre automático y responde a los steps declarados en JSON.</p>
+          <div class="step-list">
+            <p class="step-item reveal" data-step="2"><strong>Step 2:</strong> mezcla suave de <code>Idle</code> a <code>Wave</code>.</p>
+            <p class="step-item reveal" data-step="3"><strong>Step 3:</strong> giro y acercamiento de cámara.</p>
+          </div>
+        </div>
+        <figure class="sz-3d reveal" data-step="1" data-id="robot" style="height:560px">
+          <img class="sz-3d-poster" src="assets/3d/robot-poster.png" alt="Robot expresivo 3D saludando de cuerpo entero en el estado final">
+          <script type="application/json">{"model":"robot","clip":"Idle","turntable":0.15,"camera":"fit","light":"studio","steps":{"2":{"clip":"Wave"},"3":{"clip":"Wave","camera":{"fit":true,"azimuth":0.35,"elevation":0.12,"zoom":1.08}}}}</script>
+        </figure>
+      </div>
+    </div>
+    <aside class="notes"><p>Mostrar cómo un archivo GLB se encuadra automáticamente con Box3 y se controla con JSON declarativo.</p><p>En cada step cambiamos de clip o movemos la cámara.</p></aside>
+    <div class="footer"><div class="left"></div><div>3D · slizdeck · <span class="num">02</span></div></div>
+  </section>
+
+  <section data-label="03 Preset logo" data-steps="2" data-current-step="0">
+    <div class="pad">
+      <div class="act-marker"><span class="step-num">1</span><span class="step-total">/2</span></div>
+      <div class="eyebrow reveal" data-step="1">Preset logo</div>
+      <h2 class="title tight reveal" data-step="1">Un SVG extruido en volumen</h2>
+      <svg id="logo-mark" viewBox="0 0 120 120" width="0" height="0" style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true">
+        <path d="M18 18 L62 18 L62 102 L18 102 Z"/>
+        <path d="M72 18 L102 18 L102 54 L72 54 Z"/>
+        <path d="M72 66 L102 66 L102 102 L72 102 Z"/>
+      </svg>
+      <div class="split-3d">
+        <div class="card reveal" data-step="1">
+          <div class="card-eyebrow">GEOMETRÍA SVG</div>
+          <h3>Volumen desde vectores</h3>
+          <p>Toma un vector inline del deck y genera geometría con bisel y colores del pack.</p>
+          <p class="reveal" data-step="2" style="margin-top:20px;color:var(--cs-fg-1)"><strong>Step 2:</strong> rotación de cámara para destacar el relieve.</p>
+        </div>
+        <figure class="sz-3d reveal" data-step="1" data-id="logo" style="height:560px">
+          <img class="sz-3d-poster" src="assets/3d/logo-poster.png" alt="Isotipo geométrico extruido en tres dimensiones con relieve biselado">
+          <script type="application/json">{"preset":"logo","svg":"#logo-mark","depth":28,"turntable":0.22,"camera":"fit","light":"dramatic","steps":{"2":{"camera":{"fit":true,"azimuth":0.52,"elevation":0.22,"zoom":0.95}}}}</script>
+        </figure>
+      </div>
+    </div>
+    <aside class="notes"><p>El preset logo no necesita un modelo externo: extruye un SVG del propio HTML con los tokens del style pack.</p></aside>
+    <div class="footer"><div class="left"></div><div>3D · slizdeck · <span class="num">03</span></div></div>
+  </section>
+
+  <section data-label="04 Preset particulas" data-steps="3" data-current-step="0">
+    <div class="pad">
+      <div class="act-marker"><span class="step-num">1</span><span class="step-total">/3</span></div>
+      <div class="eyebrow reveal" data-step="1">Preset partículas</div>
+      <h2 class="title tight reveal" data-step="1">Del caos a una esfera ordenada</h2>
+      <div class="split-3d">
+        <div>
+          <p class="lead-3d reveal" data-step="1">Nube de puntos determinista que converge hacia su forma final en cada step.</p>
+          <div class="step-list">
+            <p class="step-item reveal" data-step="2"><strong>Step 2:</strong> convergencia intermedia.</p>
+            <p class="step-item reveal" data-step="3"><strong>Step 3:</strong> esfera completa en equilibrio.</p>
+          </div>
+        </div>
+        <figure class="sz-3d reveal" data-step="1" data-id="particles" style="height:560px">
+          <img class="sz-3d-poster" src="assets/3d/particles-poster.png" alt="Esfera 3D formada por partículas ordenadas en su estado final">
+          <script type="application/json">{"preset":"particles","shape":"sphere","count":900,"turntable":0.18,"camera":{"position":[0,0.4,5.0],"target":[0,0,0],"fov":38},"steps":{"2":{"order":0.55},"3":{"order":1,"camera":{"position":[0,0.2,4.5],"target":[0,0,0]}}}}</script>
+        </figure>
+      </div>
+    </div>
+    <aside class="notes"><p>El preset particles acompaña narrativas de convergencia, orden o síntesis de datos.</p></aside>
+    <div class="footer"><div class="left"></div><div>3D · slizdeck · <span class="num">04</span></div></div>
+  </section>
+
+  <section data-label="05 Cierre" class="grad" data-steps="1" data-current-step="1">
+    <div class="pad center">
+      <div class="eyebrow">Degradación elegante</div>
+      <h2 class="title" style="max-width:1200px;margin-bottom:0">Vivo en el navegador, póster nítido en PDF y PowerPoint</h2>
+      <div class="subtitle">Si no hay red o WebGL, el deck muestra el póster automáticamente y nunca se rompe</div>
+    </div>
+    <aside class="notes"><p>Cerrar recordando que el póster garantiza compatibilidad con PDF, PowerPoint y entornos sin GPU.</p></aside>
+    <div class="footer"><div class="left"></div><div>3D · slizdeck · <span class="num">05</span></div></div>
+  </section>
+</deck-stage>
+
+<!-- Viewer chrome: progress bar (top) + fullscreen button (top-right) -->
+<div id="progress-bar"></div>
+<button id="fs-btn" type="button" aria-label="Toggle fullscreen" title="Fullscreen">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M3 9V5a2 2 0 0 1 2-2h4M21 9V5a2 2 0 0 0-2-2h-4M21 15v4a2 2 0 0 1-2 2h-4M3 15v4a2 2 0 0 0 2 2h4"/>
+  </svg>
+</button>
+
+<!-- ============================================================
+     <deck-stage> custom element — fixed-aspect canvas with
+     keyboard nav, tap zones, slide overlay, print pagination.
+     Inlined IIFE — no external dependencies.
+     ============================================================ -->
+<script>
+  (() => {
+    const DESIGN_W_DEFAULT = 1920;
+    const DESIGN_H_DEFAULT = 1080;
+    const OVERLAY_HIDE_MS = 1800;
+
+    const stylesheet = `
+      :host {
+        position: fixed; inset: 0; display: block; background: #000; color: #fff;
+        font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, sans-serif;
+        overflow: hidden;
+      }
+      .stage { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
+      .canvas { position: relative; transform-origin: center center; flex-shrink: 0; background: var(--cs-cream); will-change: transform; }
+      ::slotted(*) {
+        position: absolute !important; inset: 0 !important;
+        width: 100% !important; height: 100% !important;
+        box-sizing: border-box !important; overflow: hidden;
+        opacity: 0; pointer-events: none; visibility: hidden;
+      }
+      ::slotted([data-deck-active]) { opacity: 1; pointer-events: auto; visibility: visible; }
+      .tapzones { position: fixed; inset: 0; display: flex; z-index: 2147482000; pointer-events: none; }
+      .tapzone { flex: 1; pointer-events: auto; -webkit-tap-highlight-color: transparent; }
+      @media (hover: hover) and (pointer: fine) { .tapzones { display: none; } }
+      .overlay {
+        position: fixed; left: 50%; bottom: 22px;
+        transform: translate(-50%, 6px) scale(0.92); filter: blur(6px);
+        display: flex; align-items: center; gap: 4px; padding: 4px;
+        background: #000; color: #fff; border-radius: 999px;
+        font-size: 12px; font-feature-settings: "tnum" 1; letter-spacing: 0.01em;
+        opacity: 0; pointer-events: none;
+        transition: opacity 260ms ease, transform 260ms cubic-bezier(.2,.8,.2,1), filter 260ms ease;
+        transform-origin: center bottom; z-index: 2147483000; user-select: none;
+      }
+      .overlay[data-visible] { opacity: 1; pointer-events: auto; transform: translate(-50%, 0) scale(1); filter: blur(0); }
+      .btn {
+        appearance: none; background: transparent; border: 0; margin: 0; padding: 0;
+        color: rgba(255,255,255,0.72); font: inherit; cursor: default;
+        display: inline-flex; align-items: center; justify-content: center;
+        height: 28px; min-width: 28px; border-radius: 999px;
+        transition: background 140ms ease, color 140ms ease;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .btn:hover { background: rgba(255,255,255,0.12); color: #fff; }
+      .btn:active { background: rgba(255,255,255,0.18); }
+      .btn:focus { outline: none; }
+      .btn:focus-visible { outline: none; box-shadow: 0 0 0 2px rgba(255,255,255,0.9); }
+      .btn svg { width: 14px; height: 14px; display: block; }
+      .btn.reset { font-size: 11px; font-weight: 500; padding: 0 10px 0 12px; gap: 6px; }
+      .btn.reset .kbd {
+        display: inline-flex; align-items: center; justify-content: center;
+        min-width: 16px; height: 16px; padding: 0 4px;
+        font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+        font-size: 10px; line-height: 1; color: rgba(255,255,255,0.88);
+        background: rgba(255,255,255,0.12); border-radius: 4px;
+      }
+      .count {
+        font-variant-numeric: tabular-nums; color: #fff; font-weight: 500;
+        padding: 0 8px; min-width: 42px; text-align: center; font-size: 12px;
+      }
+      .count .sep { color: rgba(255,255,255,0.45); margin: 0 3px; font-weight: 400; }
+      .count .total { color: rgba(255,255,255,0.55); }
+      .divider { width: 1px; height: 14px; background: rgba(255,255,255,0.18); margin: 0 2px; }
+      @media print {
+        :host { position: static; inset: auto; background: none; overflow: visible; color: inherit; }
+        .stage { position: static; display: block; }
+        .canvas { transform: none !important; width: auto !important; height: auto !important; background: none; will-change: auto; }
+        ::slotted(*) {
+          position: relative !important; inset: auto !important;
+          width: var(--deck-design-w) !important; height: var(--deck-design-h) !important;
+          box-sizing: border-box !important;
+          opacity: 1 !important; visibility: visible !important; pointer-events: auto;
+          break-after: page; page-break-after: always; break-inside: avoid; overflow: hidden;
+        }
+        ::slotted(*:last-child) { break-after: auto; page-break-after: auto; }
+        .overlay, .tapzones { display: none !important; }
+      }
+    `;
+
+    class DeckStage extends HTMLElement {
+      static get observedAttributes() { return ['width', 'height', 'noscale']; }
+
+      constructor() {
+        super();
+        this._root = this.attachShadow({ mode: 'open' });
+        this._index = 0;
+        this._slides = [];
+        this._notes = [];
+        this._hideTimer = null;
+        this._onKey = this._onKey.bind(this);
+        this._onResize = this._onResize.bind(this);
+        this._onSlotChange = this._onSlotChange.bind(this);
+        this._onMouseMove = this._onMouseMove.bind(this);
+        this._onTapBack = this._onTapBack.bind(this);
+        this._onTapForward = this._onTapForward.bind(this);
+      }
+
+      get designWidth() { return parseInt(this.getAttribute('width'), 10) || DESIGN_W_DEFAULT; }
+      get designHeight() { return parseInt(this.getAttribute('height'), 10) || DESIGN_H_DEFAULT; }
+
+      connectedCallback() {
+        this._render();
+        this._loadNotes();
+        this._syncPrintPageRule();
+        window.addEventListener('keydown', this._onKey);
+        window.addEventListener('resize', this._onResize);
+        window.addEventListener('mousemove', this._onMouseMove, { passive: true });
+      }
+      disconnectedCallback() {
+        window.removeEventListener('keydown', this._onKey);
+        window.removeEventListener('resize', this._onResize);
+        window.removeEventListener('mousemove', this._onMouseMove);
+        if (this._hideTimer) clearTimeout(this._hideTimer);
+      }
+      attributeChangedCallback() {
+        if (this._canvas) {
+          this._canvas.style.width = this.designWidth + 'px';
+          this._canvas.style.height = this.designHeight + 'px';
+          this._canvas.style.setProperty('--deck-design-w', this.designWidth + 'px');
+          this._canvas.style.setProperty('--deck-design-h', this.designHeight + 'px');
+          this._fit();
+          this._syncPrintPageRule();
+        }
+      }
+
+      _render() {
+        const style = document.createElement('style');
+        style.textContent = stylesheet;
+        const stage = document.createElement('div');
+        stage.className = 'stage';
+        const canvas = document.createElement('div');
+        canvas.className = 'canvas';
+        canvas.style.width = this.designWidth + 'px';
+        canvas.style.height = this.designHeight + 'px';
+        canvas.style.setProperty('--deck-design-w', this.designWidth + 'px');
+        canvas.style.setProperty('--deck-design-h', this.designHeight + 'px');
+        const slot = document.createElement('slot');
+        slot.addEventListener('slotchange', this._onSlotChange);
+        canvas.appendChild(slot);
+        stage.appendChild(canvas);
+        const tapzones = document.createElement('div');
+        tapzones.className = 'tapzones';
+        tapzones.setAttribute('aria-hidden', 'true');
+        const tzBack = document.createElement('div'); tzBack.className = 'tapzone tapzone--back';
+        const tzMid = document.createElement('div'); tzMid.className = 'tapzone tapzone--mid'; tzMid.style.pointerEvents = 'none';
+        const tzFwd = document.createElement('div'); tzFwd.className = 'tapzone tapzone--fwd';
+        tzBack.addEventListener('click', this._onTapBack);
+        tzFwd.addEventListener('click', this._onTapForward);
+        tapzones.append(tzBack, tzMid, tzFwd);
+        const overlay = document.createElement('div');
+        overlay.className = 'overlay';
+        overlay.setAttribute('role', 'toolbar');
+        overlay.setAttribute('aria-label', 'Deck controls');
+        overlay.innerHTML =
+          '<button class="btn prev" type="button" aria-label="Previous slide" title="Previous (←)">' +
+            '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3L5 8l5 5"/></svg>' +
+          '</button>' +
+          '<span class="count" aria-live="polite"><span class="current">1</span><span class="sep">/</span><span class="total">1</span></span>' +
+          '<button class="btn next" type="button" aria-label="Next slide" title="Next (→)">' +
+            '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3l5 5-5 5"/></svg>' +
+          '</button>' +
+          '<span class="divider"></span>' +
+          '<button class="btn reset" type="button" aria-label="Reset to first slide" title="Reset (R)">Reset<span class="kbd">R</span></button>';
+        overlay.querySelector('.prev').addEventListener('click', () => this._navKey('ArrowLeft'));
+        overlay.querySelector('.next').addEventListener('click', () => this._navKey('ArrowRight'));
+        overlay.querySelector('.reset').addEventListener('click', () => this._go(0, 'click'));
+        this._root.append(style, stage, tapzones, overlay);
+        this._canvas = canvas;
+        this._slot = slot;
+        this._overlay = overlay;
+        this._countEl = overlay.querySelector('.current');
+        this._totalEl = overlay.querySelector('.total');
+      }
+
+      _syncPrintPageRule() {
+        const id = 'deck-stage-print-page';
+        let tag = document.getElementById(id);
+        if (!tag) { tag = document.createElement('style'); tag.id = id; document.head.appendChild(tag); }
+        tag.textContent =
+          '@page { size: ' + this.designWidth + 'px ' + this.designHeight + 'px; margin: 0; } ' +
+          '@media print { html, body { margin: 0 !important; padding: 0 !important; background: none !important; overflow: visible !important; height: auto !important; } * { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }';
+      }
+
+      _onSlotChange() {
+        this._collectSlides();
+        this._restoreIndex();
+        this._applyIndex({ showOverlay: false, broadcast: true, reason: 'init' });
+        this._fit();
+      }
+
+      _collectSlides() {
+        const assigned = this._slot.assignedElements({ flatten: true });
+        this._slides = assigned.filter((el) => {
+          const tag = el.tagName;
+          return tag !== 'TEMPLATE' && tag !== 'SCRIPT' && tag !== 'STYLE';
+        });
+        this._slides.forEach((slide, i) => {
+          slide.setAttribute('data-deck-slide', String(i));
+        });
+        if (this._totalEl) this._totalEl.textContent = String(this._slides.length || 1);
+        if (this._index >= this._slides.length) this._index = Math.max(0, this._slides.length - 1);
+      }
+
+      _loadNotes() {
+        const tag = document.getElementById('speaker-notes');
+        if (!tag) { this._notes = []; return; }
+        try {
+          const parsed = JSON.parse(tag.textContent || '[]');
+          if (Array.isArray(parsed)) this._notes = parsed;
+        } catch (e) { this._notes = []; }
+      }
+
+      _restoreIndex() {
+        const h = (location.hash || '').match(/^#(\d+)$/);
+        if (h) {
+          const n = parseInt(h[1], 10) - 1;
+          if (n >= 0 && n < this._slides.length) this._index = n;
+        }
+      }
+
+      _applyIndex({ showOverlay = true, broadcast = true, reason = 'init' } = {}) {
+        if (!this._slides.length) return;
+        const prev = this._prevIndex == null ? -1 : this._prevIndex;
+        const curr = this._index;
+        try { history.replaceState(null, '', '#' + (curr + 1)); } catch (e) {}
+        const swap = () => this._slides.forEach((s, i) => {
+          if (i === curr) s.setAttribute('data-deck-active', '');
+          else s.removeAttribute('data-deck-active');
+        });
+        // transition="fade" en <deck-stage>: fundido con View Transitions.
+        // Sin soporte, con movimiento reducido o en la entrada inicial, corte
+        // directo como siempre.
+        const fade = this.getAttribute('transition') === 'fade' && reason !== 'init' && prev >= 0 &&
+          typeof document.startViewTransition === 'function' &&
+          !(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+        if (fade) document.startViewTransition(swap); else swap();
+        if (this._countEl) this._countEl.textContent = String(curr + 1);
+        if (broadcast) {
+          this.dispatchEvent(new CustomEvent('slidechange', {
+            detail: {
+              index: curr, previousIndex: prev,
+              total: this._slides.length,
+              slide: this._slides[curr] || null,
+              previousSlide: prev >= 0 ? (this._slides[prev] || null) : null,
+              reason: reason,
+            },
+            bubbles: true, composed: true,
+          }));
+        }
+        this._prevIndex = curr;
+        if (showOverlay) this._flashOverlay();
+      }
+
+      _flashOverlay() {
+        if (!this._overlay) return;
+        this._overlay.setAttribute('data-visible', '');
+        if (this._hideTimer) clearTimeout(this._hideTimer);
+        this._hideTimer = setTimeout(() => { this._overlay.removeAttribute('data-visible'); }, OVERLAY_HIDE_MS);
+      }
+
+      _fit() {
+        if (!this._canvas) return;
+        if (this.hasAttribute('noscale')) { this._canvas.style.transform = 'none'; return; }
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+        const s = Math.min(vw / this.designWidth, vh / this.designHeight);
+        this._canvas.style.transform = `scale(${s})`;
+      }
+
+      _onResize() { this._fit(); }
+      _onMouseMove() { this._flashOverlay(); }
+      _onTapBack(e) { e.preventDefault(); this._navKey('ArrowLeft'); }
+      _onTapForward(e) { e.preventDefault(); this._navKey('ArrowRight'); }
+
+      // Flechas en pantalla y zonas tactiles: misma ruta que el teclado. Desde
+      // el body (no desde window) para que el controlador de pasos, en capture
+      // sobre window, revele el paso siguiente antes de que se cambie de slide.
+      _navKey(key) {
+        document.body.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }));
+      }
+
+      _onKey(e) {
+        const t = e.target;
+        if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
+        if (e.metaKey || e.ctrlKey || e.altKey) return;
+        const key = e.key;
+        let handled = true;
+        if (key === 'ArrowRight' || key === 'PageDown' || key === ' ' || key === 'Spacebar') this._go(this._index + 1, 'keyboard');
+        else if (key === 'ArrowLeft' || key === 'PageUp') this._go(this._index - 1, 'keyboard');
+        else if (key === 'Home') this._go(0, 'keyboard');
+        else if (key === 'End') this._go(this._slides.length - 1, 'keyboard');
+        else if (key === 'r' || key === 'R') this._go(0, 'keyboard');
+        else if (/^[0-9]$/.test(key)) {
+          const n = key === '0' ? 9 : parseInt(key, 10) - 1;
+          if (n < this._slides.length) this._go(n, 'keyboard');
+        } else handled = false;
+        if (handled) { e.preventDefault(); }
+      }
+
+      _go(i, reason = 'api') {
+        if (!this._slides.length) return;
+        const clamped = Math.max(0, Math.min(this._slides.length - 1, i));
+        if (clamped === this._index) { return; }
+        this._index = clamped;
+        this._applyIndex({ showOverlay: false, broadcast: true, reason });
+      }
+
+      get index() { return this._index; }
+      get length() { return this._slides.length; }
+      goTo(i) { this._go(i, 'api'); }
+      next() { this._go(this._index + 1, 'api'); }
+      prev() { this._go(this._index - 1, 'api'); }
+      reset() { this._go(0, 'api'); }
+    }
+
+    if (!customElements.get('deck-stage')) customElements.define('deck-stage', DeckStage);
+  })();
+</script>
+
+<!-- ============================================================
+     Runtime: pasos, contadores, graficas, presentador y controles
+     ============================================================ -->
+<script>
+
+  const stage = document.querySelector('deck-stage');
+
+  /* Mirror data-deck-active → data-active="true" on the section so CSS
+     animations and `.is-on` reveals can scope on it. */
+  function syncActive() {
+    const slides = stage.querySelectorAll(':scope > section');
+    slides.forEach((s) => {
+      if (s.hasAttribute('data-deck-active')) s.setAttribute('data-active', 'true');
+      else s.removeAttribute('data-active');
+    });
+  }
+
+  /* Formato compartido del contador: lo usan la animacion y el estado final
+     de impresion, para que el PDF muestre exactamente la misma cifra. */
+  const LANG = document.documentElement.lang || 'en';
+  /* useGrouping 'min2': separador de miles solo desde 5 cifras, para que un
+     año (2026) no salga como "2,026". Navegadores sin soporte caen a true. */
+  function numberFormat(opts) {
+    try { return new Intl.NumberFormat(LANG, Object.assign({ useGrouping: 'min2' }, opts)); }
+    catch (e) { return new Intl.NumberFormat(LANG, opts); }
+  }
+  /* data-counter="4.5" respeta los decimales que trae (o data-decimals="N");
+     data-format="compact" abrevia (2.4 k, 1.2 M) segun el idioma del deck. */
+  function counterParts(el) {
+    const raw = String(el.dataset.counter || '0').trim();
+    const target = parseFloat(raw.replace(',', '.')) || 0;
+    const decimals = el.dataset.decimals != null
+      ? parseInt(el.dataset.decimals, 10)
+      : (raw.split(/[.,]/)[1] || '').length;
+    const unitNode = el.querySelector('.unit');
+    const unitHTML = unitNode ? unitNode.outerHTML : '';
+    const nf = el.dataset.format === 'compact'
+      ? numberFormat({ notation: 'compact', maximumFractionDigits: 1 })
+      : numberFormat({ minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+    const formatVal = (v) => nf.format(v);
+    return { target, unitHTML, formatVal };
+  }
+
+  /* Counter animation — runs when [data-counter] reaches data-target-step.
+     Used by the counter+bars pattern (animations.md). */
+  function runCounter(el) {
+    if (el.dataset.played === '1') return;
+    el.dataset.played = '1';
+    const { target, unitHTML, formatVal } = counterParts(el);
+    const duration = 1400;
+    el.innerHTML = formatVal(0) + unitHTML;
+    const start = performance.now();
+    // Cada corrida lleva su id: si finalizeForPrint (PDF, export, capturas)
+    // deja la cifra final mientras la animacion sigue viva, el siguiente
+    // frame ya no la pisa con un valor intermedio.
+    const run = (el._counterRun = (el._counterRun || 0) + 1);
+    const tick = (now) => {
+      if (el._counterRun !== run) return;
+      const t = Math.min(1, (now - start) / duration);
+      const eased = 1 - Math.pow(1 - t, 5);
+      el.innerHTML = formatVal(target * eased) + unitHTML;
+      if (t < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }
+
+  function resetCounters(slide) {
+    slide.querySelectorAll('[data-counter]').forEach((el) => {
+      el.dataset.played = '';
+      el._counterRun = (el._counterRun || 0) + 1;
+      const { unitHTML, formatVal } = counterParts(el);
+      el.innerHTML = formatVal(0) + unitHTML;
+    });
+  }
+
+  /* ── Graficas declarativas (.sz-chart) ────────────────────────────────
+     Un <figure class="sz-chart"> con un bloque script type="application/json"
+     adentro, con los datos:
+         {"type":"bar","labels":["2023","2024","2025"],
+          "series":[{"name":"ARR","values":[0.4,1.2,3.1]}],
+          "unit":" M","prefix":"$","highlight":"last"}
+     (un cierre de etiqueta script literal en este comentario cortaria el
+     bloque: por eso el ejemplo completo vive en media-and-data.md).
+     type: bar | hbar | line | area. scale:"log" para ordenes de magnitud.
+     highlight: indice, "last", "max" o "min" (va en el color de acento).
+     Ver reference/media-and-data.md → "Datos".                          */
+  const SVGNS = 'http://www.w3.org/2000/svg';
+  const SUP = { '-': '⁻', 0: '⁰', 1: '¹', 2: '²', 3: '³', 4: '⁴', 5: '⁵', 6: '⁶', 7: '⁷', 8: '⁸', 9: '⁹' };
+  function svgEl(tag, attrs, parent) {
+    const e = document.createElementNS(SVGNS, tag);
+    for (const k in attrs) if (attrs[k] != null) e.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(e);
+    return e;
+  }
+  function svgText(parent, x, y, cls, text, anchor) {
+    const t = svgEl('text', { x, y, class: cls, 'text-anchor': anchor || 'start', 'dominant-baseline': 'middle' }, parent);
+    t.textContent = text;
+    return t;
+  }
+  function niceStep(range, count) {
+    const raw = (range || 1) / Math.max(1, count);
+    const mag = Math.pow(10, Math.floor(Math.log10(raw)));
+    const f = raw / mag;
+    return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10) * mag;
+  }
+  function chartSpec(fig) {
+    const tag = fig.querySelector('script[type="application/json"]');
+    try { return JSON.parse(tag ? tag.textContent : (fig.dataset.chart || '{}')); }
+    catch (e) { console.warn('sz-chart: JSON invalido', fig, e); return null; }
+  }
+  function renderChart(fig) {
+    const spec = chartSpec(fig);
+    if (!spec || !Array.isArray(spec.series) || !spec.series.length) return;
+    fig.querySelectorAll(':scope > svg').forEach((s) => s.remove());
+    const type = spec.type || 'bar';
+    const series = spec.series.map((s) => ({ name: s.name || '', values: (s.values || []).map(Number) }));
+    const n = Math.max(...series.map((s) => s.values.length));
+    const labels = (spec.labels || Array.from({ length: n }, (_, i) => String(i + 1))).map(String);
+    const W = fig.clientWidth || 1400, H = fig.clientHeight || 520;
+    const all = series.flatMap((s) => s.values).filter((v) => isFinite(v));
+    const decOf = (v) => Math.min(3, (String(v).split('.')[1] || '').length);
+    const log = spec.scale === 'log';
+    /* Cada cifra con la precision con la que viene en el JSON (3.4 → "3,4",
+       50 → "50"); spec.decimals la fija para todas. En escala log, notacion
+       cientifica: 5 × 10²⁵ en vez de 25 digitos. */
+    const fmtNum = (v, d) => {
+      if (log && Math.abs(v) >= 1e5) {
+        const e = Math.floor(Math.log10(Math.abs(v)));
+        const m = v / Math.pow(10, e);
+        const ms = Math.abs(m - 1) < 1e-9 ? '' : numberFormat({ maximumFractionDigits: 1 }).format(m) + ' × ';
+        return ms + '10' + String(e).split('').map((c) => SUP[c] || c).join('');
+      }
+      const dd = spec.decimals != null ? spec.decimals : d;
+      return numberFormat({ minimumFractionDigits: dd, maximumFractionDigits: dd }).format(v);
+    };
+    const fmt = (v, d = decOf(v)) => (spec.prefix || '') + fmtNum(v, d) + (spec.unit || '');
+    const hlIndex = (vals) => spec.highlight === 'last' ? vals.length - 1
+      : spec.highlight === 'max' ? vals.indexOf(Math.max(...vals))
+      : spec.highlight === 'min' ? vals.indexOf(Math.min(...vals))
+      : typeof spec.highlight === 'number' ? spec.highlight : -1;
+
+    /* Escala de valores */
+    let lo, hi, tickDec = 0; const ticks = [];
+    if (log) {
+      const pos = all.filter((v) => v > 0);
+      lo = Math.floor(Math.log10(spec.min || Math.min(...pos)));
+      hi = Math.ceil(Math.log10(spec.max || Math.max(...pos)));
+      if (hi === lo) hi = lo + 1;
+      const step = Math.max(1, Math.ceil((hi - lo) / 5));
+      hi = lo + step * Math.ceil((hi - lo) / step);   // que el tope caiga en una linea de la grilla
+      for (let e = lo; e <= hi; e += step) ticks.push(e);
+    } else {
+      const dMin = Math.min(0, ...all), dMax = Math.max(0, ...all);
+      const step = niceStep((spec.max ?? dMax) - (spec.min ?? dMin), 4);
+      lo = spec.min ?? Math.floor(dMin / step) * step;
+      hi = spec.max ?? Math.ceil(dMax / step) * step;
+      if (hi === lo) hi = lo + step;
+      tickDec = decOf(Number(step.toPrecision(6)));
+      for (let v = lo; v <= hi + step / 1e6; v += step) ticks.push(Number(v.toPrecision(12)));
+    }
+    const tv = (v) => (log ? Math.log10(Math.max(v, 1e-300)) : v);
+    const tickLabel = (t) => log ? '10' + String(t).split('').map((c) => SUP[c] || c).join('') : fmt(t, tickDec);
+
+    const svg = svgEl('svg', { viewBox: `0 0 ${W} ${H}`, width: W, height: H, role: 'img', 'aria-label': spec.title || labels.join(', ') });
+    fig.appendChild(svg);
+    const multi = series.length > 1;
+
+    if (type === 'hbar') {
+      /* Barras horizontales: rankings, "donde gana cada uno". */
+      const left = Math.min(W * 0.4, Math.max(...labels.map((l) => l.length)) * 14 + 28);
+      const right = Math.max(...all.map((v) => fmt(v).length)) * 16 + 24;
+      const x0 = left, x1 = W - right, band = H / n, bh = Math.min(64, band * 0.56);
+      const xs = (v) => x0 + ((tv(v) - (log ? lo : Math.min(lo, 0))) / (hi - (log ? lo : Math.min(lo, 0)))) * (x1 - x0);
+      svgEl('line', { x1: x0, x2: x0, y1: 0, y2: H, class: 'sz-axis' }, svg);
+      const vals = series[0].values, hl = hlIndex(vals);
+      vals.forEach((v, i) => {
+        const cy = band * i + band / 2;
+        const x = xs(v);
+        svgEl('rect', { x: x0, y: cy - bh / 2, width: Math.max(0, x - x0), height: bh, rx: 4,
+          class: `sz-bar sz-h ${i === hl ? 'sz-hl' : 'sz-s0'}`, style: `--i:${i}` }, svg);
+        svgText(svg, x0 - 18, cy, 'sz-cat', labels[i] || '', 'end');
+        svgText(svg, x + 14, cy, `sz-value ${i === hl ? 'sz-hl' : ''}`, fmt(v));
+      });
+      return svg;
+    }
+
+    const isLine = type === 'line' || type === 'area';
+    const legend = multi && !isLine;
+    const top = 48 + (legend ? 44 : 0);
+    const left = Math.max(...ticks.map((t) => tickLabel(t).length)) * 13.5 + 28;
+    const right = isLine ? (multi ? Math.max(...series.map((s, si) => s.name.length + (si === 0 ? 14 : 0))) * 13 + 40 : 32) : 12;
+    const bottom = 60;
+    const x0 = left, x1 = W - right, y0 = top, y1 = H - bottom;
+    const ys = (v) => y1 - ((tv(v) - lo) / (hi - lo)) * (y1 - y0);
+    const every = Math.max(1, Math.ceil(n / 12));
+
+    ticks.forEach((t) => {
+      const y = y1 - ((t - lo) / (hi - lo)) * (y1 - y0);
+      svgEl('line', { x1: x0, x2: x1, y1: y, y2: y, class: t === (log ? lo : 0) || (t === lo) ? 'sz-axis' : 'sz-grid' }, svg);
+      svgText(svg, x0 - 16, y, log ? 'sz-tick sz-exp' : 'sz-tick', tickLabel(t), 'end');
+    });
+
+    if (legend) {
+      let lx = x0;
+      series.forEach((s, si) => {
+        const g = svgEl('g', { class: `sz-s${si}` }, svg);
+        svgEl('rect', { x: lx, y: 8, width: 20, height: 20, rx: 4, class: 'sz-bar', style: 'transform:none' }, g);
+        const t = svgText(g, lx + 30, 18, 'sz-name', s.name);
+        t.style.opacity = 1;
+        lx += 30 + s.name.length * 13 + 40;
+      });
+    }
+
+    if (!isLine) {
+      const band = (x1 - x0) / n, groupW = band * (multi ? 0.72 : 0.62), bw = groupW / series.length;
+      const base = ys(log ? Math.pow(10, lo) : Math.max(lo, 0));
+      series.forEach((s, si) => {
+        const hl = multi ? -1 : hlIndex(s.values);
+        s.values.forEach((v, i) => {
+          const x = x0 + band * i + (band - groupW) / 2 + bw * si;
+          const y = ys(v);
+          svgEl('rect', { x: x + 2, y: Math.min(y, base), width: Math.max(0, bw - 4), height: Math.abs(base - y), rx: 4,
+            class: `sz-bar ${i === hl ? 'sz-hl' : 'sz-s' + si}`, style: `--i:${i}` }, svg);
+          if (!multi && (n <= 10 || i === hl)) svgText(svg, x + bw / 2, y - 22, `sz-value ${i === hl ? 'sz-hl' : ''}`, fmt(v), 'middle');
+        });
+      });
+      labels.forEach((l, i) => { if (i % every === 0) svgText(svg, x0 + band * i + band / 2, y1 + 34, 'sz-cat', l, 'middle'); });
+      return svg;
+    }
+
+    const px = (i) => (n === 1 ? (x0 + x1) / 2 : x0 + (i * (x1 - x0)) / (n - 1));
+    series.forEach((s, si) => {
+      const g = svgEl('g', { class: `sz-s${si}` }, svg);
+      const pts = s.values.map((v, i) => [px(i), ys(v)]).filter((p) => isFinite(p[1]));
+      if (!pts.length) return;
+      if (type === 'area') {
+        const d = `M${pts[0][0]},${y1} ` + pts.map((p) => `L${p[0]},${p[1]}`).join(' ') + ` L${pts[pts.length - 1][0]},${y1} Z`;
+        svgEl('path', { d, class: 'sz-area' }, g);
+      }
+      const path = svgEl('path', { d: 'M' + pts.map((p) => p.join(',')).join(' L'), class: 'sz-line' }, g);
+      const len = Math.ceil(path.getTotalLength ? path.getTotalLength() : 4000);
+      path.style.strokeDasharray = len;
+      path.style.strokeDashoffset = len;
+      const hl = si === 0 ? hlIndex(s.values) : -1;
+      pts.forEach((p, i) => {
+        if (n <= 12 || i === hl || i === pts.length - 1) {
+          svgEl('circle', { cx: p[0], cy: p[1], r: i === hl ? 10 : 7, class: `sz-dot ${i === hl ? 'sz-hl' : ''}` }, g);
+        }
+      });
+      const last = pts[pts.length - 1];
+      const hp = hl >= 0 ? pts[hl] : last;
+      if (!multi || (si === 0 && hl >= 0 && hl !== pts.length - 1)) {
+        svgText(g, hp[0], hp[1] - 30, `sz-value ${hl >= 0 ? 'sz-hl' : ''}`, fmt(s.values[hl >= 0 ? hl : pts.length - 1]), hl === pts.length - 1 || hl < 0 ? 'end' : 'middle');
+      }
+      if (multi) svgText(g, last[0] + 18, last[1], 'sz-name', s.name + (si === 0 ? '  ' + fmt(s.values[pts.length - 1]) : ''));
+    });
+    labels.forEach((l, i) => { if (i % every === 0 || i === n - 1) svgText(svg, px(i), y1 + 34, 'sz-cat', l, i === 0 && n > 1 ? 'start' : i === n - 1 && n > 1 ? 'end' : 'middle'); });
+    return svg;
+  }
+  function renderCharts() {
+    document.querySelectorAll('.sz-chart').forEach((fig) => {
+      try {
+        if (renderChart(fig)) {
+          fig.dataset.rendered = '1';
+          if (!fig.closest('.reveal')) fig.classList.add('sz-static');
+        }
+      } catch (e) { console.warn('sz-chart: no se pudo dibujar', fig, e); }
+    });
+  }
+  /* Timeline: el punto de cada paso es un elemento real, no un ::before. */
+  function enhanceTimelines() {
+    document.querySelectorAll('ol.sz-timeline > li').forEach((li) => {
+      if (li.querySelector(':scope > .sz-dot')) return;
+      const dot = document.createElement('span');
+      dot.className = 'sz-dot';
+      dot.setAttribute('aria-hidden', 'true');
+      li.prepend(dot);
+    });
+  }
+
+  /* ── Escenas 3D declarativas (.sz-3d) ─────────────────────────────────
+     Opt-in: si el deck no tiene ninguna figura .sz-3d, esta funcion sale
+     de inmediato sin tocar la red, sin crear contextos WebGL y sin definir
+     globales nuevos. Cuando hay .sz-3d, el poster (img.sz-3d-poster) es el
+     estado visible por defecto y el canvas aparece encima solo tras pintar
+     el primer frame de forma sincrona. Ver reference/3d.md.              */
+  let pauseAll3D = null;
+  let resumeActive3D = null;
+  function init3D() {
+    const figs = Array.from(document.querySelectorAll('.sz-3d'));
+    if (!figs.length) return;
+
+    const allSlides = Array.from(stage.querySelectorAll(':scope > section'));
+    const isReducedMotion = () => !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    const isPosterMode = () => document.documentElement.classList.contains('sz-3d--poster');
+
+    /* Normaliza cualquier token de color CSS (incluidos oklch y color-mix)
+       a #RRGGBB pintando un pixel en un canvas 2D de 1x1, para pasarselo
+       a THREE.Color sin depender del parser de three.js. */
+    let colorCv = null, colorCx = null;
+    function cssHex(el, prop, fallback) {
+      try {
+        const raw = getComputedStyle(el).getPropertyValue(prop).trim();
+        if (!raw) return fallback;
+        if (/^#[0-9a-fA-F]{6}$/.test(raw)) return raw;
+        if (!colorCv) {
+          colorCv = document.createElement('canvas');
+          colorCv.width = colorCv.height = 1;
+          colorCx = colorCv.getContext('2d', { willReadFrequently: true });
+        }
+        colorCx.clearRect(0, 0, 1, 1);
+        colorCx.fillStyle = '#000000';
+        colorCx.fillStyle = raw;
+        colorCx.fillRect(0, 0, 1, 1);
+        const d = colorCx.getImageData(0, 0, 1, 1).data;
+        return '#' + [d[0], d[1], d[2]].map((v) => v.toString(16).padStart(2, '0')).join('');
+      } catch (e) { return fallback; }
+    }
+
+    function checkWebGL2() {
+      try {
+        const c = document.createElement('canvas');
+        return !!(window.WebGL2RenderingContext && c.getContext('webgl2'));
+      } catch (e) { return false; }
+    }
+
+    function parseSpec(fig) {
+      const tag = fig.querySelector('script[type="application/json"]');
+      if (!tag) return { spec: null, error: 'falta el bloque JSON de configuracion' };
+      try {
+        const s = JSON.parse(tag.textContent || '{}');
+        if (!s || typeof s !== 'object') return { spec: null, error: 'JSON invalido' };
+        if (typeof s.model !== 'string' && s.preset !== 'logo' && s.preset !== 'particles') {
+          return { spec: null, error: 'el JSON debe declarar "model" o "preset" ("logo"|"particles")' };
+        }
+        return { spec: s, error: null };
+      } catch (e) {
+        return { spec: null, error: 'JSON invalido: ' + e.message };
+      }
+    }
+
+    function collectRequestedClips(spec) {
+      if (!spec) return [];
+      const set = new Set();
+      if (typeof spec.clip === 'string' && spec.clip) set.add(spec.clip);
+      if (spec.steps && typeof spec.steps === 'object') {
+        Object.values(spec.steps).forEach((st) => {
+          if (st && typeof st.clip === 'string' && st.clip) set.add(st.clip);
+        });
+      }
+      return Array.from(set);
+    }
+
+    const states = new Map();
+    figs.forEach((fig, idx) => {
+      const slide = fig.closest('section');
+      const slideIdx = slide ? allSlides.indexOf(slide) : -1;
+      const { spec, error } = parseSpec(fig);
+      const id = fig.dataset.id || (spec && spec.model) || (spec && spec.preset) || ('3d-' + (idx + 1));
+      const st = {
+        id, fig, slide, slideIdx, spec,
+        status: error ? 'fallback' : 'idle',
+        error: error || null,
+        threeLoaded: false,
+        availableClips: [],
+        requestedClips: collectRequestedClips(spec),
+        renderer: null, scene: null, camera: null, cameraTarget: null,
+        rootObj: null, mixer: null, actions: {}, activeAction: null, activeClipName: null,
+        particlesData: null, turntable: 0, tween: null,
+        looping: false, loopRaf: 0, loopTimer: 0, lastTime: 0,
+        initPromise: null, THREE: null,
+      };
+      if (error) {
+        fig.setAttribute('data-sz-3d', 'fallback');
+        console.info('sz-3d (' + id + '): ' + error);
+      }
+      states.set(fig, st);
+    });
+
+    const webglOk = checkWebGL2();
+    if (!webglOk) {
+      states.forEach((st) => {
+        if (!st.error) st.error = 'WebGL2 no disponible';
+        st.status = 'fallback';
+        st.fig.setAttribute('data-sz-3d', 'fallback');
+      });
+      console.info('sz-3d: WebGL2 no disponible, se mantiene el poster estatico');
+    }
+
+    let threePromise = null;
+    let gltfPromise = null;
+    let svgPromise = null;
+    function withTimeout(p, ms, label) {
+      return new Promise((resolve, reject) => {
+        const t = setTimeout(() => reject(new Error('tiempo agotado al cargar ' + label)), ms);
+        p.then((v) => { clearTimeout(t); resolve(v); }, (e) => { clearTimeout(t); reject(e); });
+      });
+    }
+    function loadModules(spec) {
+      if (!threePromise) threePromise = withTimeout(import('three'), 8000, 'three');
+      const tasks = [threePromise];
+      if (spec.model) {
+        if (!gltfPromise) gltfPromise = withTimeout(import('three/addons/loaders/GLTFLoader.js'), 8000, 'GLTFLoader');
+        tasks.push(gltfPromise);
+      } else {
+        tasks.push(Promise.resolve(null));
+      }
+      if (spec.preset === 'logo' || (spec.preset === 'particles' && spec.shape === 'logo')) {
+        if (!svgPromise) svgPromise = withTimeout(import('three/addons/loaders/SVGLoader.js'), 8000, 'SVGLoader');
+        tasks.push(svgPromise);
+      } else {
+        tasks.push(Promise.resolve(null));
+      }
+      return Promise.all(tasks);
+    }
+
+    function computeAutoCamera(THREE, rootObj, W, H, baseFov) {
+      const fov = typeof baseFov === 'number' ? baseFov : 35;
+      rootObj.updateMatrixWorld(true);
+      rootObj.traverse((o) => {
+        if (o.isSkinnedMesh && o.skeleton && typeof o.skeleton.update === 'function') {
+          try { o.skeleton.update(); } catch (e) {}
+        }
+      });
+      const box = new THREE.Box3().setFromObject(rootObj);
+      if (box.isEmpty()) {
+        return { position: [0, 2.0, 6.5], target: [0, 1.8, 0], fov, dist: 6.5 };
+      }
+      const center = new THREE.Vector3();
+      const size = new THREE.Vector3();
+      box.getCenter(center);
+      box.getSize(size);
+      const aspect = Math.max(0.5, (W || 720) / (H || 520));
+      const fovRad = (fov * Math.PI) / 180;
+      const halfSpan = Math.max(size.y * 0.5, (size.x / aspect) * 0.5, 0.4);
+      const dist = (halfSpan / Math.tan(fovRad * 0.5)) * 1.38 + size.z * 0.55;
+      const target = [center.x, center.y, center.z];
+      const position = [center.x, center.y + size.y * 0.06, center.z + dist];
+      return { position, target, fov, dist, size: [size.x, size.y, size.z] };
+    }
+
+    function applyCameraOverride(cam, override, autoCam) {
+      if (!override) return;
+      if (override === 'fit' && autoCam) {
+        cam.position = autoCam.position.slice(0, 3);
+        cam.target = autoCam.target.slice(0, 3);
+        cam.fov = autoCam.fov;
+        return;
+      }
+      if (typeof override !== 'object') return;
+      if (override.fit && autoCam) {
+        cam.position = autoCam.position.slice(0, 3);
+        cam.target = autoCam.target.slice(0, 3);
+      }
+      if (typeof override.fov === 'number') cam.fov = override.fov;
+      if (Array.isArray(override.target)) cam.target = override.target.slice(0, 3);
+      if (Array.isArray(override.position)) {
+        cam.position = override.position.slice(0, 3);
+      } else if (autoCam && (typeof override.zoom === 'number' || typeof override.azimuth === 'number' || typeof override.elevation === 'number')) {
+        const z = typeof override.zoom === 'number' && override.zoom > 0 ? override.zoom : 1;
+        const az = typeof override.azimuth === 'number' ? override.azimuth : 0;
+        const el = typeof override.elevation === 'number' ? override.elevation : 0.08;
+        const r = autoCam.dist / z;
+        const tx = cam.target[0], ty = cam.target[1], tz = cam.target[2];
+        cam.position = [
+          tx + r * Math.sin(az) * Math.cos(el),
+          ty + r * Math.sin(el),
+          tz + r * Math.cos(az) * Math.cos(el),
+        ];
+      }
+    }
+
+    function effectiveStepSpec(spec, step, totalSteps, autoCam) {
+      const isModel = !!spec.model;
+      const defaultPos = autoCam ? autoCam.position.slice(0, 3) : (isModel ? [0, 2.0, 6.5] : [0, 0, 4.4]);
+      const defaultTarget = autoCam ? autoCam.target.slice(0, 3) : (isModel ? [0, 1.8, 0] : [0, 0, 0]);
+      const defaultFov = autoCam ? autoCam.fov : 35;
+      const eff = {
+        clip: spec.clip || null,
+        turntable: typeof spec.turntable === 'number' ? spec.turntable : (isModel ? 0.2 : 0.25),
+        scale: typeof spec.scale === 'number' ? spec.scale : 1,
+        position: Array.isArray(spec.position) ? spec.position.slice(0, 3) : [0, 0, 0],
+        rotation: Array.isArray(spec.rotation) ? spec.rotation.slice(0, 3) : [0, 0, 0],
+        order: typeof spec.order === 'number' ? spec.order : null,
+        camera: {
+          position: defaultPos,
+          target: defaultTarget,
+          fov: defaultFov,
+        },
+      };
+      applyCameraOverride(eff.camera, spec.camera, autoCam);
+      for (let k = 1; k <= step; k++) {
+        const s = spec.steps && spec.steps[String(k)];
+        if (!s || typeof s !== 'object') continue;
+        if (typeof s.clip === 'string') eff.clip = s.clip;
+        if (typeof s.turntable === 'number') eff.turntable = s.turntable;
+        if (typeof s.scale === 'number') eff.scale = s.scale;
+        if (Array.isArray(s.position)) eff.position = s.position.slice(0, 3);
+        if (Array.isArray(s.rotation)) eff.rotation = s.rotation.slice(0, 3);
+        if (typeof s.order === 'number') eff.order = s.order;
+        if (s.camera) applyCameraOverride(eff.camera, s.camera, autoCam);
+      }
+      if (eff.order == null) {
+        eff.order = totalSteps <= 1 ? 1 : (step <= 1 ? 0.18 : Math.min(1, (step - 1) / (totalSteps - 1)));
+      }
+      return eff;
+    }
+
+    function updateParticlesOrder(pd, order) {
+      if (!pd) return;
+      pd.order = order;
+      const arr = pd.attr.array;
+      const sc = pd.scattered;
+      const or = pd.ordered;
+      for (let i = 0; i < arr.length; i++) {
+        arr[i] = sc[i] + (or[i] - sc[i]) * order;
+      }
+      pd.attr.needsUpdate = true;
+    }
+
+    function applyStepState(st, step, immediate) {
+      if (!st || st.status !== 'ready' || !st.camera || !st.rootObj) return;
+      const totalSteps = st.slide ? Math.max(1, parseInt(st.slide.dataset.steps || '1', 10)) : 1;
+      const eff = effectiveStepSpec(st.spec, Math.max(1, step), totalSteps, st.autoCamera);
+      st.turntable = eff.turntable;
+      const cut = immediate || isReducedMotion();
+
+      if (st.mixer && eff.clip && st.actions[eff.clip]) {
+        const entry = st.actions[eff.clip];
+        if (cut || !st.activeAction) {
+          Object.values(st.actions).forEach((a) => a.action.stop());
+          entry.action.reset().play();
+          st.activeAction = entry.action;
+          st.activeClipName = eff.clip;
+          if (cut) {
+            const poseT = Math.min(0.55, (entry.clip.duration || 1) * 0.38);
+            st.mixer.setTime(poseT);
+          } else {
+            st.mixer.update(0.001);
+          }
+        } else if (st.activeClipName !== eff.clip) {
+          const prev = st.activeAction;
+          entry.action.reset().fadeIn(0.4).play();
+          if (prev && prev !== entry.action) prev.fadeOut(0.4);
+          st.activeAction = entry.action;
+          st.activeClipName = eff.clip;
+        }
+      }
+
+      if (cut) {
+        st.tween = null;
+        st.camera.position.set(eff.camera.position[0], eff.camera.position[1], eff.camera.position[2]);
+        st.cameraTarget.set(eff.camera.target[0], eff.camera.target[1], eff.camera.target[2]);
+        st.camera.fov = eff.camera.fov;
+        st.camera.updateProjectionMatrix();
+        st.camera.lookAt(st.cameraTarget);
+        st.rootObj.position.set(eff.position[0], eff.position[1], eff.position[2]);
+        st.rootObj.rotation.set(eff.rotation[0], eff.rotation[1], eff.rotation[2]);
+        st.rootObj.scale.setScalar(eff.scale);
+        if (st.particlesData) updateParticlesOrder(st.particlesData, eff.order);
+      } else {
+        st.tween = {
+          start: performance.now(),
+          duration: 600,
+          fromCamPos: [st.camera.position.x, st.camera.position.y, st.camera.position.z],
+          toCamPos: eff.camera.position,
+          fromTarget: [st.cameraTarget.x, st.cameraTarget.y, st.cameraTarget.z],
+          toTarget: eff.camera.target,
+          fromFov: st.camera.fov,
+          toFov: eff.camera.fov,
+          fromPos: [st.rootObj.position.x, st.rootObj.position.y, st.rootObj.position.z],
+          toPos: eff.position,
+          fromRot: [st.rootObj.rotation.x, st.rootObj.rotation.y, st.rootObj.rotation.z],
+          toRot: eff.rotation,
+          fromScale: st.rootObj.scale.x,
+          toScale: eff.scale,
+          fromOrder: st.particlesData ? st.particlesData.order : eff.order,
+          toOrder: eff.order,
+        };
+      }
+    }
+
+    function renderOnce(st, dt) {
+      if (!st || st.status !== 'ready' || !st.renderer) return;
+      const now = performance.now();
+      if (st.tween) {
+        const t = Math.min(1, Math.max(0, (now - st.tween.start) / st.tween.duration));
+        const e = 1 - Math.pow(1 - t, 3);
+        const lerp = (a, b) => a + (b - a) * e;
+        const tw = st.tween;
+        st.camera.position.set(lerp(tw.fromCamPos[0], tw.toCamPos[0]), lerp(tw.fromCamPos[1], tw.toCamPos[1]), lerp(tw.fromCamPos[2], tw.toCamPos[2]));
+        st.cameraTarget.set(lerp(tw.fromTarget[0], tw.toTarget[0]), lerp(tw.fromTarget[1], tw.toTarget[1]), lerp(tw.fromTarget[2], tw.toTarget[2]));
+        st.camera.fov = lerp(tw.fromFov, tw.toFov);
+        st.camera.updateProjectionMatrix();
+        st.camera.lookAt(st.cameraTarget);
+        st.rootObj.position.set(lerp(tw.fromPos[0], tw.toPos[0]), lerp(tw.fromPos[1], tw.toPos[1]), lerp(tw.fromPos[2], tw.toPos[2]));
+        st.rootObj.rotation.set(lerp(tw.fromRot[0], tw.toRot[0]), lerp(tw.fromRot[1], tw.toRot[1]), lerp(tw.fromRot[2], tw.toRot[2]));
+        st.rootObj.scale.setScalar(lerp(tw.fromScale, tw.toScale));
+        if (st.particlesData) updateParticlesOrder(st.particlesData, lerp(tw.fromOrder, tw.toOrder));
+        if (t >= 1) st.tween = null;
+      }
+      if (dt > 0 && !isReducedMotion()) {
+        if (st.mixer) st.mixer.update(dt);
+        if (st.turntable && st.rootObj && !st.tween) {
+          st.rootObj.rotation.y += st.turntable * dt;
+        }
+      }
+      st.renderer.render(st.scene, st.camera);
+    }
+
+    function stopLoop(st) {
+      if (!st) return;
+      st.looping = false;
+      if (st.renderer) {
+        try { st.renderer.setAnimationLoop(null); } catch (e) {}
+      }
+      if (st.loopRaf) { cancelAnimationFrame(st.loopRaf); st.loopRaf = 0; }
+      if (st.loopTimer) { clearTimeout(st.loopTimer); st.loopTimer = 0; }
+    }
+
+    function startLoop(st) {
+      if (!st || st.status !== 'ready' || !st.renderer || isPosterMode() || isReducedMotion()) return;
+      if (st.looping) return;
+      st.looping = true;
+      st.lastTime = performance.now();
+      st.renderer.setAnimationLoop((now) => {
+        if (!st.looping || isPosterMode()) return;
+        const dt = Math.min(0.1, Math.max(0, (now - st.lastTime) / 1000));
+        st.lastTime = now;
+        renderOnce(st, dt);
+      });
+    }
+
+    function disposeFig(st) {
+      if (!st) return;
+      stopLoop(st);
+      if (st.scene) {
+        st.scene.traverse((obj) => {
+          if (obj.geometry && obj.geometry.dispose) obj.geometry.dispose();
+          if (obj.material) {
+            const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
+            mats.forEach((m) => {
+              if (m.map && m.map.dispose) m.map.dispose();
+              if (m.dispose) m.dispose();
+            });
+          }
+        });
+      }
+      if (st.renderer) {
+        try {
+          if (st.renderer.forceContextLoss) st.renderer.forceContextLoss();
+          st.renderer.dispose();
+          if (st.renderer.domElement && st.renderer.domElement.parentNode === st.fig) {
+            st.renderer.domElement.remove();
+          }
+        } catch (e) {}
+      }
+      st.renderer = null; st.scene = null; st.camera = null; st.cameraTarget = null;
+      st.rootObj = null; st.mixer = null; st.actions = {}; st.activeAction = null; st.activeClipName = null;
+      st.particlesData = null; st.tween = null; st.initPromise = null; st.autoCamera = null;
+      if (st.status === 'ready') {
+        st.status = 'idle';
+        st.fig.removeAttribute('data-sz-3d');
+      }
+    }
+
+    function setupLights(THREE, scene, mode, primaryHex, accentHex, surfaceHex) {
+      const m = mode || 'studio';
+      const lightCol = new THREE.Color(surfaceHex);
+      const hsl = { h: 0, s: 0, l: 0 };
+      lightCol.getHSL(hsl);
+      lightCol.setHSL(hsl.h, Math.min(hsl.s, 0.08), Math.max(hsl.l, 0.96));
+      if (m === 'soft') {
+        scene.add(new THREE.HemisphereLight(lightCol, primaryHex, 1.6));
+        const key = new THREE.DirectionalLight(lightCol, 1.3);
+        key.position.set(2.2, 4.2, 3.8);
+        scene.add(key);
+        const side = new THREE.DirectionalLight(lightCol, 0.65);
+        side.position.set(-3.2, 1.5, 2.2);
+        scene.add(side);
+      } else if (m === 'dramatic') {
+        scene.add(new THREE.AmbientLight(lightCol, 0.95));
+        const key = new THREE.DirectionalLight(lightCol, 2.1);
+        key.position.set(1.2, 4.8, 3.2);
+        scene.add(key);
+        const side = new THREE.DirectionalLight(lightCol, 0.85);
+        side.position.set(4.2, 1.2, -1.0);
+        scene.add(side);
+        const rim = new THREE.DirectionalLight(accentHex, 0.9);
+        rim.position.set(-3.0, 2.5, -3.5);
+        scene.add(rim);
+      } else {
+        scene.add(new THREE.AmbientLight(lightCol, 1.05));
+        const key = new THREE.DirectionalLight(lightCol, 1.85);
+        key.position.set(1.4, 4.6, 3.4);
+        scene.add(key);
+        const fill = new THREE.DirectionalLight(lightCol, 0.75);
+        fill.position.set(4.0, 1.4, -0.8);
+        scene.add(fill);
+        const rim = new THREE.DirectionalLight(accentHex, 0.75);
+        rim.position.set(-2.5, 3.0, -3.5);
+        scene.add(rim);
+      }
+    }
+
+    function findLogoSvg(st) {
+      if (typeof st.spec.svg === 'string' && st.spec.svg.trim()) {
+        return document.querySelector(st.spec.svg.trim());
+      }
+      return st.fig.querySelector('svg') || (st.slide && st.slide.querySelector('svg:not(.ic)')) || null;
+    }
+
+    function buildLogoObject(THREE, SVGLoader, st, primaryHex, accentHex) {
+      const svgElNode = findLogoSvg(st);
+      if (!svgElNode) throw new Error('preset logo: no se encontro el SVG (' + (st.spec.svg || 'svg en la figura o slide') + ')');
+      const parsed = new SVGLoader().parse(svgElNode.outerHTML);
+      if (!parsed.paths || !parsed.paths.length) throw new Error('preset logo: el SVG no contiene trazos');
+      const depth = typeof st.spec.depth === 'number' ? st.spec.depth : 28;
+      const inner = new THREE.Group();
+      parsed.paths.forEach((p, idx) => {
+        const shapes = SVGLoader.createShapes(p);
+        const node = p.userData && p.userData.node;
+        const isAccent = (node && (node.hasAttribute('data-accent') || (node.classList && node.classList.contains('hl'))))
+          || (idx === parsed.paths.length - 1 && parsed.paths.length > 1 && st.spec.accentLast !== false);
+        const baseCol = new THREE.Color(isAccent ? accentHex : primaryHex);
+        const hsl = { h: 0, s: 0, l: 0 };
+        baseCol.getHSL(hsl);
+        const sideCol = new THREE.Color();
+        if (hsl.l < 0.22) {
+          sideCol.setHSL(hsl.h, Math.min(hsl.s, 0.25), Math.min(0.36, hsl.l + 0.18));
+        } else {
+          sideCol.setHSL(hsl.h, Math.min(1, hsl.s * 1.05), Math.max(0.12, hsl.l * 0.56));
+        }
+        const frontMat = new THREE.MeshLambertMaterial({
+          color: baseCol,
+          emissive: baseCol,
+          emissiveIntensity: 0.34,
+        });
+        const sideMat = new THREE.MeshLambertMaterial({
+          color: sideCol,
+        });
+        shapes.forEach((sh) => {
+          const geom = new THREE.ExtrudeGeometry(sh, {
+            depth,
+            bevelEnabled: true,
+            bevelThickness: Math.max(1.5, depth * 0.1),
+            bevelSize: Math.max(1.2, depth * 0.08),
+            bevelSegments: 2,
+          });
+          inner.add(new THREE.Mesh(geom, [frontMat, sideMat]));
+        });
+      });
+      inner.scale.y = -1;
+      const box = new THREE.Box3().setFromObject(inner);
+      const center = new THREE.Vector3();
+      const size = new THREE.Vector3();
+      box.getCenter(center);
+      box.getSize(size);
+      const maxDim = Math.max(size.x, size.y, size.z, 1e-3);
+      const s = 2.2 / maxDim;
+      inner.scale.set(s, -s, s);
+      const box2 = new THREE.Box3().setFromObject(inner);
+      box2.getCenter(center);
+      inner.position.sub(center);
+      const holder = new THREE.Group();
+      holder.add(inner);
+      return holder;
+    }
+
+    function buildParticlesObject(THREE, SVGLoader, st, primaryHex, accentHex) {
+      const count = Math.min(2000, Math.max(120, st.spec.count || 720));
+      const scattered = new Float32Array(count * 3);
+      const ordered = new Float32Array(count * 3);
+      const current = new Float32Array(count * 3);
+      const colors = new Float32Array(count * 3);
+
+      let seed = 42;
+      const rand = () => {
+        seed = (seed + 0x6D2B79F5) | 0;
+        let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+        t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+      };
+
+      let logoPoints = null;
+      if (st.spec.shape === 'logo' && SVGLoader) {
+        const svgNode = findLogoSvg(st);
+        if (svgNode) {
+          const parsed = new SVGLoader().parse(svgNode.outerHTML);
+          const shapes = parsed.paths.flatMap((p) => SVGLoader.createShapes(p));
+          if (shapes.length) {
+            const pts2d = [];
+            const perShape = Math.max(20, Math.ceil(count / shapes.length));
+            shapes.forEach((sh) => {
+              sh.getSpacedPoints(perShape).forEach((pt) => pts2d.push(pt));
+            });
+            if (pts2d.length) {
+              let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+              pts2d.forEach((p) => {
+                if (p.x < minX) minX = p.x; if (p.x > maxX) maxX = p.x;
+                if (p.y < minY) minY = p.y; if (p.y > maxY) maxY = p.y;
+              });
+              const cx = (minX + maxX) / 2, cy = (minY + maxY) / 2;
+              const span = Math.max(maxX - minX, maxY - minY, 1);
+              logoPoints = pts2d.map((p) => [((p.x - cx) / span) * 2.5, -((p.y - cy) / span) * 2.5]);
+            }
+          }
+        }
+      }
+
+      const cPrimary = new THREE.Color(primaryHex);
+      const cAccent = new THREE.Color(accentHex);
+      const phi = Math.PI * (3 - Math.sqrt(5));
+      for (let i = 0; i < count; i++) {
+        const idx = i * 3;
+        const u = rand() * Math.PI * 2;
+        const v = rand() * 2 - 1;
+        const rScat = 2.0 + rand() * 1.9;
+        const sRad = Math.sqrt(Math.max(0, 1 - v * v));
+        scattered[idx] = rScat * sRad * Math.cos(u);
+        scattered[idx + 1] = rScat * sRad * Math.sin(u);
+        scattered[idx + 2] = rScat * v;
+
+        if (logoPoints && logoPoints.length) {
+          const lp = logoPoints[i % logoPoints.length];
+          ordered[idx] = lp[0] + (rand() - 0.5) * 0.06;
+          ordered[idx + 1] = lp[1] + (rand() - 0.5) * 0.06;
+          ordered[idx + 2] = (rand() - 0.5) * 0.28;
+        } else {
+          const y = 1 - (i / Math.max(1, count - 1)) * 2;
+          const rad = Math.sqrt(Math.max(0, 1 - y * y));
+          const th = phi * i;
+          const rOrd = i % 7 === 0 ? 0.85 : 1.35;
+          ordered[idx] = Math.cos(th) * rad * rOrd;
+          ordered[idx + 1] = y * rOrd;
+          ordered[idx + 2] = Math.sin(th) * rad * rOrd;
+        }
+
+        current[idx] = ordered[idx];
+        current[idx + 1] = ordered[idx + 1];
+        current[idx + 2] = ordered[idx + 2];
+
+        const col = (i % 6 === 0) ? cAccent : cPrimary;
+        colors[idx] = col.r;
+        colors[idx + 1] = col.g;
+        colors[idx + 2] = col.b;
+      }
+
+      const geom = new THREE.BufferGeometry();
+      const posAttr = new THREE.BufferAttribute(current, 3);
+      geom.setAttribute('position', posAttr);
+      geom.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+      const dotCv = document.createElement('canvas');
+      dotCv.width = dotCv.height = 32;
+      const dotCx = dotCv.getContext('2d');
+      dotCx.fillStyle = '#ffffff';
+      dotCx.beginPath();
+      dotCx.arc(16, 16, 14, 0, Math.PI * 2);
+      dotCx.fill();
+      const dotTex = new THREE.CanvasTexture(dotCv);
+
+      const mat = new THREE.PointsMaterial({
+        size: 0.12,
+        map: dotTex,
+        vertexColors: true,
+        transparent: true,
+        alphaTest: 0.05,
+        depthWrite: false,
+      });
+      st.particlesData = { scattered, ordered, attr: posAttr, order: 1 };
+      return new THREE.Points(geom, mat);
+    }
+
+    function ensureFig(st) {
+      if (!st) return Promise.resolve(null);
+      if (st.status === 'ready' || st.status === 'fallback') return Promise.resolve(st);
+      if (st.initPromise) return st.initPromise;
+
+      st.status = 'loading';
+      st.initPromise = (async () => {
+        try {
+          if (!webglOk) throw new Error('WebGL2 no disponible');
+          const [THREE, gltfMod, svgMod] = await loadModules(st.spec);
+          st.THREE = THREE;
+          st.threeLoaded = true;
+
+          const W = st.fig.clientWidth || 720;
+          const H = st.fig.clientHeight || 520;
+          const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+          const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+          renderer.setPixelRatio(dpr);
+          renderer.setSize(W, H, false);
+          if (THREE.SRGBColorSpace) renderer.outputColorSpace = THREE.SRGBColorSpace;
+          const canvas = renderer.domElement;
+          canvas.setAttribute('aria-hidden', 'true');
+
+          const scene = new THREE.Scene();
+          const camSpec = st.spec.camera || {};
+          const camera = new THREE.PerspectiveCamera(camSpec.fov || 35, W / H, 0.1, 100);
+          const cameraTarget = new THREE.Vector3(0, 0, 0);
+
+          const primaryHex = cssHex(st.fig, '--cs-primary', '#16181A');
+          const accentHex = cssHex(st.fig, '--cs-accent', '#E23D1E');
+          const surfaceHex = cssHex(st.fig, '--cs-surface', '#FAFBFB');
+          setupLights(THREE, scene, st.spec.light, primaryHex, accentHex, surfaceHex);
+
+          let rootObj = null;
+          if (st.spec.model) {
+            const b64 = window.__szModels && window.__szModels[st.spec.model];
+            if (!b64 || typeof b64 !== 'string') {
+              throw new Error('modelo "' + st.spec.model + '" ausente en window.__szModels');
+            }
+            const bin = atob(b64.trim());
+            const bytes = new Uint8Array(bin.length);
+            for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+            const loader = new gltfMod.GLTFLoader();
+            const gltf = await new Promise((res, rej) => loader.parse(bytes.buffer, '', res, rej));
+            rootObj = gltf.scene;
+            st.availableClips = (gltf.animations || []).map((a) => a.name);
+            if (gltf.animations && gltf.animations.length) {
+              st.mixer = new THREE.AnimationMixer(rootObj);
+              gltf.animations.forEach((clip) => {
+                st.actions[clip.name] = { action: st.mixer.clipAction(clip), clip };
+              });
+            }
+          } else if (st.spec.preset === 'logo') {
+            rootObj = buildLogoObject(THREE, svgMod.SVGLoader, st, primaryHex, accentHex, surfaceHex);
+          } else if (st.spec.preset === 'particles') {
+            rootObj = buildParticlesObject(THREE, svgMod ? svgMod.SVGLoader : null, st, primaryHex, accentHex);
+          }
+
+          scene.add(rootObj);
+          if (st.mixer) {
+            const initClipName = st.spec.clip || st.availableClips[0];
+            if (initClipName && st.actions[initClipName]) {
+              st.actions[initClipName].action.reset().play();
+              st.mixer.setTime(0.01);
+            }
+          }
+          st.autoCamera = computeAutoCamera(THREE, rootObj, W, H, camSpec && typeof camSpec === 'object' ? camSpec.fov : 35);
+          st.fig.querySelectorAll(':scope > canvas').forEach((c) => c.remove());
+          st.fig.appendChild(canvas);
+
+          st.renderer = renderer;
+          st.scene = scene;
+          st.camera = camera;
+          st.cameraTarget = cameraTarget;
+          st.rootObj = rootObj;
+          st.status = 'ready';
+
+          const curStep = st.slide ? Math.max(1, parseInt(st.slide.dataset.currentStep || '1', 10)) : 1;
+          applyStepState(st, curStep, true);
+          renderOnce(st, 0);
+          st.fig.setAttribute('data-sz-3d', 'live');
+
+          if (!isPosterMode() && !isReducedMotion() && st.slideIdx === stage.index) {
+            startLoop(st);
+          }
+          return st;
+        } catch (err) {
+          st.error = (err && err.message) ? err.message : String(err);
+          st.status = 'fallback';
+          st.fig.setAttribute('data-sz-3d', 'fallback');
+          console.info('sz-3d (' + st.id + '): fallback al poster — ' + st.error);
+          return st;
+        }
+      })();
+      return st.initPromise;
+    }
+
+    function sync3DSlides() {
+      if (isPosterMode()) {
+        states.forEach((st) => stopLoop(st));
+        return;
+      }
+      const activeIdx = stage.index;
+      states.forEach((st) => {
+        if (st.status === 'fallback' && st.error) return;
+        const dist = Math.abs(st.slideIdx - activeIdx);
+        if (dist > 1) {
+          disposeFig(st);
+        } else {
+          ensureFig(st).then((readySt) => {
+            if (!readySt || readySt.status !== 'ready' || isPosterMode()) return;
+            if (readySt.slideIdx === stage.index) {
+              const curStep = readySt.slide ? Math.max(1, parseInt(readySt.slide.dataset.currentStep || '1', 10)) : 1;
+              applyStepState(readySt, curStep, true);
+              renderOnce(readySt, 0);
+              if (!isReducedMotion()) startLoop(readySt);
+              else stopLoop(readySt);
+            } else {
+              stopLoop(readySt);
+            }
+          });
+        }
+      });
+    }
+
+    pauseAll3D = () => { states.forEach((st) => stopLoop(st)); };
+    resumeActive3D = () => { sync3DSlides(); };
+
+    stage.addEventListener('slidechange', () => sync3DSlides());
+    stage.addEventListener('stepchange', (e) => {
+      if (isPosterMode()) return;
+      const { slide, step } = e.detail || {};
+      if (!slide) return;
+      states.forEach((st) => {
+        if (st.slide !== slide || st.status !== 'ready') return;
+        applyStepState(st, step, false);
+        renderOnce(st, 0);
+      });
+    });
+
+    function resolveFigState(figOrId) {
+      if (!figOrId) return figs[0] ? states.get(figs[0]) : null;
+      if (typeof figOrId === 'string') {
+        const el = document.querySelector('.sz-3d[data-id="' + figOrId + '"]') || document.querySelector(figOrId);
+        return el ? states.get(el) : null;
+      }
+      return states.get(figOrId) || null;
+    }
+
+    window.__sz3d = {
+      live() {
+        let n = 0;
+        states.forEach((st) => { if (st.looping) n++; });
+        return n;
+      },
+      async inspect(figOrId) {
+        const st = resolveFigState(figOrId);
+        if (!st) return { status: 'missing', error: 'figura .sz-3d no encontrada' };
+        await ensureFig(st);
+        return {
+          id: st.id,
+          status: st.status,
+          error: st.error,
+          threeLoaded: st.threeLoaded,
+          availableClips: st.availableClips.slice(),
+          requestedClips: st.requestedClips.slice(),
+          missingClips: st.requestedClips.filter((c) => !st.availableClips.includes(c)),
+          autoCamera: st.autoCamera || null,
+          looping: st.looping,
+        };
+      },
+      async capture(figOrId, stepOpt) {
+        const st = resolveFigState(figOrId);
+        if (!st) throw new Error('figura .sz-3d no encontrada');
+        await ensureFig(st);
+        if (st.status !== 'ready' || !st.renderer) {
+          throw new Error(st.error || 'la escena 3D no pudo inicializarse');
+        }
+        const step = stepOpt != null
+          ? Number(stepOpt)
+          : (st.slide ? Math.max(1, parseInt(st.slide.dataset.currentStep || st.slide.dataset.steps || '1', 10)) : 1);
+        applyStepState(st, step, true);
+        renderOnce(st, 0);
+        return st.renderer.domElement.toDataURL('image/png');
+      },
+    };
+
+    sync3DSlides();
+  }
+
+  /* ── Modo presentador (tecla P) ───────────────────────────────────────
+     Abre una ventana con las notas de la slide actual, la siguiente, el
+     paso en curso y un cronometro. Las flechas funcionan desde cualquiera
+     de las dos ventanas. Notas: <aside class="notes"> dentro de la slide,
+     o el JSON de <script id="speaker-notes"> (por indice).              */
+  let presenter = null;
+  let presenterStart = 0;
+  function slideNotes(slide, i) {
+    const aside = slide && slide.querySelector('aside.notes');
+    if (aside) return aside.innerHTML.trim();
+    const arr = stage._notes || [];
+    const n = arr[i];
+    if (typeof n !== 'string' || !n.trim()) return '';
+    return n.split(/\n\s*\n/).map((p) => '<p>' + p.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c])) + '</p>').join('');
+  }
+  function slideTitle(slide) {
+    if (!slide) return '';
+    const h = slide.querySelector('h1, h2, .ts-title');
+    const label = slide.getAttribute('data-label') || '';
+    return (h ? h.textContent.replace(/\s+/g, ' ').trim() : '') || label;
+  }
+  function updatePresenter() {
+    if (!presenter || presenter.closed) return;
+    const d = presenter.document;
+    const slides = Array.from(stage.querySelectorAll(':scope > section'));
+    const i = slides.findIndex((s) => s.hasAttribute('data-deck-active'));
+    const cur = slides[i], next = slides[i + 1];
+    const steps = cur ? parseInt(cur.dataset.steps || '1', 10) : 1;
+    const step = cur ? Math.max(1, parseInt(cur.dataset.currentStep || '1', 10)) : 1;
+    d.getElementById('pos').textContent = (i + 1) + ' / ' + slides.length + (steps > 1 ? '  ·  paso ' + step + ' / ' + steps : '');
+    d.getElementById('cur').textContent = slideTitle(cur);
+    d.getElementById('next').textContent = next ? slideTitle(next) : 'Fin del deck';
+    d.getElementById('notes').innerHTML = slideNotes(cur, i) || '<p class="empty">Esta slide no tiene notas.</p>';
+  }
+  function tickPresenter() {
+    if (!presenter || presenter.closed) return;
+    const s = Math.floor((Date.now() - presenterStart) / 1000);
+    const pad = (v) => String(v).padStart(2, '0');
+    presenter.document.getElementById('timer').textContent = pad(Math.floor(s / 60)) + ':' + pad(s % 60);
+    presenter.document.getElementById('clock').textContent = new Date().toLocaleTimeString(LANG, { hour: '2-digit', minute: '2-digit' });
+    setTimeout(tickPresenter, 500);
+  }
+  function openPresenter() {
+    if (presenter && !presenter.closed) { presenter.focus(); return; }
+    presenter = window.open('', 'slizdeck-presenter', 'width=1180,height=760');
+    if (!presenter) return;
+    presenterStart = Date.now();
+    const d = presenter.document;
+    /* Armado con el DOM, sin document.write de un HTML completo: una
+       etiqueta de cierre de body/head literal dentro de este script cortaria
+       la inyeccion de los scripts de la skill (que insertan su codigo antes
+       del cierre de body del deck). */
+    d.title = 'Presentador · ' + document.title;
+    d.documentElement.lang = LANG;
+    // Tras recargar el deck, window.open devuelve la ventana ya abierta: se
+    // reemplaza su estilo y su atajo de teclado en vez de acumularlos.
+    d.querySelectorAll('style[data-sz-presenter]').forEach((el) => el.remove());
+    const css = d.createElement('style');
+    css.setAttribute('data-sz-presenter', '');
+    css.textContent =
+      'body{margin:0;background:#0A0B0C;color:#E8EAEC;font:20px/1.5 system-ui,-apple-system,sans-serif;display:grid;grid-template-rows:auto 1fr;height:100vh}' +
+      'header{display:flex;gap:40px;align-items:baseline;padding:22px 32px;border-bottom:1px solid #22262A}' +
+      '#timer{font:600 44px ui-monospace,Menlo,monospace;color:#fff}#clock,#pos{color:#8A9199;font-family:ui-monospace,Menlo,monospace}' +
+      'main{display:grid;grid-template-columns:2fr 1fr;min-height:0}' +
+      '#notes{padding:28px 36px;overflow:auto;font-size:28px;line-height:1.5;color:#F2F3F4}#notes p{margin:0 0 .8em}#notes .empty{color:#6B7278}' +
+      'aside{padding:28px 32px;border-left:1px solid #22262A;display:flex;flex-direction:column;gap:28px}' +
+      '.k{font:600 13px ui-monospace,Menlo,monospace;letter-spacing:.12em;text-transform:uppercase;color:#6B7278;margin-bottom:6px}' +
+      '#cur{font-size:26px;font-weight:600;color:#fff}#next{font-size:22px;color:#AEB4BA}.hint{margin-top:auto;color:#6B7278;font-size:15px}';
+    d.head.appendChild(css);
+    d.body.innerHTML =
+      '<header><span id="timer">00:00</span><span id="pos"></span><span id="clock"></span></header>' +
+      '<main><div id="notes"></div><aside><div><div class="k">Ahora</div><div id="cur"></div></div>' +
+      '<div><div class="k">Siguiente</div><div id="next"></div></div>' +
+      '<div class="hint">← → avanzan desde esta ventana · R reinicia el cronómetro · P la vuelve a enfocar</div></aside></main>';
+    d.onkeydown = (e) => {
+      if (e.key === 'r' || e.key === 'R') { presenterStart = Date.now(); return; }
+      if (['ArrowRight', 'ArrowLeft', ' ', 'PageDown', 'PageUp', 'Home', 'End'].includes(e.key)) {
+        e.preventDefault();
+        // Desde el body, como una tecla real: asi el controlador de pasos
+        // (capture en window) corre antes que el cambio de slide de
+        // deck-stage. Despachado directo en window, los dos corrian como
+        // "at target" en orden de registro y la flecha saltaba de slide sin
+        // revelar el paso siguiente.
+        document.body.dispatchEvent(new KeyboardEvent('keydown', { key: e.key, bubbles: true, cancelable: true }));
+      }
+    };
+    updatePresenter();
+    tickPresenter();
+  }
+  window.addEventListener('keydown', (e) => {
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    const t = e.target;
+    if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
+    if (e.key === 'p' || e.key === 'P') { e.preventDefault(); openPresenter(); }
+  });
+
+  /* Apply current step: every .reveal whose data-step <= current gets .is-on. */
+  function applyStep(slide, step) {
+    slide.dataset.currentStep = String(step);
+    slide.querySelectorAll('.reveal').forEach((el) => {
+      const elStep = parseInt(el.dataset.step || '1', 10);
+      el.classList.toggle('is-on', elStep <= step);
+    });
+    slide.querySelectorAll('[data-counter]').forEach((el) => {
+      const target = parseInt(el.dataset.targetStep || '1', 10);
+      if (target <= step) runCounter(el);
+    });
+    const marker = slide.querySelector('.act-marker .step-num');
+    if (marker) marker.textContent = String(step);
+    stage.dispatchEvent(new CustomEvent('stepchange', {
+      detail: { slide, step },
+      bubbles: true, composed: true,
+    }));
+    updatePresenter();
+  }
+
+  /* Reset slide to step 0 (all reveals hidden), then advance to step 1
+     so the first reveal animates in on entry. */
+  function afterFrame(fn) {
+    let done = false;
+    const once = () => { if (!done) { done = true; fn(); } };
+    requestAnimationFrame(() => setTimeout(once, 0));
+    setTimeout(once, 120);
+  }
+
+  function resetAndEnter(slide) {
+    if (!slide) return;
+    slide.querySelectorAll('.reveal').forEach((el) => el.classList.remove('is-on'));
+    resetCounters(slide);
+    slide.dataset.currentStep = '0';
+    // Un frame para que el navegador pinte el paso 0 y la entrada anime; con
+    // temporizador de respaldo, porque sin compositor (Chrome headless sin
+    // GPU) el rAF puede no llegar nunca y la slide quedaria en blanco.
+    afterFrame(() => applyStep(slide, 1));
+  }
+
+  /* Capture-phase keydown — runs BEFORE deck-stage's own handler. Advances
+     in-slide steps until exhausted, then lets deck-stage advance the slide. */
+  window.addEventListener('keydown', (e) => {
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    const t = e.target;
+    if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
+    const slide = stage.querySelector(':scope > section[data-deck-active]');
+    if (!slide) return;
+    const total = parseInt(slide.dataset.steps || '1', 10);
+    const current = parseInt(slide.dataset.currentStep || '1', 10);
+    if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+      if (current < total) {
+        applyStep(slide, current + 1);
+        e.preventDefault();
+        e.stopImmediatePropagation();
+      }
+    } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+      if (current > 1) {
+        applyStep(slide, current - 1);
+        e.preventDefault();
+        e.stopImmediatePropagation();
+      }
+    }
+  }, { capture: true });
+
+  /* On slide change: sync data-active, re-enter the new slide, update progress bar */
+  stage.addEventListener('slidechange', (e) => {
+    syncActive();
+    resetAndEnter(e.detail.slide);   // ya espera su propio frame
+    updatePresenter();
+    const pct = (e.detail.index + 1) / e.detail.total;
+    const bar = document.getElementById('progress-bar');
+    if (bar) bar.style.transform = 'scaleX(' + pct + ')';
+  });
+
+  /* Entrada inicial: deck-stage puede emitir su primer `slidechange` antes de
+     que este script registre el listener de arriba (define el custom element en
+     el bloque anterior). Sin esto, abrir el deck directo en una slide animada
+     — o deep-linkear con #N — la deja en blanco: los .reveal nunca reciben
+     .is-on. Sembramos el estado a mano una vez, ya con el DOM listo. */
+  function enterInitialSlide() {
+    const slide = stage.querySelector(':scope > section[data-deck-active]');
+    if (!slide) { setTimeout(enterInitialSlide, 16); return; }
+    syncActive();
+    resetAndEnter(slide);
+    const total = stage.querySelectorAll(':scope > section').length || 1;
+    const idx = Array.prototype.indexOf.call(stage.querySelectorAll(':scope > section'), slide);
+    const bar = document.getElementById('progress-bar');
+    if (bar) bar.style.transform = 'scaleX(' + ((idx + 1) / total) + ')';
+  }
+  renderCharts();
+  enhanceTimelines();
+  init3D();
+  enterInitialSlide();
+
+  /* Antes de imprimir / exportar a PDF: llevar TODAS las slides a su estado
+     final, no solo la activa. El CSS de @media print ya revela los .reveal,
+     pero los contadores [data-counter] necesitan JS: su valor lo calcula
+     runCounter al llegar al paso objetivo, asi que sin esto un dato se
+     imprime como "0" en vez de su cifra real. */
+  let beforePrint = null;
+  function finalizeForPrint() {
+    if (!beforePrint) {
+      const live = stage.querySelector(':scope > section[data-deck-active]');
+      beforePrint = { slide: live, step: live ? parseInt(live.dataset.currentStep || '1', 10) : 1 };
+    }
+    document.documentElement.classList.add('sz-3d--poster');
+    document.querySelectorAll('.sz-3d').forEach((f) => f.classList.add('sz-3d--poster'));
+    if (pauseAll3D) pauseAll3D();
+    stage.querySelectorAll(':scope > section').forEach((slide) => {
+      // Los patrones que miran section[data-current-step="N"] (pulsos,
+      // magic-move) tambien llegan a su estado final.
+      slide.dataset.currentStep = slide.dataset.steps || '1';
+      slide.querySelectorAll('.reveal').forEach((el) => el.classList.add('is-on'));
+      slide.querySelectorAll('[data-counter]').forEach((el) => {
+        const { target, unitHTML, formatVal } = counterParts(el);
+        el.dataset.played = '1';
+        el._counterRun = (el._counterRun || 0) + 1;   // corta cualquier animacion en curso
+        el.innerHTML = formatVal(target) + unitHTML;
+      });
+      const marker = slide.querySelector('.act-marker .step-num');
+      if (marker) marker.textContent = slide.dataset.steps || '1';
+    });
+  }
+  /* Despues de imprimir, la slide en vivo vuelve al paso en que estaba (sin
+     esto, tras un Cmd+P quedaba todo revelado). */
+  function restoreAfterPrint() {
+    if (!beforePrint) return;
+    const { slide, step } = beforePrint;
+    beforePrint = null;
+    document.documentElement.classList.remove('sz-3d--poster');
+    document.querySelectorAll('.sz-3d').forEach((f) => f.classList.remove('sz-3d--poster'));
+    stage.querySelectorAll(':scope > section').forEach((s) => {
+      if (s === slide) return;
+      s.querySelectorAll('.reveal').forEach((el) => el.classList.remove('is-on'));
+      resetCounters(s);
+    });
+    if (slide) applyStep(slide, step);
+    if (resumeActive3D) resumeActive3D();
+  }
+  window.addEventListener('beforeprint', finalizeForPrint);
+  window.addEventListener('afterprint', restoreAfterPrint);
+  if (window.matchMedia) {
+    const mq = window.matchMedia('print');
+    if (mq.addEventListener) mq.addEventListener('change', (e) => { if (e.matches) finalizeForPrint(); else restoreAfterPrint(); });
+  }
+
+  /* Fullscreen button — toggle, hide while fullscreen */
+  const fsBtn = document.getElementById('fs-btn');
+  if (fsBtn) {
+    fsBtn.addEventListener('click', () => {
+      if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(() => {});
+      else document.exitFullscreen();
+    });
+    document.addEventListener('fullscreenchange', () => {
+      if (document.fullscreenElement) fsBtn.setAttribute('data-fs', '1');
+      else fsBtn.removeAttribute('data-fs');
+    });
+  }
+</script>
+
+</body>
+</html>

@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- slizdeck-engine-version: 2.3.2 — no borrar este comentario. scripts/doctor.mjs
+<!-- slizdeck-engine-version: 2.4.0 — no borrar este comentario. scripts/doctor.mjs
      lo lee para saber contra qué versión del engine se generó este deck y
      detectar si hay fixes de template.html posteriores que no llegaron acá
      (ver CHANGELOG.md). Se copia tal cual al generar un deck nuevo en build. -->
@@ -526,6 +526,18 @@
   .sz-timeline h3 { margin: 12px 0 10px; font-size: 36px; line-height: 1.15; font-weight: 600; color: var(--cs-fg-1); }
   .sz-timeline p { margin: 0; font-size: 24px; line-height: 1.4; color: var(--cs-fg-2); }
 
+  /* Escena 3D opcional (.sz-3d, reference/3d.md). El poster es el estado
+     visible por defecto; el canvas se monta encima y aparece con fundido
+     solo despues del primer frame (data-sz-3d="live"). En print, export y
+     medicion (.sz-3d--poster) vuelve al poster estatico. */
+  .sz-3d { position: relative; display: block; width: 100%; height: 520px; margin: 0; }
+  .sz-3d > .sz-3d-poster { display: block; width: 100%; height: 100%; object-fit: contain; transition: opacity 260ms var(--cs-ease-std); }
+  .sz-3d > canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; opacity: 0; pointer-events: none; transition: opacity 260ms var(--cs-ease-std); }
+  .sz-3d[data-sz-3d="live"] > canvas { opacity: 1; }
+  .sz-3d[data-sz-3d="live"] > .sz-3d-poster { opacity: 0; }
+  .sz-3d.sz-3d--poster > canvas, .sz-3d--poster .sz-3d > canvas { display: none !important; opacity: 0 !important; }
+  .sz-3d.sz-3d--poster > .sz-3d-poster, .sz-3d--poster .sz-3d > .sz-3d-poster { display: block !important; opacity: 1 !important; }
+
 
   /* Act marker — top-right step indicator on multi-step slides */
   .act-marker {
@@ -559,6 +571,7 @@
     .reveal.r-wipe, .reveal.r-mask { opacity: 0; clip-path: none; }
     .reveal.r-wipe.is-on, .reveal.r-mask.is-on { opacity: 1; }
     .sz-chart .sz-bar, .sz-chart .sz-line, .sz-chart .sz-area, .sz-chart .sz-dot, .sz-chart .sz-value, .sz-chart .sz-name { transition-duration: 200ms !important; transition-delay: 0ms !important; }
+    .sz-3d > canvas, .sz-3d > .sz-3d-poster { transition: opacity 200ms ease !important; }
     *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; }
   }
 
@@ -577,6 +590,8 @@
     .sz-chart .sz-line { stroke-dashoffset: 0 !important; }
     .sz-chart .sz-area { opacity: .12 !important; }
     .sz-chart .sz-dot, .sz-chart .sz-value, .sz-chart .sz-name { opacity: 1 !important; }
+    .sz-3d > canvas { display: none !important; opacity: 0 !important; }
+    .sz-3d > .sz-3d-poster { display: block !important; opacity: 1 !important; }
     /* background-clip:text degrada mal al imprimir: Chrome dibuja la caja del
        gradiente como un recuadro visible alrededor de la palabra. En PDF la
        palabra de enfasis va en color solido. */
@@ -1328,6 +1343,791 @@
     });
   }
 
+  /* ── Escenas 3D declarativas (.sz-3d) ─────────────────────────────────
+     Opt-in: si el deck no tiene ninguna figura .sz-3d, esta funcion sale
+     de inmediato sin tocar la red, sin crear contextos WebGL y sin definir
+     globales nuevos. Cuando hay .sz-3d, el poster (img.sz-3d-poster) es el
+     estado visible por defecto y el canvas aparece encima solo tras pintar
+     el primer frame de forma sincrona. Ver reference/3d.md.              */
+  let pauseAll3D = null;
+  let resumeActive3D = null;
+  function init3D() {
+    const figs = Array.from(document.querySelectorAll('.sz-3d'));
+    if (!figs.length) return;
+
+    const allSlides = Array.from(stage.querySelectorAll(':scope > section'));
+    const isReducedMotion = () => !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    const isPosterMode = () => document.documentElement.classList.contains('sz-3d--poster');
+
+    /* Normaliza cualquier token de color CSS (incluidos oklch y color-mix)
+       a #RRGGBB pintando un pixel en un canvas 2D de 1x1, para pasarselo
+       a THREE.Color sin depender del parser de three.js. */
+    let colorCv = null, colorCx = null;
+    function cssHex(el, prop, fallback) {
+      try {
+        const raw = getComputedStyle(el).getPropertyValue(prop).trim();
+        if (!raw) return fallback;
+        if (/^#[0-9a-fA-F]{6}$/.test(raw)) return raw;
+        if (!colorCv) {
+          colorCv = document.createElement('canvas');
+          colorCv.width = colorCv.height = 1;
+          colorCx = colorCv.getContext('2d', { willReadFrequently: true });
+        }
+        colorCx.clearRect(0, 0, 1, 1);
+        colorCx.fillStyle = '#000000';
+        colorCx.fillStyle = raw;
+        colorCx.fillRect(0, 0, 1, 1);
+        const d = colorCx.getImageData(0, 0, 1, 1).data;
+        return '#' + [d[0], d[1], d[2]].map((v) => v.toString(16).padStart(2, '0')).join('');
+      } catch (e) { return fallback; }
+    }
+
+    function checkWebGL2() {
+      try {
+        const c = document.createElement('canvas');
+        return !!(window.WebGL2RenderingContext && c.getContext('webgl2'));
+      } catch (e) { return false; }
+    }
+
+    function parseSpec(fig) {
+      const tag = fig.querySelector('script[type="application/json"]');
+      if (!tag) return { spec: null, error: 'falta el bloque JSON de configuracion' };
+      try {
+        const s = JSON.parse(tag.textContent || '{}');
+        if (!s || typeof s !== 'object') return { spec: null, error: 'JSON invalido' };
+        if (typeof s.model !== 'string' && s.preset !== 'logo' && s.preset !== 'particles') {
+          return { spec: null, error: 'el JSON debe declarar "model" o "preset" ("logo"|"particles")' };
+        }
+        return { spec: s, error: null };
+      } catch (e) {
+        return { spec: null, error: 'JSON invalido: ' + e.message };
+      }
+    }
+
+    function collectRequestedClips(spec) {
+      if (!spec) return [];
+      const set = new Set();
+      if (typeof spec.clip === 'string' && spec.clip) set.add(spec.clip);
+      if (spec.steps && typeof spec.steps === 'object') {
+        Object.values(spec.steps).forEach((st) => {
+          if (st && typeof st.clip === 'string' && st.clip) set.add(st.clip);
+        });
+      }
+      return Array.from(set);
+    }
+
+    const states = new Map();
+    figs.forEach((fig, idx) => {
+      const slide = fig.closest('section');
+      const slideIdx = slide ? allSlides.indexOf(slide) : -1;
+      const { spec, error } = parseSpec(fig);
+      const id = fig.dataset.id || (spec && spec.model) || (spec && spec.preset) || ('3d-' + (idx + 1));
+      const st = {
+        id, fig, slide, slideIdx, spec,
+        status: error ? 'fallback' : 'idle',
+        error: error || null,
+        threeLoaded: false,
+        availableClips: [],
+        requestedClips: collectRequestedClips(spec),
+        renderer: null, scene: null, camera: null, cameraTarget: null,
+        rootObj: null, mixer: null, actions: {}, activeAction: null, activeClipName: null,
+        particlesData: null, turntable: 0, tween: null,
+        looping: false, loopRaf: 0, loopTimer: 0, lastTime: 0,
+        initPromise: null, THREE: null,
+      };
+      if (error) {
+        fig.setAttribute('data-sz-3d', 'fallback');
+        console.info('sz-3d (' + id + '): ' + error);
+      }
+      states.set(fig, st);
+    });
+
+    const webglOk = checkWebGL2();
+    if (!webglOk) {
+      states.forEach((st) => {
+        if (!st.error) st.error = 'WebGL2 no disponible';
+        st.status = 'fallback';
+        st.fig.setAttribute('data-sz-3d', 'fallback');
+      });
+      console.info('sz-3d: WebGL2 no disponible, se mantiene el poster estatico');
+    }
+
+    let threePromise = null;
+    let gltfPromise = null;
+    let svgPromise = null;
+    function withTimeout(p, ms, label) {
+      return new Promise((resolve, reject) => {
+        const t = setTimeout(() => reject(new Error('tiempo agotado al cargar ' + label)), ms);
+        p.then((v) => { clearTimeout(t); resolve(v); }, (e) => { clearTimeout(t); reject(e); });
+      });
+    }
+    function loadModules(spec) {
+      if (!threePromise) threePromise = withTimeout(import('three'), 8000, 'three');
+      const tasks = [threePromise];
+      if (spec.model) {
+        if (!gltfPromise) gltfPromise = withTimeout(import('three/addons/loaders/GLTFLoader.js'), 8000, 'GLTFLoader');
+        tasks.push(gltfPromise);
+      } else {
+        tasks.push(Promise.resolve(null));
+      }
+      if (spec.preset === 'logo' || (spec.preset === 'particles' && spec.shape === 'logo')) {
+        if (!svgPromise) svgPromise = withTimeout(import('three/addons/loaders/SVGLoader.js'), 8000, 'SVGLoader');
+        tasks.push(svgPromise);
+      } else {
+        tasks.push(Promise.resolve(null));
+      }
+      return Promise.all(tasks);
+    }
+
+    function computeAutoCamera(THREE, rootObj, W, H, baseFov) {
+      const fov = typeof baseFov === 'number' ? baseFov : 35;
+      rootObj.updateMatrixWorld(true);
+      rootObj.traverse((o) => {
+        if (o.isSkinnedMesh && o.skeleton && typeof o.skeleton.update === 'function') {
+          try { o.skeleton.update(); } catch (e) {}
+        }
+      });
+      const box = new THREE.Box3().setFromObject(rootObj);
+      if (box.isEmpty()) {
+        return { position: [0, 2.0, 6.5], target: [0, 1.8, 0], fov, dist: 6.5 };
+      }
+      const center = new THREE.Vector3();
+      const size = new THREE.Vector3();
+      box.getCenter(center);
+      box.getSize(size);
+      const aspect = Math.max(0.5, (W || 720) / (H || 520));
+      const fovRad = (fov * Math.PI) / 180;
+      const halfSpan = Math.max(size.y * 0.5, (size.x / aspect) * 0.5, 0.4);
+      const dist = (halfSpan / Math.tan(fovRad * 0.5)) * 1.38 + size.z * 0.55;
+      const target = [center.x, center.y, center.z];
+      const position = [center.x, center.y + size.y * 0.06, center.z + dist];
+      return { position, target, fov, dist, size: [size.x, size.y, size.z] };
+    }
+
+    function applyCameraOverride(cam, override, autoCam) {
+      if (!override) return;
+      if (override === 'fit' && autoCam) {
+        cam.position = autoCam.position.slice(0, 3);
+        cam.target = autoCam.target.slice(0, 3);
+        cam.fov = autoCam.fov;
+        return;
+      }
+      if (typeof override !== 'object') return;
+      if (override.fit && autoCam) {
+        cam.position = autoCam.position.slice(0, 3);
+        cam.target = autoCam.target.slice(0, 3);
+      }
+      if (typeof override.fov === 'number') cam.fov = override.fov;
+      if (Array.isArray(override.target)) cam.target = override.target.slice(0, 3);
+      if (Array.isArray(override.position)) {
+        cam.position = override.position.slice(0, 3);
+      } else if (autoCam && (typeof override.zoom === 'number' || typeof override.azimuth === 'number' || typeof override.elevation === 'number')) {
+        const z = typeof override.zoom === 'number' && override.zoom > 0 ? override.zoom : 1;
+        const az = typeof override.azimuth === 'number' ? override.azimuth : 0;
+        const el = typeof override.elevation === 'number' ? override.elevation : 0.08;
+        const r = autoCam.dist / z;
+        const tx = cam.target[0], ty = cam.target[1], tz = cam.target[2];
+        cam.position = [
+          tx + r * Math.sin(az) * Math.cos(el),
+          ty + r * Math.sin(el),
+          tz + r * Math.cos(az) * Math.cos(el),
+        ];
+      }
+    }
+
+    function effectiveStepSpec(spec, step, totalSteps, autoCam) {
+      const isModel = !!spec.model;
+      const defaultPos = autoCam ? autoCam.position.slice(0, 3) : (isModel ? [0, 2.0, 6.5] : [0, 0, 4.4]);
+      const defaultTarget = autoCam ? autoCam.target.slice(0, 3) : (isModel ? [0, 1.8, 0] : [0, 0, 0]);
+      const defaultFov = autoCam ? autoCam.fov : 35;
+      const eff = {
+        clip: spec.clip || null,
+        turntable: typeof spec.turntable === 'number' ? spec.turntable : (isModel ? 0.2 : 0.25),
+        scale: typeof spec.scale === 'number' ? spec.scale : 1,
+        position: Array.isArray(spec.position) ? spec.position.slice(0, 3) : [0, 0, 0],
+        rotation: Array.isArray(spec.rotation) ? spec.rotation.slice(0, 3) : [0, 0, 0],
+        order: typeof spec.order === 'number' ? spec.order : null,
+        camera: {
+          position: defaultPos,
+          target: defaultTarget,
+          fov: defaultFov,
+        },
+      };
+      applyCameraOverride(eff.camera, spec.camera, autoCam);
+      for (let k = 1; k <= step; k++) {
+        const s = spec.steps && spec.steps[String(k)];
+        if (!s || typeof s !== 'object') continue;
+        if (typeof s.clip === 'string') eff.clip = s.clip;
+        if (typeof s.turntable === 'number') eff.turntable = s.turntable;
+        if (typeof s.scale === 'number') eff.scale = s.scale;
+        if (Array.isArray(s.position)) eff.position = s.position.slice(0, 3);
+        if (Array.isArray(s.rotation)) eff.rotation = s.rotation.slice(0, 3);
+        if (typeof s.order === 'number') eff.order = s.order;
+        if (s.camera) applyCameraOverride(eff.camera, s.camera, autoCam);
+      }
+      if (eff.order == null) {
+        eff.order = totalSteps <= 1 ? 1 : (step <= 1 ? 0.18 : Math.min(1, (step - 1) / (totalSteps - 1)));
+      }
+      return eff;
+    }
+
+    function updateParticlesOrder(pd, order) {
+      if (!pd) return;
+      pd.order = order;
+      const arr = pd.attr.array;
+      const sc = pd.scattered;
+      const or = pd.ordered;
+      for (let i = 0; i < arr.length; i++) {
+        arr[i] = sc[i] + (or[i] - sc[i]) * order;
+      }
+      pd.attr.needsUpdate = true;
+    }
+
+    function applyStepState(st, step, immediate) {
+      if (!st || st.status !== 'ready' || !st.camera || !st.rootObj) return;
+      const totalSteps = st.slide ? Math.max(1, parseInt(st.slide.dataset.steps || '1', 10)) : 1;
+      const eff = effectiveStepSpec(st.spec, Math.max(1, step), totalSteps, st.autoCamera);
+      st.turntable = eff.turntable;
+      const cut = immediate || isReducedMotion();
+
+      if (st.mixer && eff.clip && st.actions[eff.clip]) {
+        const entry = st.actions[eff.clip];
+        if (cut || !st.activeAction) {
+          Object.values(st.actions).forEach((a) => a.action.stop());
+          entry.action.reset().play();
+          st.activeAction = entry.action;
+          st.activeClipName = eff.clip;
+          if (cut) {
+            const poseT = Math.min(0.55, (entry.clip.duration || 1) * 0.38);
+            st.mixer.setTime(poseT);
+          } else {
+            st.mixer.update(0.001);
+          }
+        } else if (st.activeClipName !== eff.clip) {
+          const prev = st.activeAction;
+          entry.action.reset().fadeIn(0.4).play();
+          if (prev && prev !== entry.action) prev.fadeOut(0.4);
+          st.activeAction = entry.action;
+          st.activeClipName = eff.clip;
+        }
+      }
+
+      if (cut) {
+        st.tween = null;
+        st.camera.position.set(eff.camera.position[0], eff.camera.position[1], eff.camera.position[2]);
+        st.cameraTarget.set(eff.camera.target[0], eff.camera.target[1], eff.camera.target[2]);
+        st.camera.fov = eff.camera.fov;
+        st.camera.updateProjectionMatrix();
+        st.camera.lookAt(st.cameraTarget);
+        st.rootObj.position.set(eff.position[0], eff.position[1], eff.position[2]);
+        st.rootObj.rotation.set(eff.rotation[0], eff.rotation[1], eff.rotation[2]);
+        st.rootObj.scale.setScalar(eff.scale);
+        if (st.particlesData) updateParticlesOrder(st.particlesData, eff.order);
+      } else {
+        st.tween = {
+          start: performance.now(),
+          duration: 600,
+          fromCamPos: [st.camera.position.x, st.camera.position.y, st.camera.position.z],
+          toCamPos: eff.camera.position,
+          fromTarget: [st.cameraTarget.x, st.cameraTarget.y, st.cameraTarget.z],
+          toTarget: eff.camera.target,
+          fromFov: st.camera.fov,
+          toFov: eff.camera.fov,
+          fromPos: [st.rootObj.position.x, st.rootObj.position.y, st.rootObj.position.z],
+          toPos: eff.position,
+          fromRot: [st.rootObj.rotation.x, st.rootObj.rotation.y, st.rootObj.rotation.z],
+          toRot: eff.rotation,
+          fromScale: st.rootObj.scale.x,
+          toScale: eff.scale,
+          fromOrder: st.particlesData ? st.particlesData.order : eff.order,
+          toOrder: eff.order,
+        };
+      }
+    }
+
+    function renderOnce(st, dt) {
+      if (!st || st.status !== 'ready' || !st.renderer) return;
+      const now = performance.now();
+      if (st.tween) {
+        const t = Math.min(1, Math.max(0, (now - st.tween.start) / st.tween.duration));
+        const e = 1 - Math.pow(1 - t, 3);
+        const lerp = (a, b) => a + (b - a) * e;
+        const tw = st.tween;
+        st.camera.position.set(lerp(tw.fromCamPos[0], tw.toCamPos[0]), lerp(tw.fromCamPos[1], tw.toCamPos[1]), lerp(tw.fromCamPos[2], tw.toCamPos[2]));
+        st.cameraTarget.set(lerp(tw.fromTarget[0], tw.toTarget[0]), lerp(tw.fromTarget[1], tw.toTarget[1]), lerp(tw.fromTarget[2], tw.toTarget[2]));
+        st.camera.fov = lerp(tw.fromFov, tw.toFov);
+        st.camera.updateProjectionMatrix();
+        st.camera.lookAt(st.cameraTarget);
+        st.rootObj.position.set(lerp(tw.fromPos[0], tw.toPos[0]), lerp(tw.fromPos[1], tw.toPos[1]), lerp(tw.fromPos[2], tw.toPos[2]));
+        st.rootObj.rotation.set(lerp(tw.fromRot[0], tw.toRot[0]), lerp(tw.fromRot[1], tw.toRot[1]), lerp(tw.fromRot[2], tw.toRot[2]));
+        st.rootObj.scale.setScalar(lerp(tw.fromScale, tw.toScale));
+        if (st.particlesData) updateParticlesOrder(st.particlesData, lerp(tw.fromOrder, tw.toOrder));
+        if (t >= 1) st.tween = null;
+      }
+      if (dt > 0 && !isReducedMotion()) {
+        if (st.mixer) st.mixer.update(dt);
+        if (st.turntable && st.rootObj && !st.tween) {
+          st.rootObj.rotation.y += st.turntable * dt;
+        }
+      }
+      st.renderer.render(st.scene, st.camera);
+    }
+
+    function stopLoop(st) {
+      if (!st) return;
+      st.looping = false;
+      if (st.renderer) {
+        try { st.renderer.setAnimationLoop(null); } catch (e) {}
+      }
+      if (st.loopRaf) { cancelAnimationFrame(st.loopRaf); st.loopRaf = 0; }
+      if (st.loopTimer) { clearTimeout(st.loopTimer); st.loopTimer = 0; }
+    }
+
+    function startLoop(st) {
+      if (!st || st.status !== 'ready' || !st.renderer || isPosterMode() || isReducedMotion()) return;
+      if (st.looping) return;
+      st.looping = true;
+      st.lastTime = performance.now();
+      st.renderer.setAnimationLoop((now) => {
+        if (!st.looping || isPosterMode()) return;
+        const dt = Math.min(0.1, Math.max(0, (now - st.lastTime) / 1000));
+        st.lastTime = now;
+        renderOnce(st, dt);
+      });
+    }
+
+    function disposeFig(st) {
+      if (!st) return;
+      stopLoop(st);
+      if (st.scene) {
+        st.scene.traverse((obj) => {
+          if (obj.geometry && obj.geometry.dispose) obj.geometry.dispose();
+          if (obj.material) {
+            const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
+            mats.forEach((m) => {
+              if (m.map && m.map.dispose) m.map.dispose();
+              if (m.dispose) m.dispose();
+            });
+          }
+        });
+      }
+      if (st.renderer) {
+        try {
+          if (st.renderer.forceContextLoss) st.renderer.forceContextLoss();
+          st.renderer.dispose();
+          if (st.renderer.domElement && st.renderer.domElement.parentNode === st.fig) {
+            st.renderer.domElement.remove();
+          }
+        } catch (e) {}
+      }
+      st.renderer = null; st.scene = null; st.camera = null; st.cameraTarget = null;
+      st.rootObj = null; st.mixer = null; st.actions = {}; st.activeAction = null; st.activeClipName = null;
+      st.particlesData = null; st.tween = null; st.initPromise = null; st.autoCamera = null;
+      if (st.status === 'ready') {
+        st.status = 'idle';
+        st.fig.removeAttribute('data-sz-3d');
+      }
+    }
+
+    function setupLights(THREE, scene, mode, primaryHex, accentHex, surfaceHex) {
+      const m = mode || 'studio';
+      const lightCol = new THREE.Color(surfaceHex);
+      const hsl = { h: 0, s: 0, l: 0 };
+      lightCol.getHSL(hsl);
+      lightCol.setHSL(hsl.h, Math.min(hsl.s, 0.08), Math.max(hsl.l, 0.96));
+      if (m === 'soft') {
+        scene.add(new THREE.HemisphereLight(lightCol, primaryHex, 1.6));
+        const key = new THREE.DirectionalLight(lightCol, 1.3);
+        key.position.set(2.2, 4.2, 3.8);
+        scene.add(key);
+        const side = new THREE.DirectionalLight(lightCol, 0.65);
+        side.position.set(-3.2, 1.5, 2.2);
+        scene.add(side);
+      } else if (m === 'dramatic') {
+        scene.add(new THREE.AmbientLight(lightCol, 0.95));
+        const key = new THREE.DirectionalLight(lightCol, 2.1);
+        key.position.set(1.2, 4.8, 3.2);
+        scene.add(key);
+        const side = new THREE.DirectionalLight(lightCol, 0.85);
+        side.position.set(4.2, 1.2, -1.0);
+        scene.add(side);
+        const rim = new THREE.DirectionalLight(accentHex, 0.9);
+        rim.position.set(-3.0, 2.5, -3.5);
+        scene.add(rim);
+      } else {
+        scene.add(new THREE.AmbientLight(lightCol, 1.05));
+        const key = new THREE.DirectionalLight(lightCol, 1.85);
+        key.position.set(1.4, 4.6, 3.4);
+        scene.add(key);
+        const fill = new THREE.DirectionalLight(lightCol, 0.75);
+        fill.position.set(4.0, 1.4, -0.8);
+        scene.add(fill);
+        const rim = new THREE.DirectionalLight(accentHex, 0.75);
+        rim.position.set(-2.5, 3.0, -3.5);
+        scene.add(rim);
+      }
+    }
+
+    function findLogoSvg(st) {
+      if (typeof st.spec.svg === 'string' && st.spec.svg.trim()) {
+        return document.querySelector(st.spec.svg.trim());
+      }
+      return st.fig.querySelector('svg') || (st.slide && st.slide.querySelector('svg:not(.ic)')) || null;
+    }
+
+    function buildLogoObject(THREE, SVGLoader, st, primaryHex, accentHex) {
+      const svgElNode = findLogoSvg(st);
+      if (!svgElNode) throw new Error('preset logo: no se encontro el SVG (' + (st.spec.svg || 'svg en la figura o slide') + ')');
+      const parsed = new SVGLoader().parse(svgElNode.outerHTML);
+      if (!parsed.paths || !parsed.paths.length) throw new Error('preset logo: el SVG no contiene trazos');
+      const depth = typeof st.spec.depth === 'number' ? st.spec.depth : 28;
+      const inner = new THREE.Group();
+      parsed.paths.forEach((p, idx) => {
+        const shapes = SVGLoader.createShapes(p);
+        const node = p.userData && p.userData.node;
+        const isAccent = (node && (node.hasAttribute('data-accent') || (node.classList && node.classList.contains('hl'))))
+          || (idx === parsed.paths.length - 1 && parsed.paths.length > 1 && st.spec.accentLast !== false);
+        const baseCol = new THREE.Color(isAccent ? accentHex : primaryHex);
+        const hsl = { h: 0, s: 0, l: 0 };
+        baseCol.getHSL(hsl);
+        const sideCol = new THREE.Color();
+        if (hsl.l < 0.22) {
+          sideCol.setHSL(hsl.h, Math.min(hsl.s, 0.25), Math.min(0.36, hsl.l + 0.18));
+        } else {
+          sideCol.setHSL(hsl.h, Math.min(1, hsl.s * 1.05), Math.max(0.12, hsl.l * 0.56));
+        }
+        const frontMat = new THREE.MeshLambertMaterial({
+          color: baseCol,
+          emissive: baseCol,
+          emissiveIntensity: 0.34,
+        });
+        const sideMat = new THREE.MeshLambertMaterial({
+          color: sideCol,
+        });
+        shapes.forEach((sh) => {
+          const geom = new THREE.ExtrudeGeometry(sh, {
+            depth,
+            bevelEnabled: true,
+            bevelThickness: Math.max(1.5, depth * 0.1),
+            bevelSize: Math.max(1.2, depth * 0.08),
+            bevelSegments: 2,
+          });
+          inner.add(new THREE.Mesh(geom, [frontMat, sideMat]));
+        });
+      });
+      inner.scale.y = -1;
+      const box = new THREE.Box3().setFromObject(inner);
+      const center = new THREE.Vector3();
+      const size = new THREE.Vector3();
+      box.getCenter(center);
+      box.getSize(size);
+      const maxDim = Math.max(size.x, size.y, size.z, 1e-3);
+      const s = 2.2 / maxDim;
+      inner.scale.set(s, -s, s);
+      const box2 = new THREE.Box3().setFromObject(inner);
+      box2.getCenter(center);
+      inner.position.sub(center);
+      const holder = new THREE.Group();
+      holder.add(inner);
+      return holder;
+    }
+
+    function buildParticlesObject(THREE, SVGLoader, st, primaryHex, accentHex) {
+      const count = Math.min(2000, Math.max(120, st.spec.count || 720));
+      const scattered = new Float32Array(count * 3);
+      const ordered = new Float32Array(count * 3);
+      const current = new Float32Array(count * 3);
+      const colors = new Float32Array(count * 3);
+
+      let seed = 42;
+      const rand = () => {
+        seed = (seed + 0x6D2B79F5) | 0;
+        let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+        t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+      };
+
+      let logoPoints = null;
+      if (st.spec.shape === 'logo' && SVGLoader) {
+        const svgNode = findLogoSvg(st);
+        if (svgNode) {
+          const parsed = new SVGLoader().parse(svgNode.outerHTML);
+          const shapes = parsed.paths.flatMap((p) => SVGLoader.createShapes(p));
+          if (shapes.length) {
+            const pts2d = [];
+            const perShape = Math.max(20, Math.ceil(count / shapes.length));
+            shapes.forEach((sh) => {
+              sh.getSpacedPoints(perShape).forEach((pt) => pts2d.push(pt));
+            });
+            if (pts2d.length) {
+              let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+              pts2d.forEach((p) => {
+                if (p.x < minX) minX = p.x; if (p.x > maxX) maxX = p.x;
+                if (p.y < minY) minY = p.y; if (p.y > maxY) maxY = p.y;
+              });
+              const cx = (minX + maxX) / 2, cy = (minY + maxY) / 2;
+              const span = Math.max(maxX - minX, maxY - minY, 1);
+              logoPoints = pts2d.map((p) => [((p.x - cx) / span) * 2.5, -((p.y - cy) / span) * 2.5]);
+            }
+          }
+        }
+      }
+
+      const cPrimary = new THREE.Color(primaryHex);
+      const cAccent = new THREE.Color(accentHex);
+      const phi = Math.PI * (3 - Math.sqrt(5));
+      for (let i = 0; i < count; i++) {
+        const idx = i * 3;
+        const u = rand() * Math.PI * 2;
+        const v = rand() * 2 - 1;
+        const rScat = 2.0 + rand() * 1.9;
+        const sRad = Math.sqrt(Math.max(0, 1 - v * v));
+        scattered[idx] = rScat * sRad * Math.cos(u);
+        scattered[idx + 1] = rScat * sRad * Math.sin(u);
+        scattered[idx + 2] = rScat * v;
+
+        if (logoPoints && logoPoints.length) {
+          const lp = logoPoints[i % logoPoints.length];
+          ordered[idx] = lp[0] + (rand() - 0.5) * 0.06;
+          ordered[idx + 1] = lp[1] + (rand() - 0.5) * 0.06;
+          ordered[idx + 2] = (rand() - 0.5) * 0.28;
+        } else {
+          const y = 1 - (i / Math.max(1, count - 1)) * 2;
+          const rad = Math.sqrt(Math.max(0, 1 - y * y));
+          const th = phi * i;
+          const rOrd = i % 7 === 0 ? 0.85 : 1.35;
+          ordered[idx] = Math.cos(th) * rad * rOrd;
+          ordered[idx + 1] = y * rOrd;
+          ordered[idx + 2] = Math.sin(th) * rad * rOrd;
+        }
+
+        current[idx] = ordered[idx];
+        current[idx + 1] = ordered[idx + 1];
+        current[idx + 2] = ordered[idx + 2];
+
+        const col = (i % 6 === 0) ? cAccent : cPrimary;
+        colors[idx] = col.r;
+        colors[idx + 1] = col.g;
+        colors[idx + 2] = col.b;
+      }
+
+      const geom = new THREE.BufferGeometry();
+      const posAttr = new THREE.BufferAttribute(current, 3);
+      geom.setAttribute('position', posAttr);
+      geom.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+      const dotCv = document.createElement('canvas');
+      dotCv.width = dotCv.height = 32;
+      const dotCx = dotCv.getContext('2d');
+      dotCx.fillStyle = '#ffffff';
+      dotCx.beginPath();
+      dotCx.arc(16, 16, 14, 0, Math.PI * 2);
+      dotCx.fill();
+      const dotTex = new THREE.CanvasTexture(dotCv);
+
+      const mat = new THREE.PointsMaterial({
+        size: 0.12,
+        map: dotTex,
+        vertexColors: true,
+        transparent: true,
+        alphaTest: 0.05,
+        depthWrite: false,
+      });
+      st.particlesData = { scattered, ordered, attr: posAttr, order: 1 };
+      return new THREE.Points(geom, mat);
+    }
+
+    function ensureFig(st) {
+      if (!st) return Promise.resolve(null);
+      if (st.status === 'ready' || st.status === 'fallback') return Promise.resolve(st);
+      if (st.initPromise) return st.initPromise;
+
+      st.status = 'loading';
+      st.initPromise = (async () => {
+        try {
+          if (!webglOk) throw new Error('WebGL2 no disponible');
+          const [THREE, gltfMod, svgMod] = await loadModules(st.spec);
+          st.THREE = THREE;
+          st.threeLoaded = true;
+
+          const W = st.fig.clientWidth || 720;
+          const H = st.fig.clientHeight || 520;
+          const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+          const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+          renderer.setPixelRatio(dpr);
+          renderer.setSize(W, H, false);
+          if (THREE.SRGBColorSpace) renderer.outputColorSpace = THREE.SRGBColorSpace;
+          const canvas = renderer.domElement;
+          canvas.setAttribute('aria-hidden', 'true');
+
+          const scene = new THREE.Scene();
+          const camSpec = st.spec.camera || {};
+          const camera = new THREE.PerspectiveCamera(camSpec.fov || 35, W / H, 0.1, 100);
+          const cameraTarget = new THREE.Vector3(0, 0, 0);
+
+          const primaryHex = cssHex(st.fig, '--cs-primary', '#16181A');
+          const accentHex = cssHex(st.fig, '--cs-accent', '#E23D1E');
+          const surfaceHex = cssHex(st.fig, '--cs-surface', '#FAFBFB');
+          setupLights(THREE, scene, st.spec.light, primaryHex, accentHex, surfaceHex);
+
+          let rootObj = null;
+          if (st.spec.model) {
+            const b64 = window.__szModels && window.__szModels[st.spec.model];
+            if (!b64 || typeof b64 !== 'string') {
+              throw new Error('modelo "' + st.spec.model + '" ausente en window.__szModels');
+            }
+            const bin = atob(b64.trim());
+            const bytes = new Uint8Array(bin.length);
+            for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+            const loader = new gltfMod.GLTFLoader();
+            const gltf = await new Promise((res, rej) => loader.parse(bytes.buffer, '', res, rej));
+            rootObj = gltf.scene;
+            st.availableClips = (gltf.animations || []).map((a) => a.name);
+            if (gltf.animations && gltf.animations.length) {
+              st.mixer = new THREE.AnimationMixer(rootObj);
+              gltf.animations.forEach((clip) => {
+                st.actions[clip.name] = { action: st.mixer.clipAction(clip), clip };
+              });
+            }
+          } else if (st.spec.preset === 'logo') {
+            rootObj = buildLogoObject(THREE, svgMod.SVGLoader, st, primaryHex, accentHex, surfaceHex);
+          } else if (st.spec.preset === 'particles') {
+            rootObj = buildParticlesObject(THREE, svgMod ? svgMod.SVGLoader : null, st, primaryHex, accentHex);
+          }
+
+          scene.add(rootObj);
+          if (st.mixer) {
+            const initClipName = st.spec.clip || st.availableClips[0];
+            if (initClipName && st.actions[initClipName]) {
+              st.actions[initClipName].action.reset().play();
+              st.mixer.setTime(0.01);
+            }
+          }
+          st.autoCamera = computeAutoCamera(THREE, rootObj, W, H, camSpec && typeof camSpec === 'object' ? camSpec.fov : 35);
+          st.fig.querySelectorAll(':scope > canvas').forEach((c) => c.remove());
+          st.fig.appendChild(canvas);
+
+          st.renderer = renderer;
+          st.scene = scene;
+          st.camera = camera;
+          st.cameraTarget = cameraTarget;
+          st.rootObj = rootObj;
+          st.status = 'ready';
+
+          const curStep = st.slide ? Math.max(1, parseInt(st.slide.dataset.currentStep || '1', 10)) : 1;
+          applyStepState(st, curStep, true);
+          renderOnce(st, 0);
+          st.fig.setAttribute('data-sz-3d', 'live');
+
+          if (!isPosterMode() && !isReducedMotion() && st.slideIdx === stage.index) {
+            startLoop(st);
+          }
+          return st;
+        } catch (err) {
+          st.error = (err && err.message) ? err.message : String(err);
+          st.status = 'fallback';
+          st.fig.setAttribute('data-sz-3d', 'fallback');
+          console.info('sz-3d (' + st.id + '): fallback al poster — ' + st.error);
+          return st;
+        }
+      })();
+      return st.initPromise;
+    }
+
+    function sync3DSlides() {
+      if (isPosterMode()) {
+        states.forEach((st) => stopLoop(st));
+        return;
+      }
+      const activeIdx = stage.index;
+      states.forEach((st) => {
+        if (st.status === 'fallback' && st.error) return;
+        const dist = Math.abs(st.slideIdx - activeIdx);
+        if (dist > 1) {
+          disposeFig(st);
+        } else {
+          ensureFig(st).then((readySt) => {
+            if (!readySt || readySt.status !== 'ready' || isPosterMode()) return;
+            if (readySt.slideIdx === stage.index) {
+              const curStep = readySt.slide ? Math.max(1, parseInt(readySt.slide.dataset.currentStep || '1', 10)) : 1;
+              applyStepState(readySt, curStep, true);
+              renderOnce(readySt, 0);
+              if (!isReducedMotion()) startLoop(readySt);
+              else stopLoop(readySt);
+            } else {
+              stopLoop(readySt);
+            }
+          });
+        }
+      });
+    }
+
+    pauseAll3D = () => { states.forEach((st) => stopLoop(st)); };
+    resumeActive3D = () => { sync3DSlides(); };
+
+    stage.addEventListener('slidechange', () => sync3DSlides());
+    stage.addEventListener('stepchange', (e) => {
+      if (isPosterMode()) return;
+      const { slide, step } = e.detail || {};
+      if (!slide) return;
+      states.forEach((st) => {
+        if (st.slide !== slide || st.status !== 'ready') return;
+        applyStepState(st, step, false);
+        renderOnce(st, 0);
+      });
+    });
+
+    function resolveFigState(figOrId) {
+      if (!figOrId) return figs[0] ? states.get(figs[0]) : null;
+      if (typeof figOrId === 'string') {
+        const el = document.querySelector('.sz-3d[data-id="' + figOrId + '"]') || document.querySelector(figOrId);
+        return el ? states.get(el) : null;
+      }
+      return states.get(figOrId) || null;
+    }
+
+    window.__sz3d = {
+      live() {
+        let n = 0;
+        states.forEach((st) => { if (st.looping) n++; });
+        return n;
+      },
+      async inspect(figOrId) {
+        const st = resolveFigState(figOrId);
+        if (!st) return { status: 'missing', error: 'figura .sz-3d no encontrada' };
+        await ensureFig(st);
+        return {
+          id: st.id,
+          status: st.status,
+          error: st.error,
+          threeLoaded: st.threeLoaded,
+          availableClips: st.availableClips.slice(),
+          requestedClips: st.requestedClips.slice(),
+          missingClips: st.requestedClips.filter((c) => !st.availableClips.includes(c)),
+          autoCamera: st.autoCamera || null,
+          looping: st.looping,
+        };
+      },
+      async capture(figOrId, stepOpt) {
+        const st = resolveFigState(figOrId);
+        if (!st) throw new Error('figura .sz-3d no encontrada');
+        await ensureFig(st);
+        if (st.status !== 'ready' || !st.renderer) {
+          throw new Error(st.error || 'la escena 3D no pudo inicializarse');
+        }
+        const step = stepOpt != null
+          ? Number(stepOpt)
+          : (st.slide ? Math.max(1, parseInt(st.slide.dataset.currentStep || st.slide.dataset.steps || '1', 10)) : 1);
+        applyStepState(st, step, true);
+        renderOnce(st, 0);
+        return st.renderer.domElement.toDataURL('image/png');
+      },
+    };
+
+    sync3DSlides();
+  }
+
   /* ── Modo presentador (tecla P) ───────────────────────────────────────
      Abre una ventana con las notas de la slide actual, la siguiente, el
      paso en curso y un cronometro. Las flechas funcionan desde cualquiera
@@ -1437,6 +2237,10 @@
     });
     const marker = slide.querySelector('.act-marker .step-num');
     if (marker) marker.textContent = String(step);
+    stage.dispatchEvent(new CustomEvent('stepchange', {
+      detail: { slide, step },
+      bubbles: true, composed: true,
+    }));
     updatePresenter();
   }
 
@@ -1512,6 +2316,7 @@
   }
   renderCharts();
   enhanceTimelines();
+  init3D();
   enterInitialSlide();
 
   /* Antes de imprimir / exportar a PDF: llevar TODAS las slides a su estado
@@ -1525,6 +2330,9 @@
       const live = stage.querySelector(':scope > section[data-deck-active]');
       beforePrint = { slide: live, step: live ? parseInt(live.dataset.currentStep || '1', 10) : 1 };
     }
+    document.documentElement.classList.add('sz-3d--poster');
+    document.querySelectorAll('.sz-3d').forEach((f) => f.classList.add('sz-3d--poster'));
+    if (pauseAll3D) pauseAll3D();
     stage.querySelectorAll(':scope > section').forEach((slide) => {
       // Los patrones que miran section[data-current-step="N"] (pulsos,
       // magic-move) tambien llegan a su estado final.
@@ -1546,12 +2354,15 @@
     if (!beforePrint) return;
     const { slide, step } = beforePrint;
     beforePrint = null;
+    document.documentElement.classList.remove('sz-3d--poster');
+    document.querySelectorAll('.sz-3d').forEach((f) => f.classList.remove('sz-3d--poster'));
     stage.querySelectorAll(':scope > section').forEach((s) => {
       if (s === slide) return;
       s.querySelectorAll('.reveal').forEach((el) => el.classList.remove('is-on'));
       resetCounters(s);
     });
     if (slide) applyStep(slide, step);
+    if (resumeActive3D) resumeActive3D();
   }
   window.addEventListener('beforeprint', finalizeForPrint);
   window.addEventListener('afterprint', restoreAfterPrint);

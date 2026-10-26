@@ -52,20 +52,21 @@ Una línea en imperativo, en español, que diga qué cambia y por qué: `Arregla
 | `.claude-plugin/` · `hooks/hooks.json` | Plugin y marketplace de Claude Code, y el hook que viaja con el plugin. |
 | `scripts/apply-style-pack.mjs` | Aplica un pack a un deck fusionando tokens; al cambiar de pack devuelve al default los del anterior. |
 | `scripts/check-style-pack.mjs` | Contrastes de los tokens, primario vs acento, acento resaltado vs fondo, clichés de IA. |
-| `scripts/audit.mjs` | Validación estática del deck y avisos de criterio (texto, emojis, layout). |
+| `scripts/audit.mjs` | Validación estática del deck y avisos de criterio (texto, emojis, layout, 3D y SRI). |
 | `scripts/check-reveal.mjs` · `scripts/check-overflow.mjs` · `scripts/check-contrast.mjs` | Validación en Chrome headless (cascada de `.reveal`, desbordes y solapes, contraste medido). |
+| `scripts/add-3d.mjs` · `scripts/poster-3d.mjs` · `scripts/check-3d.mjs` | 3D opcional: inserta importmap fijado y sidecar `.glb.js`, genera pósters PNG y verifica el render WebGL en Chrome con SwiftShader. |
 | `scripts/shoot.mjs` | PNG por slide en estado final. `--clean` sin la UI del reproductor (así se generan `docs/img/`). |
 | `scripts/doctor.mjs` | Fixes del engine que le faltan a un deck viejo (lee `CHANGELOG.md`). |
 | `scripts/renumber.mjs` | Renumera `data-label` y footers. |
 | `scripts/export-pptx.mjs` | PPTX por geometría sobre `scripts/lib/measure-deck.mjs`. |
-| `scripts/export-pdf.mjs` · `scripts/make-offline.mjs` | PDF liviano; fuentes incrustadas para presentar sin red. |
+| `scripts/export-pdf.mjs` · `scripts/make-offline.mjs` | PDF liviano; fuentes, módulos 3D y sidecars incrustados para presentar sin red. |
 | `scripts/verify-hook.mjs` | Hook `PostToolUse` que corre `audit.mjs` tras cada edición. |
 | `scripts/check-docs.mjs` · `scripts/check-versions.mjs` | Canarios de drift: docs vs repo, versión en los seis sitios. |
 | `scripts/smoke-test.mjs` | Regresión de todos los packs × tipografías. |
 | `scripts/score-deck.mjs` · `evals/` | Puntaje 0-100 y briefs fijos para medir la calidad entre versiones. |
-| `scripts/lib/` | Compartido: `chrome-run` (harness, reintentos), `deck-html` (parseo estático), `inject`, `find-chrome`, `measure-deck`. |
+| `scripts/lib/` | Compartido: `chrome-run` (harness, reintentos), `deck-html` (parseo estático), `inject`, `find-chrome`, `measure-deck`, `three-pin` (versión y hashes SRI de `three.js`). |
 | `tests/` | `node:test`: los validadores distinguen un deck bueno de uno roto; el instalador instala, respeta y desinstala. |
-| `examples/pitch-showcase.html` · `examples/datos-showcase.html` | Decks de referencia; el CI los valida y exporta, y los tests mutan `pitch-showcase`. |
+| `examples/pitch-showcase.html` · `examples/datos-showcase.html` · `examples/3d/3d-showcase.html` | Decks de referencia; el CI los valida y exporta, y los tests mutan `pitch-showcase` y `3d-showcase`. |
 | `examples/test-0*/` | Tres decks generados de punta a punta por la skill; el CI exige que exporten sin pérdidas. |
 
 ## Notas técnicas

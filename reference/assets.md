@@ -18,6 +18,8 @@ Por cada slide, decidir si necesita algo más que texto:
 
 **Necesita dato real** cuando el wireframe tiene una cifra. Un placeholder marcado (`[DATO PENDIENTE: ...]`) es preferible a un número inventado, siempre.
 
+**Necesita modelo 3D (`.glb`)** cuando el wireframe incluye una slide con patrón `3d-model` (personaje, mascota o producto 3D). Si todavía no tiene el `.glb`, explicarle brevemente cómo generarlo a partir de una imagen (ver [reference/3d.md](3d.md) → "Flujo imagen → GLB"). Los presets `3d-logo` y `3d-particles` no requieren un archivo `.glb` (aunque `3d-logo` necesita el `<svg>` del logo).
+
 Las slides de puro texto/argumento (sin producto, sin persona, sin cifra) no necesitan nada — no forzar una imagen donde no aporta.
 
 ## 2. Pedir todo en un solo mensaje
@@ -28,6 +30,7 @@ Para cada ítem de la lista, decir explícitamente:
 - **En qué proporción**: a sangre completa (1920×1080), media pantalla (960×1080), o recuadro (libre).
 - Para logos: dónde va (footer de todas las slides, una slide de "clientes", ambas).
 - Para datos: qué cifra falta y de qué slide.
+- Para modelos 3D (`3d-model`): pedir la ruta al archivo `.glb` (idealmente menor a 15 MB y ~100 mil triángulos) y qué animación o pose espera por step.
 
 ## 3. Bloquear hasta tener una respuesta explícita por ítem
 
@@ -37,6 +40,7 @@ Para cada ítem de la lista, decir explícitamente:
 2. **Seguir sin él, a sabiendas** — el usuario dice explícitamente "sigue sin esa foto" o "no la tengo, continúa". En este caso `build` debe insertar un marcador en el HTML generado, inmediatamente antes del `<section>` afectado:
    ```html
    <!-- SLIZDECK-ASSET-PENDING: slide 04 — foto del equipo, sigue con placeholder -->
+   <!-- SLIZDECK-ASSET-PENDING: slide 05 — modelo 3D astra.glb pendiente -->
    ```
    Esto es lo que la fase `audit` reporta después como aviso (no como fallo: ya fue una decisión informada del usuario, no un descuido).
 3. **Cambiar el wireframe** — el usuario prefiere quitar o rehacer esa slide para no depender del asset. Volver brevemente a `brief` para ese ajuste puntual, sin repetir toda la fase.
@@ -45,8 +49,8 @@ Si el usuario no responde a un ítem (lo ignora, cambia de tema), **volver a pre
 
 ## 4. Guardar los archivos
 
-`assets/img/` para fotos y capturas, `assets/people/` para personas, `assets/logos/` para marcas, `assets/qr/` para códigos QR (`qrencode -o assets/qr/[nombre].png -s 20 -m 2 -l H "URL"`, requiere `qrencode`: `brew install qrencode` en macOS, `apt install qrencode` en Linux).
+`assets/img/` para fotos y capturas, `assets/people/` para personas, `assets/logos/` para marcas, `assets/qr/` para códigos QR (`qrencode -o assets/qr/[nombre].png -s 20 -m 2 -l H "URL"`, requiere `qrencode`: `brew install qrencode` en macOS, `apt install qrencode` en Linux), `assets/3d/` para sidecars de modelos (`.glb.js`) y pósters (`.png`) generados por `scripts/add-3d.mjs` y `scripts/poster-3d.mjs`.
 
-Ver `reference/media-and-data.md` para los patrones HTML/CSS de cada tipo de slide con imagen o dato.
+Ver `reference/media-and-data.md` para los patrones HTML/CSS de cada tipo de slide con imagen o dato, y `reference/3d.md` para escenas `.sz-3d`.
 
 **Al terminar esta fase:** cada ítem del wireframe tiene una resolución explícita — un archivo real, un marcador de pendiente aceptado, o un wireframe ajustado para no necesitarlo. Sigue `build`.

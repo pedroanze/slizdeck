@@ -112,6 +112,11 @@
         "name": "progress-bar-fill",
         "value": "240ms cubic-bezier(0.22, 1, 0.36, 1), animado vía transform: scaleX()",
         "purpose": "Avance de la barra de progreso — se cambió de `width` a `transform` para evitar layout thrash (hallazgo de una auditoria de rendimiento)."
+      },
+      {
+        "name": "sz-3d-step",
+        "value": "600ms cubic-bezier ease-out en cámara/transformaciones y 400ms crossfade de clips",
+        "purpose": "Transición entre steps de una escena .sz-3d; con prefers-reduced-motion corta de forma inmediata sin giro ni autoplay."
       }
     ],
     "gradients": {
@@ -130,7 +135,8 @@
         "@media print revela los .reveal: sin esto un deck animado exportaba slides en blanco.",
         "beforeprint lleva TODAS las slides a su estado final: los contadores [data-counter] imprimian '0' en vez de su cifra real.",
         "@media print oculta #progress-bar y #fs-btn: el chrome del reproductor se imprimia sobre el contenido.",
-        "@media print degrada .grad-word a color solido: background-clip:text dibujaba un recuadro visible alrededor de la palabra."
+        "@media print degrada .grad-word a color solido: background-clip:text dibujaba un recuadro visible alrededor de la palabra.",
+        "beforeprint y @media print activan .sz-3d--poster en las figuras .sz-3d: oculta el canvas WebGL y muestra el poster PNG del estado final."
       ]
     },
     "antipatternAudit": {

@@ -24,7 +24,7 @@ Catálogo de layout patterns compatibles con `template.html` (deck-stage 1920×1
 | 6 · Special | `kb-tree` · `skill-list-with-workflow` |
 | 7 · Intro / About | `speaker-card` · `org-hero` |
 
-**Datos (gráficas, tablas, timelines, métricas), imágenes a sangre y pantalla de standby viven en `media-and-data.md`**, no aquí.
+**Datos (gráficas, tablas, timelines, métricas), imágenes a sangre y pantalla de standby viven en `media-and-data.md`; las escenas 3D (`3d-model`, `3d-logo`, `3d-particles`) viven en [reference/3d.md](3d.md)**, no aquí.
 
 ---
 
