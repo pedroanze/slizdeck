@@ -7,7 +7,7 @@ description: |
 license: MIT
 compatibility: Requiere un agente con capacidad de ejecutar comandos de shell (crear/copiar archivos, abrir el navegador) y búsqueda web. Probado en Claude Code; compatible con cualquier cliente del estándar Agent Skills (agentskills.io).
 metadata:
-  version: "2.4.0"
+  version: "2.5.0"
 allowed-tools: Bash, Read, Write, Edit, WebSearch, WebFetch
 # user-invocable / argument-hint: extensiones de Claude Code (tab-completion de /slizdeck).
 user-invocable: true
@@ -27,7 +27,7 @@ Fork/adaptación de [`claude-slides`](https://github.com/marcogalluccio/claude-s
 | Archivo | Uso |
 |---|---|
 | `template.html` | El engine: canvas, navegación, pasos, tokens, patrones de datos, modo presentador. Punto de partida de todo deck. |
-| `reference/init.md` · `brief.md` · `assets.md` · `build.md` · `audit.md` · `export.md` · `add.md` · `fix.md` | Una fase cada uno (tabla de fases abajo). |
+| `reference/init.md` · `brief.md` · `assets.md` · `build.md` · `audit.md` · `export.md` · `add.md` · `fix.md` · `studio.md` | Una fase cada uno (tabla de fases abajo). |
 | `reference/deck-schema.md` | Formato del wireframe, arcos narrativos, niveles de animación, estructura de cada `<section>`. |
 | `reference/design-guidelines.md` | Principios de diseño y anti-clichés. Aplicar en el wireframe y al generar. |
 | `reference/components.md` | Catálogo de layouts (cards, grids, mockups, diagramas). **Ir directo al patrón que pide el wireframe.** |
@@ -48,6 +48,7 @@ Fork/adaptación de [`claude-slides`](https://github.com/marcogalluccio/claude-s
 | `scripts/shoot.mjs` | PNG de cada slide en su estado final, para **mirar** el deck en `audit`. |
 | `scripts/doctor.mjs` | Avisa si un deck se generó con un engine anterior a algún fix (lee `CHANGELOG.md`). |
 | `scripts/renumber.mjs` | Renumera `data-label` y footers en orden de documento. Siempre después de insertar una slide. |
+| `scripts/studio.mjs` | Studio: editor visual local para que el usuario edite a mano (texto, mover, tamaño, imágenes, slides, datos, notas) y deje comentarios al agente. La carpeta `studio/` es su interfaz. |
 | `scripts/export-pdf.mjs` · `scripts/export-pptx.mjs` · `scripts/make-offline.mjs` | PDF liviano, PPTX editable, deck con las fuentes incrustadas para presentar sin red. |
 | `scripts/verify-hook.mjs` | El hook de `reference/hooks.md`. |
 
@@ -57,7 +58,7 @@ Cuando el usuario pide slides o una presentación de cualquier tipo. Si no espec
 
 ## Fases
 
-El flujo completo es multi-turno: una vez cargada esta skill, sigue vigente en toda la conversación hasta cerrar el deck. Pero no es una sola cadena rígida — son ocho fases independientes, cada una con su propio archivo. Las primeras seis arman un deck nuevo de punta a punta; `add` y `fix` se activan sueltas sobre un deck que ya existe.
+El flujo completo es multi-turno: una vez cargada esta skill, sigue vigente en toda la conversación hasta cerrar el deck. Pero no es una sola cadena rígida — son nueve fases independientes, cada una con su propio archivo. Las primeras seis arman un deck nuevo de punta a punta; `add`, `fix` y `studio` se activan sueltas sobre un deck que ya existe.
 
 | Fase | Se activa con | Qué hace | Referencia |
 |---|---|---|---|
@@ -69,12 +70,14 @@ El flujo completo es multi-turno: una vez cargada esta skill, sigue vigente en t
 | **export** | "pásalo a PDF/PPTX", "dame las notas" | PDF nativo, PPTX editable, deck sin red, speaker notes | [reference/export.md](reference/export.md) |
 | **add** | "agrega una slide sobre X", "mete 2 slides entre la 9 y la 10" | Agregar slides a un deck existente, renumerando todo con `scripts/renumber.mjs` | [reference/add.md](reference/add.md) |
 | **fix** | "la slide 7 se ve genérica, mejórala", "arregla el texto de la 12" | Corregir o mejorar una o más slides puntuales sin tocar el resto del deck | [reference/fix.md](reference/fix.md) |
+| **studio** | "quiero editarlo yo", "déjame mover esto a mano", "abre el editor" | Abrir el editor visual local: el usuario edita como en PowerPoint y el cambio se guarda en el HTML; sus comentarios vuelven al agente | [reference/studio.md](reference/studio.md) |
 
 **Ruteo:**
 - **Invocación sin argumento ni pedido claro** (ej. `/slizdeck` a secas, o "¿qué puede hacer esta skill?"): no adivinar ni arrancar `init` a ciegas. Mostrar la tabla de fases de arriba como menú — es la lista completa de lo que se puede pedir — y preguntar cuál corresponde. Si el paso 0 de abajo encuentra un deck existente en el directorio, mencionarlo también como opción ("ya hay un deck.html acá, ¿seguimos con ese o arrancamos uno nuevo?").
 - **Paso 0, antes de asumir nada:** si el pedido no nombra un archivo concreto, chequear el directorio actual antes de decidir que es un deck nuevo — `grep -l "data-steps=" *.html 2>/dev/null` (o buscar `<deck-stage`). Si aparece uno o más `.html` con esa firma, no asumir "deck nuevo, sin más contexto": confirmar primero si el pedido es sobre alguno de esos decks existentes. Este chequeo es lo que evita, por ejemplo, arrancar `init`→`brief` desde cero cuando el usuario en realidad quería decir "agregale una slide" sobre un deck que ya está en la carpeta.
 - **Deck nuevo, sin más contexto (confirmado por el paso 0):** recorrer `init` → `brief` → `assets` → `build` → `audit` → `export` en orden, una por una, esperando la confirmación que cada archivo de referencia pide antes de avanzar a la siguiente. No saltarse `assets` nunca, aunque el usuario no lo mencione — es la fase que existe precisamente porque se saltaba antes.
 - **Petición puntual sobre un deck que ya existe** ("cambia la paleta a X", "agrega una slide de tracción", "arregla la slide 12", "audita esto", "pásalo a PDF"): identificar qué fase la cubre por su columna "Se activa con", cargar solo esa referencia, y resolver sin repetir las fases anteriores. `add` y `fix` terminan siempre corriendo `audit` antes de darse por cerradas — ver sus propios archivos.
+- **Ajustes finos de posición, tamaño o texto que el usuario pide de a uno** ("un poco más a la izquierda", "más grande", "no, menos"): tras el segundo ida y vuelta, ofrecer `studio` una vez. Arrastrarlo él mismo es más rápido que describirlo; si prefiere seguir pidiéndolo, seguir con `fix`.
 - **Ambiguo entre dos fases:** preguntar una vez cuál corresponde, en vez de adivinar.
 
 Al reconocer el disparador inicial: *"Te armo el deck. Antes, defino tu design system y el brief."*

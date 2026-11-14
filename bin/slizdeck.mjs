@@ -42,7 +42,7 @@ const AGENTS = {
 /* Lo que viaja a la carpeta instalada: la skill y lo que sus scripts leen
    en runtime (doctor lee CHANGELOG.md, smoke-test lee los dos ejemplos). */
 const PAYLOAD = [
-  'SKILL.md', 'template.html', 'styles', 'reference', 'scripts', 'bin',
+  'SKILL.md', 'template.html', 'styles', 'reference', 'scripts', 'bin', 'studio',
   'CHANGELOG.md', 'DESIGN.md', 'design.json', 'LICENSE', 'NOTICE.md', 'package.json',
   'examples/pitch-showcase.html', 'examples/datos-showcase.html',
 ];
@@ -66,6 +66,7 @@ const SCRIPTS = {
   'add-3d': 'add-3d.mjs',
   'poster-3d': 'poster-3d.mjs',
   'check-3d': 'check-3d.mjs',
+  studio: 'studio.mjs',
 };
 
 const HELP = `slizdeck ${PKG.version} — decks de slides HTML animados (Agent Skill)
@@ -101,6 +102,13 @@ Deck
   score <deck> [--json] [--no-chrome] | score --all <carpeta> [--out=x.json]
                             Puntaje 0-100 del deck (evals/README.md)
   smoke-test [--pack=<pack>] [--no-render]
+
+Studio (editor visual)
+  studio <deck> [--port=N] [--no-open]
+                            Abre el deck en el editor local: texto, mover, tamaño, imágenes,
+                            slides, datos y notas. Guarda directo en el HTML
+  studio comments <deck> [--wait] [--json] [--resolve <id|all>]
+                            Comentarios dejados en Studio para el agente (--wait espera el envío)
 
   new <deck.html> [--pack=<pack>] [--font=<id>]     Copia el template y aplica un pack
 `;

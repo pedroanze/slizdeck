@@ -1,6 +1,6 @@
 {
   "name": "slizdeck",
-  "version": "2.4.0",
+  "version": "2.5.0",
   "description": "Agent Skill que genera decks de slides HTML animados desde tu design system",
   "license": "MIT",
   "type": "module",
@@ -34,6 +34,7 @@
     "reference/",
     "scripts/",
     "bin/",
+    "studio/",
     "hooks/",
     ".claude-plugin/",
     "CHANGELOG.md",
@@ -58,5 +59,6 @@
   "dependencies": {
     "pptxgenjs": "^4.0.1",
     "jszip": "^3.10.1"
-  }
+  },
+  "packageManager": "npm@11.14.1+sha512.6a8a4d67478497a2dbc6815cad72e64c43f33413717e242756047d466241ab39bee61e691683a64658e94496ec5f1a1c05e4a5ec62dcc773280dfd949443a367"
 }

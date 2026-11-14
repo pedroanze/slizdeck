@@ -30,6 +30,10 @@ Háblale a tu agente:
 
 Te consulta el estilo, el público y los datos antes de generar, y valida contraste, desbordes y texto antes de entregar.
 
+**Edítalo a mano** cuando quieras, como en PowerPoint: `npx slizdeck studio deck.html` abre el deck en un editor local donde cambias textos, mueves y redimensionas elementos, reemplazas imágenes, reordenas slides y editas los datos de las gráficas. Se guarda directo en el HTML, y lo que no quieras hacer tú se lo dejas comentado al agente.
+
+<img src="docs/img/studio.jpg" alt="Slizdeck Studio: una slide seleccionada en el editor, con el rail de slides y el panel de propiedades">
+
 **Recibes** un `.html` que se presenta en cualquier navegador (con modo presentador: tecla `P`), un PDF liviano y un PowerPoint editable. Soporta además escenas 3D opcionales con `three.js` (modelos `.glb` y presets animados por step, con póster estático para PDF y PPTX).
 
 ## Cinco estilos
