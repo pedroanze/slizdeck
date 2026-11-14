@@ -65,8 +65,7 @@ body {
   background: var(--panel); border-bottom: 1px solid var(--line); flex: none;
 }
 .brand { display: flex; align-items: center; gap: 8px; min-width: 0; }
-.brand .mark { width: 34px; height: 20px; flex: none; color: var(--ink); }
-.brand .mark .paper { fill: var(--raised); }
+.brand .mark { width: 30px; height: 20px; flex: none; color: var(--ink); }
 .brand .sub { color: var(--ink-3); font-weight: 500; margin-left: -3px; }
 .brand .file { color: var(--ink-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 34vw; }
 .status { color: var(--ink-3); font-size: 12px; flex: 1; white-space: nowrap; }

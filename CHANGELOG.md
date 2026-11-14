@@ -4,6 +4,14 @@ Historial de cambios al engine (`template.html`) y a los scripts de la skill. Ca
 
 Una sola versión gobierna todo el proyecto y vive en seis sitios que deben coincidir siempre: `package.json`, el `metadata.version` de `SKILL.md`, el marcador `slizdeck-engine-version` de `template.html`, la primera entrada de este archivo, y el `version` de `.claude-plugin/plugin.json` y `.claude-plugin/marketplace.json`. `node scripts/check-versions.mjs` lo verifica y falla si alguno se desalinea.
 
+## 2.5.1
+
+Marca nueva y Studio con sus colores. El engine no cambia.
+
+- **Logo nuevo en SVG (`docs/brand/`):** una slide con la S y el borde de otra asomando detrás, más la S sola como ícono y favicon. Símbolo, símbolo con nombre e ícono, en negro y en blanco, con el texto convertido a trazos. Reemplaza a `SlizDeck.png` en los README, que ahora muestran la versión blanca en modo oscuro.
+- **Studio monocromo, como la marca:** tinta sobre papel con el logo en la barra, en vez del cromo oscuro con acento bermellón. El color queda solo para lo funcional (azul de selección, guías, errores y borrar). Tema claro por defecto y oscuro si el sistema está en oscuro.
+- **Disparadores de edición en la descripción de la skill:** "editar el deck a mano", "abrir el editor" y "abrir Studio" activan la skill también en una conversación nueva.
+
 ## 2.5.0
 
 Slizdeck Studio: un editor visual local para hacer a mano los ajustes simples, como en PowerPoint. El engine no cambia: los decks generados con 2.4.0 no necesitan reaplicar nada, y Studio abre decks de cualquier versión.
