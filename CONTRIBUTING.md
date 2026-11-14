@@ -68,6 +68,7 @@ Una línea en imperativo, en español, que diga qué cambia y por qué: `Arregla
 | `tests/` | `node:test`: los validadores distinguen un deck bueno de uno roto; el instalador instala, respeta y desinstala. |
 | `examples/pitch-showcase.html` · `examples/datos-showcase.html` · `examples/3d/3d-showcase.html` | Decks de referencia; el CI los valida y exporta, y los tests mutan `pitch-showcase` y `3d-showcase`. |
 | `examples/test-0*/` | Tres decks generados de punta a punta por la skill; el CI exige que exporten sin pérdidas. |
+| `examples/orca/` | Deck de ejemplo con una mascota 3D hecha por código (Ori, sobre orquestar agentes con Orca). No lo valida el CI ni viaja en npm; `ori/build-ori.mjs` regenera el modelo. |
 
 ## Notas técnicas
 
