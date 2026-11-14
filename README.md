@@ -1,5 +1,8 @@
 <div align="center">
-  <img src="SlizDeck.png" alt="SlizDeck" width="200">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/brand/slizdeck-logo-white.svg">
+    <img src="docs/brand/slizdeck-logo.svg" alt="Slizdeck" width="260">
+  </picture>
 
   <p><strong>Pídele a tu agente un pitch deck. Recibe un deck animado, investigado y listo para presentar.</strong></p>
 
