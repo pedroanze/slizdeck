@@ -15,5 +15,9 @@ examples/**/*.pdf
 examples/**/*.pptx
 .slizdeck-shots/
 
+# Archivos de trabajo de Studio (respaldo de sesion y comentarios al agente)
+.slizdeck/
+*.comments.json
+
 # Decks generados al correr los evals: se versionan solo los puntajes (evals/results/)
 evals/runs/

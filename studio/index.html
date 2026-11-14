@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Slizdeck Studio</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%23e23d1e'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="/__studio/editor.css">
+</head>
+<body>
+<header class="bar">
+  <div class="brand"><span class="mark" aria-hidden="true"></span><strong>Studio</strong><span class="file" id="file-name"></span></div>
+  <div class="status" id="status" aria-live="polite">Cargando</div>
+  <div class="bar-actions">
+    <button type="button" class="btn icon" id="btn-undo" title="Deshacer (⌘Z)" aria-label="Deshacer" disabled>
+      <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3 2.5 6.5 6 10M3 6.5h6.5a3.5 3.5 0 0 1 0 7H7"/></svg>
+    </button>
+    <button type="button" class="btn icon" id="btn-redo" title="Rehacer (⇧⌘Z)" aria-label="Rehacer" disabled>
+      <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3l3.5 3.5L10 10M13 6.5H6.5a3.5 3.5 0 0 0 0 7H9"/></svg>
+    </button>
+    <span class="sep" aria-hidden="true"></span>
+    <button type="button" class="btn" id="btn-check" title="Corre audit y check-overflow sobre el deck guardado">Revisar</button>
+    <button type="button" class="btn" id="btn-preview" title="Abre el deck con sus animaciones en otra pestaña">Vista previa</button>
+    <button type="button" class="btn primary" id="btn-send" disabled>Enviar al agente</button>
+  </div>
+</header>
+
+<main class="work">
+  <nav class="rail" id="rail" aria-label="Slides"></nav>
+
+  <section class="stage" id="stage">
+    <div class="canvas" id="canvas">
+      <iframe id="frame" title="Deck" tabindex="-1"></iframe>
+      <div class="overlay" id="overlay">
+        <div class="hover-box" id="hover-box" hidden></div>
+        <div class="guides" id="guides"></div>
+        <div class="sel-box" id="sel-box" hidden>
+          <span class="sel-label" id="sel-label"></span>
+          <i class="h nw" data-h="nw"></i><i class="h ne" data-h="ne"></i>
+          <i class="h se" data-h="se"></i><i class="h sw" data-h="sw"></i>
+          <i class="h e" data-h="e"></i><i class="h w" data-h="w"></i><i class="h s" data-h="s"></i>
+        </div>
+      </div>
+    </div>
+    <p class="hint" id="hint">Clic para seleccionar · doble clic para editar texto · arrastra para mover · Esc sube al contenedor</p>
+  </section>
+
+  <aside class="panel" id="panel" aria-label="Propiedades"></aside>
+</main>
+
+<div class="drawer" id="drawer" hidden>
+  <div class="drawer-head"><strong>Revisión del deck</strong><button type="button" class="btn icon" id="drawer-close" aria-label="Cerrar">×</button></div>
+  <div class="drawer-body" id="drawer-body"></div>
+</div>
+<div class="toast" id="toast" role="status" hidden></div>
+<input type="file" id="file-input" accept="image/png,image/jpeg,image/gif,image/webp,image/avif,image/svg+xml" hidden>
+<script src="/__studio/editor.js"></script>
+</body>
+</html>

@@ -6,6 +6,16 @@ Se activa cuando el usuario señala una o más slides específicas de un deck ya
 
 Antes de tocar nada, correr `node scripts/doctor.mjs deck.html` — un deck viejo puede estar generado con una versión del engine anterior a algún fix relevante (ver `CHANGELOG.md`). Es un hallazgo **a decidir** (ver doctrina de severidad en `reference/audit.md`), no bloqueante: revisarlo antes de decidir si el fix puntual pedido también debería incluir ese arreglo de fondo.
 
+## 0b. Si el pedido viene de Studio
+
+Cuando el usuario revisa el deck en el editor visual (`reference/studio.md`), sus pedidos llegan como comentarios anclados a un elemento:
+
+```bash
+node scripts/studio.mjs comments deck.html --wait    # espera a que pulse "Enviar al agente"
+```
+
+Cada comentario trae la slide, el texto del usuario y el elemento señalado (etiqueta, clases y un extracto), que es el alcance del fix. Aplicarlo con los pasos de abajo y cerrarlo con `node scripts/studio.mjs comments deck.html --resolve <id>`. Si el usuario movió o redimensionó cosas a mano en esa slide (`translate`, `width`, `font-size` en línea), respetarlo: es una decisión suya, no un defecto a limpiar.
+
 ## 1. Acotar el alcance
 
 Tocar **solo** la(s) slide(s) señaladas. No aprovechar para tocar otras, aunque se note un problema parecido en una vecina — si el problema es sistémico (afecta a varias slides por igual, ej. un tamaño de fuente mal calibrado en todo un patrón), decirlo explícitamente y preguntar si el fix debe quedarse puntual o si conviene escalarlo a `init` (cambio de design system) o a un ajuste de `reference/design-guidelines.md` / `template.html` (cambio de sistema, no de una slide).

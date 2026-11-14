@@ -58,13 +58,14 @@ Una línea en imperativo, en español, que diga qué cambia y por qué: `Arregla
 | `scripts/shoot.mjs` | PNG por slide en estado final. `--clean` sin la UI del reproductor (así se generan `docs/img/`). |
 | `scripts/doctor.mjs` | Fixes del engine que le faltan a un deck viejo (lee `CHANGELOG.md`). |
 | `scripts/renumber.mjs` | Renumera `data-label` y footers. |
+| `scripts/studio.mjs` · `studio/` | Studio: servidor local sin dependencias y su interfaz (`index.html`, `editor.js`, `editor.css`, y `bridge.js`, que se inyecta al servir el deck). Edita por parches sobre el fuente con `scripts/lib/source-map.mjs` y `scripts/lib/studio-ops.mjs`; nunca serializa el DOM. |
 | `scripts/export-pptx.mjs` | PPTX por geometría sobre `scripts/lib/measure-deck.mjs`. |
 | `scripts/export-pdf.mjs` · `scripts/make-offline.mjs` | PDF liviano; fuentes, módulos 3D y sidecars incrustados para presentar sin red. |
 | `scripts/verify-hook.mjs` | Hook `PostToolUse` que corre `audit.mjs` tras cada edición. |
 | `scripts/check-docs.mjs` · `scripts/check-versions.mjs` | Canarios de drift: docs vs repo, versión en los seis sitios. |
 | `scripts/smoke-test.mjs` | Regresión de todos los packs × tipografías. |
 | `scripts/score-deck.mjs` · `evals/` | Puntaje 0-100 y briefs fijos para medir la calidad entre versiones. |
-| `scripts/lib/` | Compartido: `chrome-run` (harness, reintentos), `deck-html` (parseo estático), `inject`, `find-chrome`, `measure-deck`, `three-pin` (versión y hashes SRI de `three.js`). |
+| `scripts/lib/` | Compartido: `chrome-run` (harness, reintentos), `deck-html` (parseo estático), `inject`, `find-chrome`, `measure-deck`, `three-pin` (versión y hashes SRI de `three.js`), `source-map` y `studio-ops` (mapa elemento → offsets del fuente y operaciones de Studio), `renumber`. |
 | `tests/` | `node:test`: los validadores distinguen un deck bueno de uno roto; el instalador instala, respeta y desinstala. |
 | `examples/pitch-showcase.html` · `examples/datos-showcase.html` · `examples/3d/3d-showcase.html` | Decks de referencia; el CI los valida y exporta, y los tests mutan `pitch-showcase` y `3d-showcase`. |
 | `examples/test-0*/` | Tres decks generados de punta a punta por la skill; el CI exige que exporten sin pérdidas. |

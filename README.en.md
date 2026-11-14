@@ -30,6 +30,10 @@ Talk to your agent:
 
 It checks style, audience and data with you before building, and validates contrast, overflow and text before handing it over. The skill's instructions are in Spanish; your deck comes out in whatever language you ask for.
 
+**Edit it by hand** whenever you want, PowerPoint-style: `npx slizdeck studio deck.html` opens the deck in a local editor where you change text, move and resize elements, replace images, reorder slides and edit chart data. It saves straight into the HTML, and anything you would rather not do yourself you leave as a comment for the agent.
+
+<img src="docs/img/studio.jpg" alt="Slizdeck Studio: a selected slide element in the editor, with the slide rail and the properties panel">
+
 **You get** an `.html` you present from any browser (with presenter mode: press `P`), a lightweight PDF and an editable PowerPoint.
 
 ## Five styles

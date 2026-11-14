@@ -4,6 +4,23 @@ Historial de cambios al engine (`template.html`) y a los scripts de la skill. Ca
 
 Una sola versión gobierna todo el proyecto y vive en seis sitios que deben coincidir siempre: `package.json`, el `metadata.version` de `SKILL.md`, el marcador `slizdeck-engine-version` de `template.html`, la primera entrada de este archivo, y el `version` de `.claude-plugin/plugin.json` y `.claude-plugin/marketplace.json`. `node scripts/check-versions.mjs` lo verifica y falla si alguno se desalinea.
 
+## 2.5.0
+
+Slizdeck Studio: un editor visual local para hacer a mano los ajustes simples, como en PowerPoint. El engine no cambia: los decks generados con 2.4.0 no necesitan reaplicar nada, y Studio abre decks de cualquier versión.
+
+**Studio (`scripts/studio.mjs`, `studio/`)**
+- **`slizdeck studio <deck.html>`:** servidor local sin dependencias que abre el deck en el navegador y guarda cada cambio directo en el `.html`. Editar texto con doble clic, mover arrastrando (queda como `translate` en línea, con guías a los bordes, el centro y los vecinos), redimensionar con tiradores (ancho, alto o tamaño de fuente), reemplazar imágenes (se copian a `assets/`), deshacer y rehacer.
+- **Slides, propiedades y datos:** reordenar, duplicar y borrar slides con renumerado automático; tamaño, peso, alineación y color (siempre como `var(--cs-*)`); paso de animación de cada elemento; valor de los contadores, datos de `.sz-chart` y notas del presentador.
+- **Parches sobre el fuente:** Studio nunca guarda el DOM del navegador. Sirve el deck con un índice por elemento (`scripts/lib/source-map.mjs`) y aplica cada operación al texto del archivo (`scripts/lib/studio-ops.mjs`), así que el diff de una edición es solo lo editado y el archivo nunca lleva marcas del editor. Si el agente cambia el deck por fuera, el editor se recarga y rechaza los cambios hechos sobre la versión vieja.
+- **Comentarios al agente:** el usuario comenta un elemento y pulsa "Enviar al agente"; `slizdeck studio comments <deck.html> --wait` los entrega, se aplican con la fase `fix` y se cierran con `--resolve`. Viven en `<deck>.comments.json`.
+- **Revisar:** corre `audit.mjs` y `check-overflow.mjs` desde el editor. Mover un elemento no reacomoda el resto, y Studio no lo esconde.
+- **Seguridad:** escucha solo en `127.0.0.1`, exige el token de la URL, valida `Host` y `Origin`, y no sirve nada fuera de la carpeta del deck.
+- **Límites conocidos:** no edita texto generado por CSS, ni el interior de un SVG, una gráfica o una escena 3D (la figura entera sí se mueve; el póster 3D hay que regenerarlo); no crea elementos nuevos; una imagen reemplazada y luego deshecha deja su archivo en `assets/`.
+
+**Skill y scripts**
+- **Fase `studio`** (`reference/studio.md`) y cómo consumir los comentarios en `reference/fix.md`.
+- **`scripts/lib/renumber.mjs`:** la lógica de `scripts/renumber.mjs` como función, compartida con Studio. El script se comporta igual.
+
 ## 2.4.0
 
 Escenas 3D opcionales con `three.js` (`.sz-3d`) y evento `stepchange` en el motor.
